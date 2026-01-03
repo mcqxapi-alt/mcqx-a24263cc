@@ -14,7 +14,347 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bookmarks: {
+        Row: {
+          created_at: string
+          id: string
+          question_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          question_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          question_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookmarks_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookmarks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenges: {
+        Row: {
+          challenger_id: string
+          challenger_score: number | null
+          chapter_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          opponent_id: string | null
+          opponent_score: number | null
+          question_ids: string[]
+          status: Database["public"]["Enums"]["challenge_status"]
+        }
+        Insert: {
+          challenger_id: string
+          challenger_score?: number | null
+          chapter_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          opponent_id?: string | null
+          opponent_score?: number | null
+          question_ids: string[]
+          status?: Database["public"]["Enums"]["challenge_status"]
+        }
+        Update: {
+          challenger_id?: string
+          challenger_score?: number | null
+          chapter_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          opponent_id?: string | null
+          opponent_score?: number | null
+          question_ids?: string[]
+          status?: Database["public"]["Enums"]["challenge_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenges_challenger_id_fkey"
+            columns: ["challenger_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenges_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenges_opponent_id_fkey"
+            columns: ["opponent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chapters: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+          subject_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: string
+          subject_id: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+          subject_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chapters_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          last_practice_date: string | null
+          streak_days: number
+          total_attempts: number
+          total_correct: number
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          last_practice_date?: string | null
+          streak_days?: number
+          total_attempts?: number
+          total_correct?: number
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          last_practice_date?: string | null
+          streak_days?: number
+          total_attempts?: number
+          total_correct?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      questions: {
+        Row: {
+          chapter_id: string
+          correct_answer: number
+          created_at: string
+          explanation: string | null
+          id: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          source: Database["public"]["Enums"]["question_source"]
+          status: Database["public"]["Enums"]["question_status"]
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          chapter_id: string
+          correct_answer: number
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          source?: Database["public"]["Enums"]["question_source"]
+          status?: Database["public"]["Enums"]["question_status"]
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          chapter_id?: string
+          correct_answer?: number
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          option_a?: string
+          option_b?: string
+          option_c?: string
+          option_d?: string
+          source?: Database["public"]["Enums"]["question_source"]
+          status?: Database["public"]["Enums"]["question_status"]
+          text?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          created_at: string
+          id: string
+          question_id: string
+          reason: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          question_id: string
+          reason: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          question_id?: string
+          reason?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          ai_count: number
+          answers: number[]
+          chapter_id: string
+          completed_at: string
+          id: string
+          question_ids: string[]
+          score: number
+          total_questions: number
+          user_id: string | null
+          verified_count: number
+        }
+        Insert: {
+          ai_count?: number
+          answers: number[]
+          chapter_id: string
+          completed_at?: string
+          id?: string
+          question_ids: string[]
+          score: number
+          total_questions: number
+          user_id?: string | null
+          verified_count?: number
+        }
+        Update: {
+          ai_count?: number
+          answers?: number[]
+          chapter_id?: string
+          completed_at?: string
+          id?: string
+          question_ids?: string[]
+          score?: number
+          total_questions?: number
+          user_id?: string | null
+          verified_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subjects: {
+        Row: {
+          created_at: string
+          display_order: number
+          icon: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          icon: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          icon?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +363,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      challenge_status: "open" | "closed"
+      question_source: "verified" | "ai"
+      question_status: "active" | "flagged" | "retired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +492,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      challenge_status: ["open", "closed"],
+      question_source: ["verified", "ai"],
+      question_status: ["active", "flagged", "retired"],
+    },
   },
 } as const
