@@ -1,118 +1,116 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ChevronRight, Check, X, AlertCircle, Zap, Flag } from "lucide-react";
+import { ArrowLeft, ChevronRight, Check, X, AlertCircle, Zap, Flag, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
-// Mock data - this will come from Supabase
-const subjects = [
-  { id: "physics", name: "Physics", icon: "⚡" },
-  { id: "chemistry", name: "Chemistry", icon: "🧪" },
-  { id: "maths", name: "Mathematics", icon: "📐" },
-  { id: "biology", name: "Biology", icon: "🧬" },
-];
-
-const chapters: Record<string, { id: string; name: string }[]> = {
-  physics: [
-    { id: "electrostatics", name: "Electrostatics" },
-    { id: "current", name: "Current Electricity" },
-    { id: "magnetism", name: "Magnetism" },
-    { id: "optics", name: "Optics" },
-    { id: "modern", name: "Modern Physics" },
-  ],
-  chemistry: [
-    { id: "solid-state", name: "Solid State" },
-    { id: "solutions", name: "Solutions" },
-    { id: "electrochemistry", name: "Electrochemistry" },
-    { id: "kinetics", name: "Chemical Kinetics" },
-  ],
-  maths: [
-    { id: "relations", name: "Relations & Functions" },
-    { id: "matrices", name: "Matrices" },
-    { id: "calculus", name: "Calculus" },
-    { id: "vectors", name: "Vectors" },
-  ],
-  biology: [
-    { id: "reproduction", name: "Reproduction" },
-    { id: "genetics", name: "Genetics" },
-    { id: "evolution", name: "Evolution" },
-    { id: "ecology", name: "Ecology" },
-  ],
+type Subject = {
+  id: string;
+  name: string;
+  icon: string;
 };
 
-// Mock MCQs
-const mockQuestions = [
-  {
-    id: 1,
-    text: "A parallel plate capacitor with air between the plates has capacitance of 8 pF. What is the capacitance if the distance between the plates is reduced by half?",
-    options: ["4 pF", "8 pF", "16 pF", "32 pF"],
-    correct: 2,
-    explanation: "Capacitance C = ε₀A/d. When d is halved, C doubles. So C' = 2 × 8 = 16 pF",
-    source: "verified" as const,
-  },
-  {
-    id: 2,
-    text: "The electric field inside a conductor is always:",
-    options: ["Maximum", "Minimum but not zero", "Zero", "Infinity"],
-    correct: 2,
-    explanation: "Inside a conductor, free electrons redistribute to cancel any internal field, making E = 0.",
-    source: "verified" as const,
-  },
-  {
-    id: 3,
-    text: "Two charges +q and -q are placed at a distance d apart. The electric potential at the midpoint is:",
-    options: ["kq/d", "2kq/d", "Zero", "4kq/d"],
-    correct: 2,
-    explanation: "At the midpoint, distances from both charges are equal (d/2). Potentials are +2kq/d and -2kq/d, which sum to zero.",
-    source: "ai" as const,
-  },
-  {
-    id: 4,
-    text: "The SI unit of electric permittivity is:",
-    options: ["C²N⁻¹m⁻²", "Nm²C⁻²", "NC⁻¹m⁻¹", "Fm⁻¹"],
-    correct: 0,
-    explanation: "From Coulomb's law, ε₀ has units of C²N⁻¹m⁻². Also equivalent to F/m.",
-    source: "verified" as const,
-  },
-  {
-    id: 5,
-    text: "If the potential in a region is given by V = 6x - 8xy - 8y + 6yz, the electric field at (1, 1, 1) is:",
-    options: ["2î + 2ĵ - 6k̂", "2î - 2ĵ + 6k̂", "6î + 2ĵ + 2k̂", "-2î + 2ĵ + 6k̂"],
-    correct: 0,
-    explanation: "E = -∇V = -(∂V/∂x)î - (∂V/∂y)ĵ - (∂V/∂z)k̂. Calculating partial derivatives and substituting (1,1,1).",
-    source: "ai" as const,
-  },
-];
+type Chapter = {
+  id: string;
+  name: string;
+  subject_id: string;
+};
+
+type Question = {
+  id: string;
+  text: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+  correct_answer: number;
+  explanation: string | null;
+  source: "verified" | "ai";
+};
 
 type Step = "subject" | "chapter" | "practice" | "result";
 
 export default function Practice() {
   const [step, setStep] = useState<Step>("subject");
-  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
-  const [selectedChapter, setSelectedChapter] = useState<string | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQ, setCurrentQ] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
 
-  const question = mockQuestions[currentQ];
-  const isCorrect = selectedAnswer === question?.correct;
-  const score = answers.filter((a, i) => a === mockQuestions[i]?.correct).length;
-  const totalQuestions = mockQuestions.length;
+  // Fetch subjects
+  const { data: subjects = [], isLoading: loadingSubjects } = useQuery({
+    queryKey: ["subjects"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("subjects")
+        .select("*")
+        .order("display_order");
+      if (error) throw error;
+      return data as Subject[];
+    },
+  });
 
-  const handleSubjectSelect = (id: string) => {
-    setSelectedSubject(id);
+  // Fetch chapters for selected subject
+  const { data: chapters = [], isLoading: loadingChapters } = useQuery({
+    queryKey: ["chapters", selectedSubject?.id],
+    queryFn: async () => {
+      if (!selectedSubject) return [];
+      const { data, error } = await supabase
+        .from("chapters")
+        .select("*")
+        .eq("subject_id", selectedSubject.id)
+        .order("display_order");
+      if (error) throw error;
+      return data as Chapter[];
+    },
+    enabled: !!selectedSubject,
+  });
+
+  const question = questions[currentQ];
+  const isCorrect = selectedAnswer === question?.correct_answer;
+  const score = answers.filter((a, i) => a === questions[i]?.correct_answer).length;
+  const totalQuestions = questions.length;
+
+  const handleSubjectSelect = (subject: Subject) => {
+    setSelectedSubject(subject);
     setStep("chapter");
   };
 
-  const handleChapterSelect = (id: string) => {
-    setSelectedChapter(id);
-    setStep("practice");
-    setCurrentQ(0);
-    setAnswers([]);
-    setSelectedAnswer(null);
-    setShowResult(false);
+  const handleChapterSelect = async (chapter: Chapter) => {
+    setSelectedChapter(chapter);
+    
+    // Fetch questions for this chapter
+    const { data, error } = await supabase
+      .from("questions")
+      .select("*")
+      .eq("chapter_id", chapter.id)
+      .eq("status", "active")
+      .limit(20);
+    
+    if (error) {
+      console.error("Error fetching questions:", error);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      // Shuffle questions
+      const shuffled = [...data].sort(() => Math.random() - 0.5);
+      setQuestions(shuffled as Question[]);
+      setStep("practice");
+      setCurrentQ(0);
+      setAnswers([]);
+      setSelectedAnswer(null);
+      setShowResult(false);
+    } else {
+      // No questions yet - show a message or use placeholder
+      alert("No questions available for this chapter yet. Check back soon!");
+    }
   };
 
   const handleAnswerSelect = (index: number) => {
@@ -140,6 +138,7 @@ export default function Practice() {
     setStep("subject");
     setSelectedSubject(null);
     setSelectedChapter(null);
+    setQuestions([]);
     setCurrentQ(0);
     setAnswers([]);
     setSelectedAnswer(null);
@@ -153,8 +152,11 @@ export default function Practice() {
     } else if (step === "practice") {
       setStep("chapter");
       setSelectedChapter(null);
+      setQuestions([]);
     }
   };
+
+  const getOptions = (q: Question) => [q.option_a, q.option_b, q.option_c, q.option_d];
 
   return (
     <div className="min-h-screen gradient-mesh">
@@ -175,7 +177,7 @@ export default function Practice() {
             </Link>
           </div>
 
-          {step === "practice" && (
+          {step === "practice" && totalQuestions > 0 && (
             <div className="flex items-center gap-4">
               <span className="text-sm text-muted-foreground">
                 Q {currentQ + 1}/{totalQuestions}
@@ -205,22 +207,28 @@ export default function Practice() {
                   <p className="text-muted-foreground">Choose what you want to practice</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  {subjects.map((subject) => (
-                    <motion.button
-                      key={subject.id}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => handleSubjectSelect(subject.id)}
-                      className="glass rounded-2xl p-6 text-left transition-all hover:border-primary/50 hover:shadow-[0_0_30px_hsl(var(--neon-cyan)/0.15)] group"
-                    >
-                      <span className="text-4xl mb-4 block">{subject.icon}</span>
-                      <h3 className="font-display text-lg font-semibold group-hover:text-primary transition-colors">
-                        {subject.name}
-                      </h3>
-                    </motion.button>
-                  ))}
-                </div>
+                {loadingSubjects ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    {subjects.map((subject) => (
+                      <motion.button
+                        key={subject.id}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleSubjectSelect(subject)}
+                        className="glass rounded-2xl p-6 text-left transition-all hover:border-primary/50 hover:shadow-[0_0_30px_hsl(var(--neon-cyan)/0.15)] group"
+                      >
+                        <span className="text-4xl mb-4 block">{subject.icon}</span>
+                        <h3 className="font-display text-lg font-semibold group-hover:text-primary transition-colors">
+                          {subject.name}
+                        </h3>
+                      </motion.button>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             )}
 
@@ -235,28 +243,33 @@ export default function Practice() {
               >
                 <div className="text-center mb-8">
                   <h1 className="font-display text-3xl font-bold mb-2">
-                    {subjects.find((s) => s.id === selectedSubject)?.icon}{" "}
-                    {subjects.find((s) => s.id === selectedSubject)?.name}
+                    {selectedSubject.icon} {selectedSubject.name}
                   </h1>
                   <p className="text-muted-foreground">Select a chapter to practice</p>
                 </div>
 
-                <div className="space-y-3">
-                  {chapters[selectedSubject]?.map((chapter) => (
-                    <motion.button
-                      key={chapter.id}
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                      onClick={() => handleChapterSelect(chapter.id)}
-                      className="w-full glass rounded-xl p-5 text-left transition-all hover:border-primary/50 flex items-center justify-between group"
-                    >
-                      <span className="font-medium group-hover:text-primary transition-colors">
-                        {chapter.name}
-                      </span>
-                      <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </motion.button>
-                  ))}
-                </div>
+                {loadingChapters ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {chapters.map((chapter) => (
+                      <motion.button
+                        key={chapter.id}
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.99 }}
+                        onClick={() => handleChapterSelect(chapter)}
+                        className="w-full glass rounded-xl p-5 text-left transition-all hover:border-primary/50 flex items-center justify-between group"
+                      >
+                        <span className="font-medium group-hover:text-primary transition-colors">
+                          {chapter.name}
+                        </span>
+                        <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                      </motion.button>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             )}
 
@@ -287,14 +300,14 @@ export default function Practice() {
 
                 {/* Options */}
                 <div className="space-y-3">
-                  {question.options.map((option, index) => {
+                  {getOptions(question).map((option, index) => {
                     const letter = String.fromCharCode(65 + index);
                     let optionClass = "glass rounded-xl p-4 text-left transition-all cursor-pointer flex items-center gap-4";
                     
                     if (showResult) {
-                      if (index === question.correct) {
+                      if (index === question.correct_answer) {
                         optionClass += " border-accent bg-accent/10";
-                      } else if (index === selectedAnswer && index !== question.correct) {
+                      } else if (index === selectedAnswer && index !== question.correct_answer) {
                         optionClass += " border-destructive bg-destructive/10";
                       }
                     } else if (selectedAnswer === index) {
@@ -316,10 +329,10 @@ export default function Practice() {
                           {letter}
                         </span>
                         <span className="flex-1">{option}</span>
-                        {showResult && index === question.correct && (
+                        {showResult && index === question.correct_answer && (
                           <Check className="w-5 h-5 text-accent shrink-0" />
                         )}
-                        {showResult && index === selectedAnswer && index !== question.correct && (
+                        {showResult && index === selectedAnswer && index !== question.correct_answer && (
                           <X className="w-5 h-5 text-destructive shrink-0" />
                         )}
                       </motion.button>
@@ -347,7 +360,7 @@ export default function Practice() {
                             {isCorrect ? "Correct!" : "Incorrect"}
                           </span>
                         </div>
-                        <p className="text-muted-foreground">{question.explanation}</p>
+                        <p className="text-muted-foreground">{question.explanation || "No explanation available."}</p>
                       </div>
                     </motion.div>
                   )}
@@ -403,11 +416,15 @@ export default function Practice() {
 
                   <div className="flex items-center justify-center gap-8 mb-8">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-accent">{answers.filter((a, i) => mockQuestions[i]?.source === "verified" && a === mockQuestions[i]?.correct).length}</div>
+                      <div className="text-2xl font-bold text-accent">
+                        {answers.filter((a, i) => questions[i]?.source === "verified" && a === questions[i]?.correct_answer).length}
+                      </div>
                       <div className="text-xs text-muted-foreground">Verified ✓</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-primary">{answers.filter((a, i) => mockQuestions[i]?.source === "ai" && a === mockQuestions[i]?.correct).length}</div>
+                      <div className="text-2xl font-bold text-primary">
+                        {answers.filter((a, i) => questions[i]?.source === "ai" && a === questions[i]?.correct_answer).length}
+                      </div>
                       <div className="text-xs text-muted-foreground">AI-gen 🤖</div>
                     </div>
                   </div>
