@@ -1,11 +1,27 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ChevronRight, Check, X, AlertCircle, Zap, Flag, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronRight,
+  Check,
+  X,
+  Sparkles,
+  Zap,
+  Flag,
+  Loader2,
+  Share2,
+  Trophy,
+  Target,
+  Flame,
+  RotateCcw,
+  Users,
+  BookOpen,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 
 type Subject = {
   id: string;
@@ -34,6 +50,7 @@ type Question = {
 type Step = "subject" | "chapter" | "practice" | "result";
 
 export default function Practice() {
+  const { user } = useAuth();
   const [step, setStep] = useState<Step>("subject");
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
@@ -42,6 +59,7 @@ export default function Practice() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Fetch subjects
   const { data: subjects = [], isLoading: loadingSubjects } = useQuery({
@@ -76,17 +94,17 @@ export default function Practice() {
   const isCorrect = selectedAnswer === question?.correct_answer;
   const score = answers.filter((a, i) => a === questions[i]?.correct_answer).length;
   const totalQuestions = questions.length;
+  const accuracy = totalQuestions > 0 ? Math.round((score / answers.length) * 100) : 0;
 
   const handleSubjectSelect = (subject: Subject) => {
     setSelectedSubject(subject);
     setStep("chapter");
   };
 
-  const [isGenerating, setIsGenerating] = useState(false);
-
   const handleChapterSelect = async (chapter: Chapter) => {
     setSelectedChapter(chapter);
-    
+    setIsGenerating(true);
+
     // Fetch verified questions for this chapter
     const { data, error } = await supabase
       .from("questions")
@@ -94,32 +112,34 @@ export default function Practice() {
       .eq("chapter_id", chapter.id)
       .eq("status", "active")
       .limit(20);
-    
+
     if (error) {
       console.error("Error fetching questions:", error);
+      setIsGenerating(false);
       return;
     }
 
-    let allQuestions: Question[] = data ? [...data] as Question[] : [];
+    let allQuestions: Question[] = data ? ([...data] as Question[]) : [];
     const targetCount = 10;
-    
+
     // If we don't have enough questions, generate AI ones
     if (allQuestions.length < targetCount) {
-      setIsGenerating(true);
       try {
         const neededCount = targetCount - allQuestions.length;
-        const { data: aiData, error: aiError } = await supabase.functions.invoke('generate-mcqs', {
-          body: {
-            chapterName: chapter.name,
-            subjectName: selectedSubject?.name,
-            count: neededCount
+        const { data: aiData, error: aiError } = await supabase.functions.invoke(
+          "generate-mcqs",
+          {
+            body: {
+              chapterName: chapter.name,
+              subjectName: selectedSubject?.name,
+              count: neededCount,
+            },
           }
-        });
+        );
 
         if (aiError) {
           console.error("Error generating AI questions:", aiError);
         } else if (aiData?.questions) {
-          // Add temporary IDs to AI questions
           const aiQuestions = aiData.questions.map((q: any, i: number) => ({
             ...q,
             id: `ai-${Date.now()}-${i}`,
@@ -128,13 +148,12 @@ export default function Practice() {
         }
       } catch (err) {
         console.error("Failed to generate AI questions:", err);
-      } finally {
-        setIsGenerating(false);
       }
     }
 
+    setIsGenerating(false);
+
     if (allQuestions.length > 0) {
-      // Shuffle questions
       const shuffled = allQuestions.sort(() => Math.random() - 0.5);
       setQuestions(shuffled);
       setStep("practice");
@@ -179,6 +198,17 @@ export default function Practice() {
     setShowResult(false);
   };
 
+  const handleRetryChapter = () => {
+    if (selectedChapter) {
+      setQuestions([]);
+      setCurrentQ(0);
+      setAnswers([]);
+      setSelectedAnswer(null);
+      setShowResult(false);
+      handleChapterSelect(selectedChapter);
+    }
+  };
+
   const goBack = () => {
     if (step === "chapter") {
       setStep("subject");
@@ -192,71 +222,123 @@ export default function Practice() {
 
   const getOptions = (q: Question) => [q.option_a, q.option_b, q.option_c, q.option_d];
 
+  const progressPercent = totalQuestions > 0 ? ((currentQ + 1) / totalQuestions) * 100 : 0;
+
   return (
-    <div className="min-h-screen gradient-mesh">
+    <div className="min-h-screen bg-background">
+      {/* Animated gradient background */}
+      <div className="fixed inset-0 gradient-mesh opacity-60" />
+      <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/50 to-background" />
+
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/30">
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-4">
             {(step === "chapter" || step === "practice") && (
-              <button onClick={goBack} className="p-2 hover:bg-secondary rounded-lg transition-colors">
+              <motion.button
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                onClick={goBack}
+                className="p-2 hover:bg-secondary rounded-lg transition-colors"
+              >
                 <ArrowLeft className="w-5 h-5" />
-              </button>
+              </motion.button>
             )}
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center neon-glow">
                 <Zap className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="font-display font-bold text-xl">MCQX</span>
+              <span className="font-display font-bold text-xl hidden sm:block">MCQX</span>
             </Link>
           </div>
 
+          {/* Session Info */}
           {step === "practice" && totalQuestions > 0 && (
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground">
-                Q {currentQ + 1}/{totalQuestions}
-              </span>
-              <span className="text-sm font-semibold neon-text-green">
-                {score}/{currentQ + (showResult ? 1 : 0)}
-              </span>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-4"
+            >
+              <div className="hidden sm:block text-center">
+                <div className="text-xs text-muted-foreground">
+                  {selectedSubject?.name} • {selectedChapter?.name}
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="text-sm">
+                  <span className="text-muted-foreground">Q</span>{" "}
+                  <span className="font-semibold">{currentQ + 1}</span>
+                  <span className="text-muted-foreground">/{totalQuestions}</span>
+                </div>
+                <div className="h-4 w-px bg-border" />
+                <div className="flex items-center gap-1">
+                  <Target className="w-4 h-4 text-accent" />
+                  <span className="font-bold neon-text-green">{score}</span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {user && (
+            <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
+              <Link to="/dashboard">Dashboard</Link>
+            </Button>
           )}
         </div>
       </header>
 
-      <main className="pt-24 pb-12 px-4">
+      <main className="relative pt-24 pb-12 px-4 min-h-screen">
         <div className="container max-w-2xl">
           <AnimatePresence mode="wait">
             {/* Subject Selection */}
             {step === "subject" && (
               <motion.div
                 key="subject"
-                initial={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
+                exit={{ opacity: 0, x: 30 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 className="space-y-6"
               >
                 <div className="text-center mb-8">
-                  <h1 className="font-display text-3xl font-bold mb-2">Pick a Subject</h1>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.1, type: "spring" }}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-4"
+                  >
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    <span className="text-sm">CBSE Class 12</span>
+                  </motion.div>
+                  <h1 className="font-display text-4xl font-bold mb-2">Pick a Subject</h1>
                   <p className="text-muted-foreground">Choose what you want to practice</p>
                 </div>
 
                 {loadingSubjects ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <div className="flex flex-col items-center justify-center py-16 gap-4">
+                    <div className="relative">
+                      <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                      <div className="absolute inset-0 blur-xl bg-primary/30 animate-pulse" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">Loading subjects...</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-4">
-                    {subjects.map((subject) => (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {subjects.map((subject, index) => (
                       <motion.button
                         key={subject.id}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        whileHover={{ scale: 1.03, y: -2 }}
+                        whileTap={{ scale: 0.97 }}
                         onClick={() => handleSubjectSelect(subject)}
-                        className="glass rounded-2xl p-6 text-left transition-all hover:border-primary/50 hover:shadow-[0_0_30px_hsl(var(--neon-cyan)/0.15)] group"
+                        className="relative glass rounded-2xl p-6 text-left transition-all hover:border-primary/50 group overflow-hidden"
                       >
-                        <span className="text-4xl mb-4 block">{subject.icon}</span>
-                        <h3 className="font-display text-lg font-semibold group-hover:text-primary transition-colors">
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute -top-10 -right-10 w-20 h-20 bg-primary/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <span className="text-4xl mb-3 block relative">{subject.icon}</span>
+                        <h3 className="font-display text-base font-semibold group-hover:text-primary transition-colors relative">
                           {subject.name}
                         </h3>
                       </motion.button>
@@ -270,39 +352,56 @@ export default function Practice() {
             {step === "chapter" && selectedSubject && (
               <motion.div
                 key="chapter"
-                initial={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
+                exit={{ opacity: 0, x: 30 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 className="space-y-6"
               >
                 <div className="text-center mb-8">
-                  <h1 className="font-display text-3xl font-bold mb-2">
-                    {selectedSubject.icon} {selectedSubject.name}
-                  </h1>
+                  <motion.div
+                    initial={{ scale: 0.8 }}
+                    animate={{ scale: 1 }}
+                    className="text-6xl mb-4"
+                  >
+                    {selectedSubject.icon}
+                  </motion.div>
+                  <h1 className="font-display text-3xl font-bold mb-2">{selectedSubject.name}</h1>
                   <p className="text-muted-foreground">Select a chapter to practice</p>
                 </div>
 
                 {loadingChapters || isGenerating ? (
-                  <div className="flex flex-col items-center justify-center py-12 gap-3">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                    {isGenerating && (
-                      <p className="text-sm text-muted-foreground">Generating questions with AI...</p>
-                    )}
+                  <div className="flex flex-col items-center justify-center py-16 gap-4">
+                    <div className="relative">
+                      <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                      <div className="absolute inset-0 blur-xl bg-primary/30 animate-pulse" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {isGenerating ? "Generating questions with AI..." : "Loading chapters..."}
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {chapters.map((chapter) => (
+                    {chapters.map((chapter, index) => (
                       <motion.button
                         key={chapter.id}
-                        whileHover={{ scale: 1.01 }}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.03 }}
+                        whileHover={{ scale: 1.01, x: 4 }}
                         whileTap={{ scale: 0.99 }}
                         onClick={() => handleChapterSelect(chapter)}
                         className="w-full glass rounded-xl p-5 text-left transition-all hover:border-primary/50 flex items-center justify-between group"
                       >
-                        <span className="font-medium group-hover:text-primary transition-colors">
-                          {chapter.name}
-                        </span>
-                        <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                        <div className="flex items-center gap-4">
+                          <span className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-sm font-semibold text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary transition-colors">
+                            {index + 1}
+                          </span>
+                          <span className="font-medium group-hover:text-primary transition-colors">
+                            {chapter.name}
+                          </span>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                       </motion.button>
                     ))}
                   </div>
@@ -314,64 +413,125 @@ export default function Practice() {
             {step === "practice" && question && (
               <motion.div
                 key={`question-${currentQ}`}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
+                exit={{ opacity: 0, y: -30 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 className="space-y-6"
               >
-                <Progress value={((currentQ + 1) / totalQuestions) * 100} className="h-2" />
+                {/* Progress Bar */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Progress</span>
+                    <span>{Math.round(progressPercent)}%</span>
+                  </div>
+                  <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progressPercent}%` }}
+                      transition={{ duration: 0.5, ease: "easeOut" }}
+                      style={{
+                        boxShadow: "0 0 10px hsl(var(--neon-cyan) / 0.5)",
+                      }}
+                    />
+                  </div>
+                </div>
 
                 {/* Question Card */}
-                <div className="glass rounded-2xl p-6">
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="relative glass rounded-2xl p-6 overflow-hidden"
+                  style={{
+                    boxShadow: "0 0 40px hsl(var(--neon-cyan) / 0.1)",
+                  }}
+                >
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
                   <div className="flex items-start justify-between gap-4 mb-4">
-                    <span className="text-sm text-muted-foreground">Question {currentQ + 1}</span>
+                    <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                      <BookOpen className="w-4 h-4" />
+                      Question {currentQ + 1}
+                    </span>
                     {question.source === "ai" && (
-                      <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-accent/10 text-accent">
-                        <AlertCircle className="w-3 h-3" />
-                        AI-generated
-                      </span>
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20"
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        AI-Generated
+                      </motion.span>
                     )}
                   </div>
-                  <p className="text-lg leading-relaxed">{question.text}</p>
-                </div>
+                  <p className="text-lg sm:text-xl leading-relaxed font-medium">{question.text}</p>
+                </motion.div>
 
                 {/* Options */}
                 <div className="space-y-3">
                   {getOptions(question).map((option, index) => {
                     const letter = String.fromCharCode(65 + index);
-                    let optionClass = "glass rounded-xl p-4 text-left transition-all cursor-pointer flex items-center gap-4";
-                    
-                    if (showResult) {
-                      if (index === question.correct_answer) {
-                        optionClass += " border-accent bg-accent/10";
-                      } else if (index === selectedAnswer && index !== question.correct_answer) {
-                        optionClass += " border-destructive bg-destructive/10";
-                      }
-                    } else if (selectedAnswer === index) {
-                      optionClass += " border-primary bg-primary/10";
-                    } else {
-                      optionClass += " hover:border-primary/50";
-                    }
+                    const isSelected = selectedAnswer === index;
+                    const isCorrectAnswer = index === question.correct_answer;
+                    const isWrong = showResult && isSelected && !isCorrectAnswer;
+                    const showCorrect = showResult && isCorrectAnswer;
 
                     return (
                       <motion.button
                         key={index}
-                        whileHover={!showResult ? { scale: 1.01 } : {}}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        whileHover={!showResult ? { scale: 1.01, x: 4 } : {}}
                         whileTap={!showResult ? { scale: 0.99 } : {}}
                         onClick={() => handleAnswerSelect(index)}
-                        className={optionClass}
                         disabled={showResult}
+                        className={`relative w-full glass rounded-xl p-4 text-left transition-all cursor-pointer flex items-center gap-4 overflow-hidden ${
+                          showCorrect
+                            ? "border-accent bg-accent/10"
+                            : isWrong
+                            ? "border-destructive bg-destructive/10"
+                            : isSelected
+                            ? "border-primary bg-primary/10"
+                            : "hover:border-primary/50"
+                        }`}
+                        style={
+                          showCorrect
+                            ? { boxShadow: "0 0 20px hsl(var(--neon-green) / 0.3)" }
+                            : isWrong
+                            ? { boxShadow: "0 0 20px hsl(0 84% 60% / 0.3)" }
+                            : isSelected
+                            ? { boxShadow: "0 0 20px hsl(var(--neon-cyan) / 0.2)" }
+                            : {}
+                        }
                       >
-                        <span className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center font-semibold shrink-0">
-                          {letter}
+                        {showCorrect && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="absolute inset-0 bg-gradient-to-r from-accent/20 to-transparent"
+                          />
+                        )}
+                        <span
+                          className={`relative z-10 w-10 h-10 rounded-lg flex items-center justify-center font-bold shrink-0 transition-colors ${
+                            showCorrect
+                              ? "bg-accent text-accent-foreground"
+                              : isWrong
+                              ? "bg-destructive text-destructive-foreground"
+                              : isSelected
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-secondary text-foreground"
+                          }`}
+                        >
+                          {showCorrect ? (
+                            <Check className="w-5 h-5" />
+                          ) : isWrong ? (
+                            <X className="w-5 h-5" />
+                          ) : (
+                            letter
+                          )}
                         </span>
-                        <span className="flex-1">{option}</span>
-                        {showResult && index === question.correct_answer && (
-                          <Check className="w-5 h-5 text-accent shrink-0" />
-                        )}
-                        {showResult && index === selectedAnswer && index !== question.correct_answer && (
-                          <X className="w-5 h-5 text-destructive shrink-0" />
-                        )}
+                        <span className="relative z-10 flex-1 text-base">{option}</span>
                       </motion.button>
                     );
                   })}
@@ -381,47 +541,84 @@ export default function Practice() {
                 <AnimatePresence>
                   {showResult && (
                     <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
+                      initial={{ opacity: 0, height: 0, y: 10 }}
+                      animate={{ opacity: 1, height: "auto", y: 0 }}
                       exit={{ opacity: 0, height: 0 }}
                       className="overflow-hidden"
                     >
-                      <div className={`rounded-xl p-5 ${isCorrect ? "bg-accent/10 border border-accent/30" : "bg-destructive/10 border border-destructive/30"}`}>
-                        <div className="flex items-center gap-2 mb-2">
-                          {isCorrect ? (
-                            <Check className="w-5 h-5 text-accent" />
-                          ) : (
-                            <X className="w-5 h-5 text-destructive" />
-                          )}
-                          <span className={`font-semibold ${isCorrect ? "text-accent" : "text-destructive"}`}>
+                      <div
+                        className={`rounded-xl p-5 border ${
+                          isCorrect
+                            ? "bg-accent/5 border-accent/30"
+                            : "bg-destructive/5 border-destructive/30"
+                        }`}
+                      >
+                        <motion.div
+                          initial={{ scale: 0.8 }}
+                          animate={{ scale: 1 }}
+                          className="flex items-center gap-3 mb-3"
+                        >
+                          <div
+                            className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                              isCorrect ? "bg-accent/20" : "bg-destructive/20"
+                            }`}
+                          >
+                            {isCorrect ? (
+                              <Check className="w-5 h-5 text-accent" />
+                            ) : (
+                              <X className="w-5 h-5 text-destructive" />
+                            )}
+                          </div>
+                          <span
+                            className={`text-xl font-bold ${
+                              isCorrect ? "text-accent" : "text-destructive"
+                            }`}
+                          >
                             {isCorrect ? "Correct!" : "Incorrect"}
                           </span>
-                        </div>
-                        <p className="text-muted-foreground">{question.explanation || "No explanation available."}</p>
+                        </motion.div>
+                        <p className="text-muted-foreground leading-relaxed">
+                          {question.explanation || "Keep practicing to master this topic!"}
+                        </p>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
 
                 {/* Actions */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 pt-2">
                   {!showResult ? (
                     <Button
                       variant="neon"
                       size="lg"
-                      className="flex-1"
+                      className="flex-1 h-14 text-lg"
                       onClick={handleSubmit}
                       disabled={selectedAnswer === null}
                     >
                       Submit Answer
                     </Button>
                   ) : (
-                    <Button variant="neon" size="lg" className="flex-1" onClick={handleNext}>
-                      {currentQ < totalQuestions - 1 ? "Next Question" : "See Results"}
-                      <ChevronRight className="w-5 h-5" />
-                    </Button>
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="flex-1"
+                    >
+                      <Button
+                        variant="neon"
+                        size="lg"
+                        className="w-full h-14 text-lg"
+                        onClick={handleNext}
+                      >
+                        {currentQ < totalQuestions - 1 ? "Next Question" : "See Results"}
+                        <ChevronRight className="w-5 h-5 ml-1" />
+                      </Button>
+                    </motion.div>
                   )}
-                  <Button variant="ghost" size="icon" className="shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 h-14 w-14 hover:bg-destructive/10 hover:text-destructive"
+                  >
                     <Flag className="w-5 h-5" />
                   </Button>
                 </div>
@@ -432,58 +629,180 @@ export default function Practice() {
             {step === "result" && (
               <motion.div
                 key="result"
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="text-center space-y-8"
+                transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                className="space-y-6"
               >
-                <div className="glass rounded-3xl p-10">
-                  <div className="text-6xl mb-4">
-                    {score >= totalQuestions * 0.8 ? "🔥" : score >= totalQuestions * 0.5 ? "👍" : "💪"}
-                  </div>
-                  <h1 className="font-display text-4xl font-bold mb-2">
-                    {score}/{totalQuestions}
-                  </h1>
-                  <p className="text-muted-foreground mb-6">
+                {/* Main Score Card */}
+                <div
+                  className="relative glass rounded-3xl p-8 sm:p-10 text-center overflow-hidden"
+                  style={{ boxShadow: "0 0 60px hsl(var(--neon-cyan) / 0.15)" }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-40 bg-primary/20 rounded-full blur-3xl" />
+
+                  {/* Emoji & Badge */}
+                  <motion.div
+                    initial={{ scale: 0, rotate: -20 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ delay: 0.2, type: "spring" }}
+                    className="relative text-7xl sm:text-8xl mb-4"
+                  >
                     {score >= totalQuestions * 0.8
-                      ? "MCQ Boss! You crushed it!"
+                      ? "🔥"
                       : score >= totalQuestions * 0.5
-                      ? "Good job! Keep practicing!"
-                      : "Keep going! Practice makes perfect!"}
-                  </p>
+                      ? "⚡"
+                      : "💪"}
+                  </motion.div>
 
-                  <div className="flex items-center justify-center gap-8 mb-8">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-accent">
-                        {answers.filter((a, i) => questions[i]?.source === "verified" && a === questions[i]?.correct_answer).length}
-                      </div>
-                      <div className="text-xs text-muted-foreground">Verified ✓</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-primary">
-                        {answers.filter((a, i) => questions[i]?.source === "ai" && a === questions[i]?.correct_answer).length}
-                      </div>
-                      <div className="text-xs text-muted-foreground">AI-gen 🤖</div>
-                    </div>
-                  </div>
+                  {accuracy >= 80 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 text-accent text-sm font-semibold mb-4"
+                    >
+                      <Trophy className="w-4 h-4" />
+                      MCQ Boss!
+                    </motion.div>
+                  )}
 
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                    <Button variant="neon" size="lg" onClick={handleRestart}>
-                      Practice Again
-                    </Button>
-                    <Button variant="neon-outline" size="lg" asChild>
-                      <Link to="/">Back to Home</Link>
-                    </Button>
-                  </div>
+                  {/* Score */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <div className="relative inline-block">
+                      <h1 className="font-display text-6xl sm:text-7xl font-bold neon-text">
+                        {score}/{totalQuestions}
+                      </h1>
+                    </div>
+                    <p className="text-2xl font-semibold mt-2">
+                      <span className={accuracy >= 70 ? "text-accent" : "text-primary"}>
+                        {accuracy}%
+                      </span>{" "}
+                      <span className="text-muted-foreground">Accuracy</span>
+                    </p>
+                  </motion.div>
+
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                    className="text-muted-foreground mt-4 text-lg"
+                  >
+                    {score >= totalQuestions * 0.8
+                      ? "You're on fire! Absolutely crushed it! 🎯"
+                      : score >= totalQuestions * 0.5
+                      ? "Good job! Keep pushing, you're getting there!"
+                      : "Keep going! Every attempt makes you stronger! 💪"}
+                  </motion.p>
+
+                  {/* Stats Grid */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                    className="grid grid-cols-3 gap-4 mt-8 relative"
+                  >
+                    <div className="glass rounded-xl p-4">
+                      <div className="flex items-center justify-center gap-2 mb-1">
+                        <Check className="w-4 h-4 text-accent" />
+                        <span className="text-2xl font-bold text-accent">{score}</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">Correct</div>
+                    </div>
+                    <div className="glass rounded-xl p-4">
+                      <div className="flex items-center justify-center gap-2 mb-1">
+                        <X className="w-4 h-4 text-destructive" />
+                        <span className="text-2xl font-bold text-destructive">
+                          {totalQuestions - score}
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">Incorrect</div>
+                    </div>
+                    <div className="glass rounded-xl p-4">
+                      <div className="flex items-center justify-center gap-2 mb-1">
+                        <Sparkles className="w-4 h-4 text-primary" />
+                        <span className="text-2xl font-bold text-primary">
+                          {questions.filter((q) => q.source === "ai").length}
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">AI-gen</div>
+                    </div>
+                  </motion.div>
                 </div>
 
-                <div className="glass rounded-xl p-4 text-left">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    💡 Sign in to save your progress and track streaks!
-                  </p>
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link to="/login">Sign In →</Link>
+                {/* Action Buttons */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                  className="grid sm:grid-cols-2 gap-3"
+                >
+                  <Button
+                    variant="neon"
+                    size="lg"
+                    onClick={handleRetryChapter}
+                    className="h-14"
+                  >
+                    <RotateCcw className="w-5 h-5 mr-2" />
+                    Try Again
                   </Button>
-                </div>
+                  <Button
+                    variant="neon-outline"
+                    size="lg"
+                    onClick={handleRestart}
+                    className="h-14"
+                  >
+                    <BookOpen className="w-5 h-5 mr-2" />
+                    New Chapter
+                  </Button>
+                </motion.div>
+
+                {/* Secondary Actions */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 }}
+                  className="flex flex-wrap justify-center gap-3"
+                >
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <Users className="w-4 h-4" />
+                    Challenge Friend
+                  </Button>
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <Share2 className="w-4 h-4" />
+                    Share Score
+                  </Button>
+                </motion.div>
+
+                {/* Sign In CTA */}
+                {!user && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.8 }}
+                    className="glass rounded-xl p-5 flex items-center justify-between gap-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                        <Flame className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Save your progress!</p>
+                        <p className="text-sm text-muted-foreground">
+                          Sign in to track streaks & compete
+                        </p>
+                      </div>
+                    </div>
+                    <Button variant="neon" size="sm" asChild>
+                      <Link to="/login">Sign In</Link>
+                    </Button>
+                  </motion.div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

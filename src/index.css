@@ -123,7 +123,33 @@
     50% { transform: translateY(-10px); }
   }
 
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(var(--primary) / 0.1) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
   .text-balance {
     text-wrap: balance;
+  }
+
+  .neon-glow-green {
+    box-shadow: 0 0 20px hsl(var(--neon-green) / 0.4),
+                0 0 40px hsl(var(--neon-green) / 0.2);
+  }
+
+  .neon-glow-pink {
+    box-shadow: 0 0 20px hsl(var(--neon-pink) / 0.4),
+                0 0 40px hsl(var(--neon-pink) / 0.2);
   }
 }
