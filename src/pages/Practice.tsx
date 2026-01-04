@@ -82,10 +82,12 @@ export default function Practice() {
     setStep("chapter");
   };
 
+  const [isGenerating, setIsGenerating] = useState(false);
+
   const handleChapterSelect = async (chapter: Chapter) => {
     setSelectedChapter(chapter);
     
-    // Fetch questions for this chapter
+    // Fetch verified questions for this chapter
     const { data, error } = await supabase
       .from("questions")
       .select("*")
@@ -98,18 +100,50 @@ export default function Practice() {
       return;
     }
 
-    if (data && data.length > 0) {
+    let allQuestions: Question[] = data ? [...data] as Question[] : [];
+    const targetCount = 10;
+    
+    // If we don't have enough questions, generate AI ones
+    if (allQuestions.length < targetCount) {
+      setIsGenerating(true);
+      try {
+        const neededCount = targetCount - allQuestions.length;
+        const { data: aiData, error: aiError } = await supabase.functions.invoke('generate-mcqs', {
+          body: {
+            chapterName: chapter.name,
+            subjectName: selectedSubject?.name,
+            count: neededCount
+          }
+        });
+
+        if (aiError) {
+          console.error("Error generating AI questions:", aiError);
+        } else if (aiData?.questions) {
+          // Add temporary IDs to AI questions
+          const aiQuestions = aiData.questions.map((q: any, i: number) => ({
+            ...q,
+            id: `ai-${Date.now()}-${i}`,
+          }));
+          allQuestions = [...allQuestions, ...aiQuestions];
+        }
+      } catch (err) {
+        console.error("Failed to generate AI questions:", err);
+      } finally {
+        setIsGenerating(false);
+      }
+    }
+
+    if (allQuestions.length > 0) {
       // Shuffle questions
-      const shuffled = [...data].sort(() => Math.random() - 0.5);
-      setQuestions(shuffled as Question[]);
+      const shuffled = allQuestions.sort(() => Math.random() - 0.5);
+      setQuestions(shuffled);
       setStep("practice");
       setCurrentQ(0);
       setAnswers([]);
       setSelectedAnswer(null);
       setShowResult(false);
     } else {
-      // No questions yet - show a message or use placeholder
-      alert("No questions available for this chapter yet. Check back soon!");
+      alert("Unable to load questions. Please try again.");
     }
   };
 
@@ -248,9 +282,12 @@ export default function Practice() {
                   <p className="text-muted-foreground">Select a chapter to practice</p>
                 </div>
 
-                {loadingChapters ? (
-                  <div className="flex items-center justify-center py-12">
+                {loadingChapters || isGenerating ? (
+                  <div className="flex flex-col items-center justify-center py-12 gap-3">
                     <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    {isGenerating && (
+                      <p className="text-sm text-muted-foreground">Generating questions with AI...</p>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-3">
