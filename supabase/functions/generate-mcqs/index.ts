@@ -38,28 +38,39 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are an expert CBSE Class 12 teacher. Generate high-quality multiple choice questions for students preparing for board exams. Questions should be clear, accurate, and test conceptual understanding.`
+            content: `You are an expert CBSE Class 12 teacher with 20+ years of experience. You MUST generate 100% factually accurate MCQs based on NCERT textbooks. 
+
+CRITICAL RULES:
+- Double-check every answer before responding
+- The correct_answer field MUST match the actually correct option
+- Use only verified facts from NCERT Class 12 curriculum
+- If unsure about any fact, use simpler well-known concepts
+- Explanations must clearly justify why the answer is correct`
           },
           {
             role: 'user',
             content: `Generate exactly ${count} MCQ questions for CBSE Class 12 ${subjectName}, chapter: "${chapterName}".
 
-For each question provide:
-1. The question text
-2. Four options (A, B, C, D)
-3. The correct answer (as a number: 1 for A, 2 for B, 3 for C, 4 for D)
-4. A brief explanation of why the answer is correct
+IMPORTANT: Verify each answer is 100% correct before including it. Use only NCERT-verified facts.
 
-Return ONLY a valid JSON array with this exact structure, no other text:
+For each question:
+1. Question text (clear, unambiguous)
+2. Four distinct options (A, B, C, D) - only ONE should be correct
+3. The correct answer number (1=A, 2=B, 3=C, 4=D)
+4. Explanation proving why the answer is correct
+
+VERIFY: Before outputting, mentally solve each question to confirm the correct_answer matches the right option.
+
+Return ONLY a valid JSON array:
 [
   {
     "text": "Question text here?",
-    "option_a": "Option A text",
-    "option_b": "Option B text", 
-    "option_c": "Option C text",
-    "option_d": "Option D text",
+    "option_a": "Option A",
+    "option_b": "Option B", 
+    "option_c": "Option C",
+    "option_d": "Option D",
     "correct_answer": 1,
-    "explanation": "Brief explanation here"
+    "explanation": "Clear explanation proving this is correct"
   }
 ]`
           }
