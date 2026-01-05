@@ -23,7 +23,7 @@ export default function Landing() {
       <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/30">
         <div className="container flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2">
-            <img src={mcqxLogo} alt="MCQX" className="h-8 w-auto" />
+            <img src={mcqxLogo} alt="MCQX" className="h-10 w-auto" />
           </Link>
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" asChild>
