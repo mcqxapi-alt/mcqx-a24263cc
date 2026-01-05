@@ -16,12 +16,22 @@ import {
   RotateCcw,
   Users,
   BookOpen,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 
 type Subject = {
   id: string;
@@ -60,6 +70,10 @@ export default function Practice() {
   const [showResult, setShowResult] = useState(false);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [isReporting, setIsReporting] = useState(false);
+  const { toast } = useToast();
 
   // Fetch subjects
   const { data: subjects = [], isLoading: loadingSubjects } = useQuery({
@@ -217,6 +231,37 @@ export default function Practice() {
       setStep("chapter");
       setSelectedChapter(null);
       setQuestions([]);
+    }
+  };
+
+  const handleReportQuestion = async () => {
+    if (!question || !reportReason.trim()) return;
+    
+    setIsReporting(true);
+    try {
+      const { error } = await supabase.from("reports").insert({
+        question_id: question.id,
+        user_id: user?.id || null,
+        reason: reportReason.trim(),
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Report submitted",
+        description: "Thanks for helping us improve! We'll review this question.",
+      });
+      setReportDialogOpen(false);
+      setReportReason("");
+    } catch (err) {
+      console.error("Error submitting report:", err);
+      toast({
+        title: "Failed to submit report",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsReporting(false);
     }
   };
 
@@ -618,9 +663,56 @@ export default function Practice() {
                     variant="ghost"
                     size="icon"
                     className="shrink-0 h-14 w-14 hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => setReportDialogOpen(true)}
+                    title="Report wrong answer"
                   >
                     <Flag className="w-5 h-5" />
                   </Button>
+
+                  {/* Report Dialog */}
+                  <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+                    <DialogContent className="glass border-border/50">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                          <AlertTriangle className="w-5 h-5 text-destructive" />
+                          Report Wrong Answer
+                        </DialogTitle>
+                        <DialogDescription>
+                          Help us improve by reporting inaccurate or incorrect questions.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 pt-2">
+                        <Textarea
+                          placeholder="Describe what's wrong with this question (e.g., incorrect answer, wrong explanation, unclear options...)"
+                          value={reportReason}
+                          onChange={(e) => setReportReason(e.target.value)}
+                          className="min-h-[100px] bg-secondary/50"
+                        />
+                        <div className="flex gap-3 justify-end">
+                          <Button
+                            variant="ghost"
+                            onClick={() => setReportDialogOpen(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={handleReportQuestion}
+                            disabled={!reportReason.trim() || isReporting}
+                          >
+                            {isReporting ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Submitting...
+                              </>
+                            ) : (
+                              "Submit Report"
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </motion.div>
             )}
