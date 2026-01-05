@@ -290,7 +290,7 @@ export default function Practice() {
               </motion.button>
             )}
             <Link to="/" className="flex items-center gap-2">
-              <img src={mcqxLogo} alt="MCQX" className="h-10 w-auto" />
+              <img src={mcqxLogo} alt="MCQX" className="h-14 w-auto" />
             </Link>
           </div>
 
