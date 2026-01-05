@@ -6,7 +6,6 @@ import {
   Check,
   X,
   Sparkles,
-  Zap,
   Flag,
   Loader2,
   Share2,
@@ -32,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import mcqxLogo from "@/assets/mcqx-logo.jpg";
 
 type Subject = {
   id: string;
@@ -290,10 +290,7 @@ export default function Practice() {
               </motion.button>
             )}
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center neon-glow">
-                <Zap className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <span className="font-display font-bold text-xl hidden sm:block">MCQX</span>
+              <img src={mcqxLogo} alt="MCQX" className="h-8 w-auto" />
             </Link>
           </div>
 
