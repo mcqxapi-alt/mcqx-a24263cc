@@ -104,11 +104,23 @@ export default function Practice() {
     enabled: !!selectedSubject,
   });
 
+  const getCorrectIndex = (q?: Question | null) => {
+    const raw = Number(q?.correct_answer);
+    if (!Number.isFinite(raw)) return 0;
+
+    // In our DB/AI generation, correct_answer is typically 1..4 (1=A, 2=B, 3=C, 4=D)
+    // but the UI uses 0..3 indexes.
+    if (raw >= 1 && raw <= 4) return raw - 1;
+    if (raw >= 0 && raw <= 3) return raw;
+    return 0;
+  };
+
   const question = questions[currentQ];
-  const isCorrect = selectedAnswer === question?.correct_answer;
-  const score = answers.filter((a, i) => a === questions[i]?.correct_answer).length;
+  const correctIndex = question ? getCorrectIndex(question) : 0;
+  const isCorrect = selectedAnswer !== null && selectedAnswer === correctIndex;
+  const score = answers.filter((a, i) => a !== null && a === getCorrectIndex(questions[i])).length;
   const totalQuestions = questions.length;
-  const accuracy = totalQuestions > 0 ? Math.round((score / answers.length) * 100) : 0;
+  const accuracy = answers.length > 0 ? Math.round((score / answers.length) * 100) : 0;
 
   const handleSubjectSelect = (subject: Subject) => {
     setSelectedSubject(subject);
@@ -514,7 +526,7 @@ export default function Practice() {
                   {getOptions(question).map((option, index) => {
                     const letter = String.fromCharCode(65 + index);
                     const isSelected = selectedAnswer === index;
-                    const isCorrectAnswer = index === question.correct_answer;
+                    const isCorrectAnswer = index === correctIndex;
                     const isWrong = showResult && isSelected && !isCorrectAnswer;
                     const showCorrect = showResult && isCorrectAnswer;
 
