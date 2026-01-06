@@ -284,11 +284,11 @@ export default function Practice() {
   return (
     <div className="min-h-screen bg-background">
       {/* Animated gradient background */}
-      <div className="fixed inset-0 gradient-mesh opacity-60" />
+      <div className="fixed inset-0 gradient-mesh-animated opacity-60" />
       <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/50 to-background" />
 
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/30">
+      <header className="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border/30">
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-4">
             {(step === "chapter" || step === "practice") && (
@@ -296,12 +296,12 @@ export default function Practice() {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 onClick={goBack}
-                className="p-2 hover:bg-secondary rounded-lg transition-colors"
+                className="p-2 hover:bg-secondary rounded-lg transition-all duration-300 hover:scale-105 active:scale-95"
               >
                 <ArrowLeft className="w-5 h-5" />
               </motion.button>
             )}
-            <Link to="/" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2 transition-transform duration-300 hover:scale-105">
               <img src={mcqxLogo} alt="MCQX" className="h-14 w-auto" />
             </Link>
           </div>
@@ -311,6 +311,7 @@ export default function Practice() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               className="flex items-center gap-4"
             >
               <div className="hidden sm:block text-center">
@@ -325,16 +326,21 @@ export default function Practice() {
                   <span className="text-muted-foreground">/{totalQuestions}</span>
                 </div>
                 <div className="h-4 w-px bg-border" />
-                <div className="flex items-center gap-1">
+                <motion.div 
+                  key={score}
+                  initial={{ scale: 1.2 }}
+                  animate={{ scale: 1 }}
+                  className="flex items-center gap-1"
+                >
                   <Target className="w-4 h-4 text-accent" />
                   <span className="font-bold neon-text-green">{score}</span>
-                </div>
+                </motion.div>
               </div>
             </motion.div>
           )}
 
           {user && (
-            <Button variant="ghost" size="sm" asChild className="hidden sm:flex">
+            <Button variant="ghost" size="sm" asChild className="hidden sm:flex transition-all duration-300 hover:bg-secondary">
               <Link to="/dashboard">Dashboard</Link>
             </Button>
           )}
@@ -361,7 +367,7 @@ export default function Practice() {
                     transition={{ delay: 0.1, type: "spring" }}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-4"
                   >
-                    <Sparkles className="w-4 h-4 text-primary" />
+                    <Sparkles className="w-4 h-4 text-primary animate-pulse" />
                     <span className="text-sm">CBSE Class 12</span>
                   </motion.div>
                   <h1 className="font-display text-4xl font-bold mb-2">Pick a Subject</h1>
@@ -383,16 +389,16 @@ export default function Practice() {
                         key={subject.id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        whileHover={{ scale: 1.03, y: -2 }}
+                        transition={{ delay: index * 0.05, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                        whileHover={{ scale: 1.03, y: -4 }}
                         whileTap={{ scale: 0.97 }}
                         onClick={() => handleSubjectSelect(subject)}
-                        className="relative glass rounded-2xl p-6 text-left transition-all hover:border-primary/50 group overflow-hidden"
+                        className="relative glass rounded-2xl p-6 text-left transition-all duration-300 hover:border-primary/50 group overflow-hidden"
                       >
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="absolute -top-10 -right-10 w-20 h-20 bg-primary/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <span className="text-4xl mb-3 block relative">{subject.icon}</span>
-                        <h3 className="font-display text-base font-semibold group-hover:text-primary transition-colors relative">
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        <div className="absolute -top-10 -right-10 w-20 h-20 bg-primary/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        <span className="text-4xl mb-3 block relative transition-transform duration-300 group-hover:scale-110">{subject.icon}</span>
+                        <h3 className="font-display text-base font-semibold group-hover:text-primary transition-colors duration-300 relative">
                           {subject.name}
                         </h3>
                       </motion.button>
@@ -414,8 +420,9 @@ export default function Practice() {
               >
                 <div className="text-center mb-8">
                   <motion.div
-                    initial={{ scale: 0.8 }}
-                    animate={{ scale: 1 }}
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                     className="text-6xl mb-4"
                   >
                     {selectedSubject.icon}
@@ -441,21 +448,21 @@ export default function Practice() {
                         key={chapter.id}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.03 }}
-                        whileHover={{ scale: 1.01, x: 4 }}
+                        transition={{ delay: index * 0.03, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                        whileHover={{ scale: 1.01, x: 6 }}
                         whileTap={{ scale: 0.99 }}
                         onClick={() => handleChapterSelect(chapter)}
-                        className="w-full glass rounded-xl p-5 text-left transition-all hover:border-primary/50 flex items-center justify-between group"
+                        className="w-full glass rounded-xl p-5 text-left transition-all duration-300 hover:border-primary/50 flex items-center justify-between group"
                       >
                         <div className="flex items-center gap-4">
-                          <span className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-sm font-semibold text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary transition-colors">
+                          <span className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-sm font-semibold text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary transition-all duration-300">
                             {index + 1}
                           </span>
-                          <span className="font-medium group-hover:text-primary transition-colors">
+                          <span className="font-medium group-hover:text-primary transition-colors duration-300">
                             {chapter.name}
                           </span>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                        <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-300" />
                       </motion.button>
                     ))}
                   </div>
@@ -477,17 +484,20 @@ export default function Practice() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>Progress</span>
-                    <span>{Math.round(progressPercent)}%</span>
+                    <motion.span
+                      key={progressPercent}
+                      initial={{ scale: 1.1 }}
+                      animate={{ scale: 1 }}
+                    >
+                      {Math.round(progressPercent)}%
+                    </motion.span>
                   </div>
-                  <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                  <div className="h-2.5 bg-secondary rounded-full overflow-hidden">
                     <motion.div
-                      className="h-full bg-gradient-to-r from-primary to-accent rounded-full"
+                      className="h-full bg-gradient-to-r from-primary via-accent to-primary rounded-full progress-glow"
                       initial={{ width: 0 }}
                       animate={{ width: `${progressPercent}%` }}
-                      transition={{ duration: 0.5, ease: "easeOut" }}
-                      style={{
-                        boxShadow: "0 0 10px hsl(var(--neon-cyan) / 0.5)",
-                      }}
+                      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                     />
                   </div>
                 </div>
@@ -496,12 +506,13 @@ export default function Practice() {
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="relative glass rounded-2xl p-6 overflow-hidden"
+                  transition={{ delay: 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  className="relative glass rounded-2xl p-6 overflow-hidden transition-all duration-300 hover:border-primary/30"
                   style={{
                     boxShadow: "0 0 40px hsl(var(--neon-cyan) / 0.1)",
                   }}
                 >
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary" />
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary animate-gradient" />
                   <div className="flex items-start justify-between gap-4 mb-4">
                     <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
                       <BookOpen className="w-4 h-4" />
@@ -511,9 +522,10 @@ export default function Practice() {
                       <motion.span
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
+                        transition={{ type: "spring", delay: 0.2 }}
                         className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20"
                       >
-                        <Sparkles className="w-3 h-3" />
+                        <Sparkles className="w-3 h-3 animate-pulse" />
                         AI-Generated
                       </motion.span>
                     )}
@@ -535,12 +547,12 @@ export default function Practice() {
                         key={index}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        whileHover={!showResult ? { scale: 1.01, x: 4 } : {}}
+                        transition={{ delay: 0.15 + index * 0.05, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                        whileHover={!showResult ? { scale: 1.01, x: 6 } : {}}
                         whileTap={!showResult ? { scale: 0.99 } : {}}
                         onClick={() => handleAnswerSelect(index)}
                         disabled={showResult}
-                        className={`relative w-full glass rounded-xl p-4 text-left transition-all cursor-pointer flex items-center gap-4 overflow-hidden ${
+                        className={`relative w-full glass rounded-xl p-4 text-left transition-all duration-300 cursor-pointer flex items-center gap-4 overflow-hidden ${
                           showCorrect
                             ? "border-accent bg-accent/10"
                             : isWrong
@@ -551,23 +563,26 @@ export default function Practice() {
                         }`}
                         style={
                           showCorrect
-                            ? { boxShadow: "0 0 20px hsl(var(--neon-green) / 0.3)" }
+                            ? { boxShadow: "0 0 25px hsl(var(--neon-green) / 0.4)" }
                             : isWrong
-                            ? { boxShadow: "0 0 20px hsl(0 84% 60% / 0.3)" }
+                            ? { boxShadow: "0 0 25px hsl(0 84% 60% / 0.4)" }
                             : isSelected
-                            ? { boxShadow: "0 0 20px hsl(var(--neon-cyan) / 0.2)" }
+                            ? { boxShadow: "0 0 25px hsl(var(--neon-cyan) / 0.3)" }
                             : {}
                         }
                       >
                         {showCorrect && (
                           <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            className="absolute inset-0 bg-gradient-to-r from-accent/20 to-transparent"
+                            initial={{ scaleX: 0 }}
+                            animate={{ scaleX: 1 }}
+                            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                            className="absolute inset-0 bg-gradient-to-r from-accent/20 to-transparent origin-left"
                           />
                         )}
-                        <span
-                          className={`relative z-10 w-10 h-10 rounded-lg flex items-center justify-center font-bold shrink-0 transition-colors ${
+                        <motion.span
+                          animate={showCorrect ? { scale: [1, 1.1, 1] } : {}}
+                          transition={{ duration: 0.3 }}
+                          className={`relative z-10 w-10 h-10 rounded-lg flex items-center justify-center font-bold shrink-0 transition-all duration-300 ${
                             showCorrect
                               ? "bg-accent text-accent-foreground"
                               : isWrong
@@ -584,7 +599,7 @@ export default function Practice() {
                           ) : (
                             letter
                           )}
-                        </span>
+                        </motion.span>
                         <span className="relative z-10 flex-1 text-base">{option}</span>
                       </motion.button>
                     );

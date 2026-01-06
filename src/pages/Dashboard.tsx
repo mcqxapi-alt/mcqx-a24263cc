@@ -136,11 +136,11 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen gradient-mesh">
+    <div className="min-h-screen gradient-mesh-animated">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/30">
+      <header className="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border/30">
         <div className="container flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2 transition-transform duration-300 hover:scale-105">
             <img src={mcqxLogo} alt="MCQX" className="h-14 w-auto" />
           </Link>
 
@@ -153,6 +153,7 @@ export default function Dashboard() {
               size="icon"
               onClick={handleSignOut}
               disabled={signingOut}
+              className="hover:bg-destructive/10 hover:text-destructive transition-colors duration-300"
             >
               {signingOut ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -170,6 +171,7 @@ export default function Dashboard() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className="mb-8"
           >
             <h1 className="font-display text-3xl font-bold mb-2">
@@ -182,57 +184,41 @@ export default function Dashboard() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
           >
-            <div className="glass rounded-2xl p-5">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
-                  <Flame className="w-5 h-5 text-accent" />
+            {[
+              { icon: Flame, value: profile?.streak_days || 0, label: "Day Streak", color: "accent", glow: true },
+              { icon: BookOpen, value: profile?.total_attempts || 0, label: "MCQs Cracked", color: "primary", glow: false },
+              { icon: Target, value: `${accuracy}%`, label: "Accuracy", color: "accent", glow: false },
+              { icon: Trophy, value: profile?.total_correct || 0, label: "Correct", color: "primary", glow: false },
+            ].map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 + i * 0.05, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                whileHover={{ y: -3, scale: 1.02 }}
+                className="glass rounded-2xl p-5 transition-all duration-300 hover:border-primary/40"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-10 h-10 rounded-xl bg-${stat.color}/20 flex items-center justify-center`}>
+                    <stat.icon className={`w-5 h-5 text-${stat.color}`} />
+                  </div>
                 </div>
-              </div>
-              <div className="text-3xl font-bold neon-text-green">{profile?.streak_days || 0}</div>
-              <div className="text-sm text-muted-foreground">Day Streak</div>
-            </div>
-
-            <div className="glass rounded-2xl p-5">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-primary" />
-                </div>
-              </div>
-              <div className="text-3xl font-bold">{profile?.total_attempts || 0}</div>
-              <div className="text-sm text-muted-foreground">MCQs Cracked</div>
-            </div>
-
-            <div className="glass rounded-2xl p-5">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
-                  <Target className="w-5 h-5 text-accent" />
-                </div>
-              </div>
-              <div className="text-3xl font-bold">{accuracy}%</div>
-              <div className="text-sm text-muted-foreground">Accuracy</div>
-            </div>
-
-            <div className="glass rounded-2xl p-5">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                  <Trophy className="w-5 h-5 text-primary" />
-                </div>
-              </div>
-              <div className="text-3xl font-bold">{profile?.total_correct || 0}</div>
-              <div className="text-sm text-muted-foreground">Correct</div>
-            </div>
+                <div className={`text-3xl font-bold ${stat.glow ? 'neon-text-green' : ''}`}>{stat.value}</div>
+                <div className="text-sm text-muted-foreground">{stat.label}</div>
+              </motion.div>
+            ))}
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-6">
             {/* Recent Sessions */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="glass rounded-2xl p-6"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="glass rounded-2xl p-6 transition-all duration-300 hover:border-primary/30"
             >
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-display text-xl font-semibold flex items-center gap-2">
@@ -247,10 +233,14 @@ export default function Dashboard() {
                 </div>
               ) : sessions.length > 0 ? (
                 <div className="space-y-3">
-                  {sessions.map((session) => (
-                    <div
+                  {sessions.map((session, i) => (
+                    <motion.div
                       key={session.id}
-                      className="flex items-center justify-between p-3 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.4 + i * 0.05, duration: 0.3 }}
+                      whileHover={{ x: 4, scale: 1.01 }}
+                      className="flex items-center justify-between p-3 rounded-xl bg-secondary/50 hover:bg-secondary transition-all duration-300 cursor-pointer"
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">
@@ -273,7 +263,7 @@ export default function Dashboard() {
                           {Math.round((session.score / session.total_questions) * 100)}%
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               ) : (
@@ -289,10 +279,10 @@ export default function Dashboard() {
 
             {/* Bookmarks */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="glass rounded-2xl p-6"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.35, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="glass rounded-2xl p-6 transition-all duration-300 hover:border-primary/30"
             >
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-display text-xl font-semibold flex items-center gap-2">
@@ -307,10 +297,14 @@ export default function Dashboard() {
                 </div>
               ) : bookmarks.length > 0 ? (
                 <div className="space-y-3">
-                  {bookmarks.map((bookmark) => (
-                    <div
+                  {bookmarks.map((bookmark, i) => (
+                    <motion.div
                       key={bookmark.id}
-                      className="p-3 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors"
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.45 + i * 0.05, duration: 0.3 }}
+                      whileHover={{ x: 4, scale: 1.01 }}
+                      className="p-3 rounded-xl bg-secondary/50 hover:bg-secondary transition-all duration-300 cursor-pointer"
                     >
                       <p className="text-sm line-clamp-2">
                         {bookmark.questions?.text || "Question unavailable"}
@@ -318,7 +312,7 @@ export default function Dashboard() {
                       <div className="text-xs text-muted-foreground mt-1">
                         {formatDate(bookmark.created_at)}
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               ) : (
@@ -337,13 +331,13 @@ export default function Dashboard() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.5, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className="mt-8 text-center"
           >
-            <Button variant="neon" size="lg" asChild>
+            <Button variant="neon" size="lg" asChild className="group">
               <Link to="/practice" className="inline-flex items-center gap-2">
                 Start New Practice
-                <ChevronRight className="w-5 h-5" />
+                <ChevronRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
             </Button>
           </motion.div>
