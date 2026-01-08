@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { BookOpen, Trophy, ChevronRight, Sparkles, Zap, Swords } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import mcqxLogo from "@/assets/mcqx-logo.jpg";
 
 const stats = [
@@ -17,6 +18,17 @@ const steps = [
 ];
 
 export default function Landing() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleChallengeClick = () => {
+    if (user) {
+      navigate("/challenge");
+    } else {
+      navigate("/login", { state: { from: "/challenge" } });
+    }
+  };
+
   return (
     <div className="min-h-screen gradient-mesh-animated">
       {/* Navbar */}
@@ -88,11 +100,9 @@ export default function Landing() {
                   <ChevronRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
               </Button>
-              <Button variant="neon-outline" size="xl" asChild className="group">
-                <Link to="/challenge">
-                  <Swords className="w-5 h-5 mr-2" />
-                  Challenge a Friend
-                </Link>
+              <Button variant="neon-outline" size="xl" className="group" onClick={handleChallengeClick}>
+                <Swords className="w-5 h-5 mr-2" />
+                Challenge a Friend
               </Button>
             </motion.div>
           </motion.div>
