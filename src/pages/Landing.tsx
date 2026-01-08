@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { BookOpen, Trophy, ChevronRight, Sparkles, Zap } from "lucide-react";
+import { BookOpen, Trophy, ChevronRight, Sparkles, Zap, Swords } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import mcqxLogo from "@/assets/mcqx-logo.jpg";
@@ -88,8 +88,11 @@ export default function Landing() {
                   <ChevronRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
               </Button>
-              <Button variant="neon-outline" size="xl" asChild>
-                <Link to="/login">Sign In for Streaks</Link>
+              <Button variant="neon-outline" size="xl" asChild className="group">
+                <Link to="/challenge">
+                  <Swords className="w-5 h-5 mr-2" />
+                  Challenge a Friend
+                </Link>
               </Button>
             </motion.div>
           </motion.div>
