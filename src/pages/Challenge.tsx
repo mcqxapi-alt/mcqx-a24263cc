@@ -377,25 +377,40 @@ export default function Challenge() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center gradient-mesh-animated">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="relative">
+          <div className="absolute inset-0 blur-2xl bg-primary/30 animate-pulse-ring" />
+          <Loader2 className="w-10 h-10 animate-spin text-primary relative" />
+        </div>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen gradient-mesh-animated flex items-center justify-center p-4">
+      <div className="min-h-screen gradient-mesh-animated flex items-center justify-center p-4 overflow-hidden">
+        {/* Floating orbs */}
+        <div className="orb orb-cyan w-96 h-96 -top-48 -left-48" style={{ animationDelay: '0s' }} />
+        <div className="orb orb-green w-80 h-80 -bottom-40 -right-40" style={{ animationDelay: '5s' }} />
+        <div className="orb orb-purple w-64 h-64 top-1/2 left-1/4" style={{ animationDelay: '10s' }} />
+        
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="glass rounded-3xl p-8 max-w-md text-center"
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          className="glass-card rounded-3xl p-10 max-w-md text-center relative"
         >
-          <Swords className="w-16 h-16 mx-auto mb-6 text-primary" />
-          <h1 className="font-display text-3xl font-bold mb-4">Challenge Mode</h1>
-          <p className="text-muted-foreground mb-8">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+          >
+            <Swords className="w-20 h-20 mx-auto mb-6 text-primary" />
+          </motion.div>
+          <h1 className="font-display text-4xl font-bold mb-4">Challenge Mode</h1>
+          <p className="text-muted-foreground mb-8 text-lg">
             Sign in to create and join 1v1 quiz battles with your friends!
           </p>
-          <Button variant="neon" size="lg" asChild>
+          <Button variant="neon" size="lg" asChild className="w-full">
             <Link to="/login">Sign In to Battle</Link>
           </Button>
         </motion.div>
@@ -404,9 +419,15 @@ export default function Challenge() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="fixed inset-0 gradient-mesh-animated opacity-60" />
-      <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/50 to-background" />
+    <div className="min-h-screen bg-background overflow-hidden">
+      {/* Enhanced animated background */}
+      <div className="fixed inset-0 gradient-mesh-animated" />
+      <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/60 to-background" />
+      
+      {/* Floating orbs */}
+      <div className="orb orb-cyan w-[500px] h-[500px] -top-64 -left-64 opacity-60" />
+      <div className="orb orb-green w-[400px] h-[400px] -bottom-48 -right-48 opacity-50" style={{ animationDelay: '7s' }} />
+      <div className="orb orb-purple w-[300px] h-[300px] top-1/3 right-1/4 opacity-40" style={{ animationDelay: '14s' }} />
 
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border/30">
@@ -461,51 +482,68 @@ export default function Challenge() {
             {step === "menu" && !challengeId && (
               <motion.div
                 key="menu"
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="space-y-8"
+                exit={{ opacity: 0, y: -30 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="space-y-10"
               >
                 <div className="text-center">
                   <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring" }}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-4"
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full glass-card mb-6"
                   >
-                    <Swords className="w-4 h-4 text-primary animate-pulse" />
-                    <span className="text-sm">1v1 Quiz Battle</span>
+                    <Swords className="w-5 h-5 text-primary" />
+                    <span className="text-sm font-medium">1v1 Quiz Battle</span>
                   </motion.div>
-                  <h1 className="font-display text-4xl font-bold mb-2">Challenge Mode</h1>
-                  <p className="text-muted-foreground">Create a challenge and battle your friends!</p>
+                  <motion.h1 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2, duration: 0.5 }}
+                    className="font-display text-5xl font-bold mb-3"
+                  >
+                    Challenge <span className="text-gradient-animated">Mode</span>
+                  </motion.h1>
+                  <motion.p 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                    className="text-muted-foreground text-lg"
+                  >
+                    Create a challenge and battle your friends!
+                  </motion.p>
                 </div>
 
-                <div className="grid gap-4">
+                <motion.div 
+                  className="grid gap-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
                   <motion.button
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 }}
-                    whileHover={{ scale: 1.02 }}
+                    whileHover={{ scale: 1.02, y: -4 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setStep("subject")}
-                    className="glass rounded-2xl p-6 text-left hover:border-primary/50 transition-all duration-300 group"
+                    className="glass-card rounded-2xl p-7 text-left group"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-xl bg-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Zap className="w-7 h-7 text-primary" />
+                    <div className="flex items-center gap-5">
+                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                        <Zap className="w-8 h-8 text-primary" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-display text-xl font-semibold mb-1 group-hover:text-primary transition-colors">
+                        <h3 className="font-display text-2xl font-semibold mb-1 group-hover:text-primary transition-colors duration-300">
                           Create Challenge
                         </h3>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-muted-foreground">
                           Pick a chapter and challenge a friend
                         </p>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                      <ChevronRight className="w-6 h-6 text-muted-foreground group-hover:text-primary group-hover:translate-x-2 transition-all duration-300" />
                     </div>
                   </motion.button>
-                </div>
+                </motion.div>
 
                 {/* Active Challenges */}
                 <ActiveChallenges userId={user.id} />
@@ -516,33 +554,52 @@ export default function Challenge() {
             {step === "subject" && (
               <motion.div
                 key="subject"
-                initial={{ opacity: 0, x: -30 }}
+                initial={{ opacity: 0, x: -40 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 30 }}
-                className="space-y-6"
+                exit={{ opacity: 0, x: 40 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="space-y-8"
               >
-                <div className="text-center mb-8">
-                  <h1 className="font-display text-4xl font-bold mb-2">Pick a Subject</h1>
-                  <p className="text-muted-foreground">Choose the battlefield</p>
+                <div className="text-center mb-10">
+                  <motion.h1 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="font-display text-5xl font-bold mb-3"
+                  >
+                    Pick a Subject
+                  </motion.h1>
+                  <motion.p 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                    className="text-muted-foreground text-lg"
+                  >
+                    Choose the battlefield
+                  </motion.p>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {subjects.map((subject, index) => (
                     <motion.button
                       key={subject.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      whileHover={{ scale: 1.03, y: -4 }}
-                      whileTap={{ scale: 0.97 }}
+                      initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ 
+                        delay: index * 0.05, 
+                        duration: 0.4, 
+                        ease: [0.16, 1, 0.3, 1] 
+                      }}
+                      whileHover={{ scale: 1.05, y: -6 }}
+                      whileTap={{ scale: 0.95 }}
                       onClick={() => {
                         setSelectedSubject(subject);
                         setStep("chapter");
                       }}
-                      className="glass rounded-2xl p-6 text-left hover:border-primary/50 transition-all duration-300 group"
+                      className="glass-card rounded-2xl p-6 text-left group relative overflow-hidden"
                     >
-                      <span className="text-4xl mb-3 block">{subject.icon}</span>
-                      <h3 className="font-display text-base font-semibold group-hover:text-primary transition-colors">
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      <span className="text-5xl mb-4 block relative group-hover:scale-110 transition-transform duration-300">{subject.icon}</span>
+                      <h3 className="font-display text-base font-semibold group-hover:text-primary transition-colors duration-300 relative">
                         {subject.name}
                       </h3>
                     </motion.button>
@@ -555,44 +612,63 @@ export default function Challenge() {
             {step === "chapter" && selectedSubject && (
               <motion.div
                 key="chapter"
-                initial={{ opacity: 0, x: -30 }}
+                initial={{ opacity: 0, x: -40 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 30 }}
-                className="space-y-6"
+                exit={{ opacity: 0, x: 40 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="space-y-8"
               >
-                <div className="text-center mb-8">
-                  <div className="text-6xl mb-4">{selectedSubject.icon}</div>
-                  <h1 className="font-display text-3xl font-bold mb-2">{selectedSubject.name}</h1>
-                  <p className="text-muted-foreground">Select a chapter to battle on</p>
+                <div className="text-center mb-10">
+                  <motion.div 
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 200 }}
+                    className="text-7xl mb-4"
+                  >
+                    {selectedSubject.icon}
+                  </motion.div>
+                  <h1 className="font-display text-4xl font-bold mb-2">{selectedSubject.name}</h1>
+                  <p className="text-muted-foreground text-lg">Select a chapter to battle on</p>
                 </div>
 
                 {isCreating ? (
-                  <div className="flex flex-col items-center justify-center py-16 gap-4">
-                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                    <p className="text-sm text-muted-foreground">Creating challenge...</p>
-                  </div>
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex flex-col items-center justify-center py-20 gap-6"
+                  >
+                    <div className="relative">
+                      <div className="absolute inset-0 blur-2xl bg-primary/40 animate-pulse-ring" />
+                      <Loader2 className="w-12 h-12 animate-spin text-primary relative" />
+                    </div>
+                    <p className="text-muted-foreground font-medium">Creating challenge...</p>
+                  </motion.div>
                 ) : (
                   <div className="space-y-3">
                     {chapters.map((chapter, index) => (
                       <motion.button
                         key={chapter.id}
-                        initial={{ opacity: 0, x: -20 }}
+                        initial={{ opacity: 0, x: -30 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.03 }}
-                        whileHover={{ scale: 1.01, x: 6 }}
-                        whileTap={{ scale: 0.99 }}
+                        transition={{ 
+                          delay: index * 0.04, 
+                          duration: 0.4,
+                          ease: [0.16, 1, 0.3, 1]
+                        }}
+                        whileHover={{ scale: 1.02, x: 8 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => handleCreateChallenge(chapter)}
-                        className="w-full glass rounded-xl p-5 text-left hover:border-primary/50 flex items-center justify-between group transition-all duration-300"
+                        className="w-full glass-card rounded-xl p-5 text-left flex items-center justify-between group"
                       >
                         <div className="flex items-center gap-4">
-                          <span className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-sm font-semibold">
+                          <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-sm font-bold text-primary group-hover:from-primary/30 group-hover:to-primary/10 transition-all duration-300">
                             {index + 1}
                           </span>
-                          <span className="font-medium group-hover:text-primary transition-colors">
+                          <span className="font-medium text-lg group-hover:text-primary transition-colors duration-300">
                             {chapter.name}
                           </span>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                        <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-2 transition-all duration-300" />
                       </motion.button>
                     ))}
                   </div>
@@ -604,43 +680,64 @@ export default function Challenge() {
             {step === "waiting" && (
               <motion.div
                 key="waiting"
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="text-center py-12"
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="text-center py-16"
               >
                 <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                  className="w-24 h-24 mx-auto mb-8 rounded-full border-4 border-dashed border-primary/50 flex items-center justify-center"
+                  className="relative w-32 h-32 mx-auto mb-10"
                 >
-                  <Users className="w-10 h-10 text-primary" />
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                    className="absolute inset-0 rounded-full border-4 border-dashed border-primary/40"
+                  />
+                  <motion.div
+                    animate={{ rotate: -360 }}
+                    transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                    className="absolute inset-2 rounded-full border-2 border-dotted border-accent/30"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Users className="w-12 h-12 text-primary animate-pulse" />
+                  </div>
                 </motion.div>
 
-                <h2 className="font-display text-3xl font-bold mb-2">Waiting for Opponent</h2>
-                <p className="text-muted-foreground mb-2">
+                <h2 className="font-display text-4xl font-bold mb-3">Waiting for Opponent</h2>
+                <p className="text-primary font-medium mb-2">
                   {chapterInfo && `${chapterInfo.subject_name} • ${chapterInfo.name}`}
                 </p>
-                <p className="text-sm text-muted-foreground mb-8">
+                <p className="text-muted-foreground mb-10">
                   Share the link below with a friend to start the battle!
                 </p>
 
-                <div className="glass rounded-xl p-4 mb-6 flex items-center gap-3 max-w-md mx-auto">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="glass-card rounded-2xl p-5 mb-8 flex items-center gap-4 max-w-lg mx-auto"
+                >
                   <input
                     readOnly
                     value={`${window.location.origin}/challenge/${challenge?.id}`}
-                    className="flex-1 bg-transparent text-sm truncate outline-none"
+                    className="flex-1 bg-transparent text-sm truncate outline-none font-mono"
                   />
-                  <Button variant="neon" size="sm" onClick={copyShareLink}>
+                  <Button variant="neon" size="sm" onClick={copyShareLink} className="shrink-0">
                     <Copy className="w-4 h-4 mr-2" />
-                    Copy
+                    Copy Link
                   </Button>
-                </div>
+                </motion.div>
 
-                <p className="text-xs text-muted-foreground flex items-center justify-center gap-2">
-                  <Clock className="w-4 h-4" />
+                <motion.p 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-sm text-muted-foreground flex items-center justify-center gap-2"
+                >
+                  <Clock className="w-4 h-4 text-primary" />
                   Challenge expires in 24 hours
-                </p>
+                </motion.p>
               </motion.div>
             )}
 
@@ -651,33 +748,35 @@ export default function Challenge() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                transition={{ duration: 0.4 }}
                 className="space-y-6"
               >
                 {/* Progress */}
-                <div className="relative h-2 rounded-full bg-secondary overflow-hidden">
+                <div className="relative h-3 rounded-full bg-secondary/50 overflow-hidden backdrop-blur-sm">
                   <motion.div
-                    className="absolute inset-y-0 left-0 bg-primary progress-glow"
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-accent progress-glow rounded-full"
                     initial={{ width: 0 }}
                     animate={{ width: `${((currentQ + 1) / questions.length) * 100}%` }}
-                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                   />
                 </div>
 
                 {/* Question */}
                 <motion.div
                   key={currentQ}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="glass rounded-2xl p-6"
+                  initial={{ opacity: 0, y: 30, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  className="glass-card rounded-3xl p-8"
                 >
-                  <div className="flex items-start gap-4 mb-6">
-                    <span className="shrink-0 w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">
+                  <div className="flex items-start gap-5 mb-8">
+                    <span className="shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center text-lg font-bold text-primary">
                       {currentQ + 1}
                     </span>
-                    <p className="text-lg leading-relaxed">{question.text}</p>
+                    <p className="text-xl leading-relaxed pt-2">{question.text}</p>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {getOptions(question).map((option, index) => {
                       const isSelected = selectedAnswer === index;
                       const isCorrectOption = index === correctIndex;
@@ -690,34 +789,37 @@ export default function Challenge() {
                       return (
                         <motion.button
                           key={index}
-                          whileHover={!showResult ? { scale: 1.01 } : {}}
-                          whileTap={!showResult ? { scale: 0.99 } : {}}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.08, duration: 0.4 }}
+                          whileHover={!showResult ? { scale: 1.02, x: 4 } : {}}
+                          whileTap={!showResult ? { scale: 0.98 } : {}}
                           onClick={() => handleAnswerSelect(index)}
                           disabled={showResult}
-                          className={`w-full p-4 rounded-xl text-left transition-all duration-300 flex items-center gap-3 ${
+                          className={`w-full p-5 rounded-2xl text-left transition-all duration-400 flex items-center gap-4 ${
                             variant === "correct"
-                              ? "bg-green-500/20 border-2 border-green-500"
+                              ? "bg-green-500/20 border-2 border-green-500 shadow-[0_0_30px_hsl(var(--neon-green)/0.3)]"
                               : variant === "wrong"
-                              ? "bg-red-500/20 border-2 border-red-500"
+                              ? "bg-red-500/20 border-2 border-red-500 shadow-[0_0_30px_hsl(0_84%_60%/0.3)]"
                               : isSelected
-                              ? "glass border-2 border-primary"
-                              : "glass hover:border-primary/50"
+                              ? "glass-card border-2 border-primary shadow-[0_0_30px_hsl(var(--primary)/0.2)]"
+                              : "glass-card"
                           }`}
                         >
-                          <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-semibold ${
+                          <span className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-300 ${
                             variant === "correct"
                               ? "bg-green-500 text-white"
                               : variant === "wrong"
                               ? "bg-red-500 text-white"
                               : isSelected
                               ? "bg-primary text-primary-foreground"
-                              : "bg-secondary"
+                              : "bg-secondary group-hover:bg-primary/20"
                           }`}>
-                            {variant === "correct" ? <Check className="w-4 h-4" /> : 
-                             variant === "wrong" ? <X className="w-4 h-4" /> : 
+                            {variant === "correct" ? <Check className="w-5 h-5" /> : 
+                             variant === "wrong" ? <X className="w-5 h-5" /> : 
                              String.fromCharCode(65 + index)}
                           </span>
-                          <span>{option}</span>
+                          <span className="text-lg">{option}</span>
                         </motion.button>
                       );
                     })}
@@ -727,25 +829,33 @@ export default function Challenge() {
                 {/* Explanation */}
                 {showResult && question.explanation && (
                   <motion.div
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="glass rounded-xl p-4"
+                    transition={{ delay: 0.2, duration: 0.4 }}
+                    className="glass-card rounded-2xl p-6"
                   >
-                    <div className="flex items-center gap-2 mb-2">
-                      <Sparkles className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-semibold">Explanation</span>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                        <Sparkles className="w-4 h-4 text-primary" />
+                      </div>
+                      <span className="font-semibold text-lg">Explanation</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">{question.explanation}</p>
+                    <p className="text-muted-foreground leading-relaxed">{question.explanation}</p>
                   </motion.div>
                 )}
 
                 {/* Actions */}
-                <div className="flex gap-3">
+                <motion.div 
+                  className="flex gap-4"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
                   {!showResult ? (
                     <Button
                       variant="neon"
                       size="lg"
-                      className="flex-1"
+                      className="flex-1 h-14 text-lg"
                       disabled={selectedAnswer === null}
                       onClick={handleSubmit}
                     >
@@ -755,14 +865,14 @@ export default function Challenge() {
                     <Button
                       variant="neon"
                       size="lg"
-                      className="flex-1"
+                      className="flex-1 h-14 text-lg group"
                       onClick={handleNext}
                     >
                       {currentQ < questions.length - 1 ? "Next Question" : "See Results"}
-                      <ChevronRight className="w-5 h-5 ml-1" />
+                      <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                     </Button>
                   )}
-                </div>
+                </motion.div>
               </motion.div>
             )}
 
