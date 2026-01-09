@@ -233,9 +233,9 @@ export default function Challenge() {
     setShowResult(false);
   };
 
-  const handleCreateChallenge = async (chapter: Chapter) => {
+const handleCreateChallenge = async (chapter: Chapter) => {
     if (!user) {
-      toast({ title: "Please sign in to create a challenge", variant: "destructive" });
+      navigate("/login", { state: { from: `/challenge` } });
       return;
     }
 
@@ -385,38 +385,6 @@ export default function Challenge() {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen gradient-mesh-animated flex items-center justify-center p-4 overflow-hidden">
-        {/* Floating orbs */}
-        <div className="orb orb-cyan w-96 h-96 -top-48 -left-48" style={{ animationDelay: '0s' }} />
-        <div className="orb orb-green w-80 h-80 -bottom-40 -right-40" style={{ animationDelay: '5s' }} />
-        <div className="orb orb-purple w-64 h-64 top-1/2 left-1/4" style={{ animationDelay: '10s' }} />
-        
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="glass-card rounded-3xl p-10 max-w-md text-center relative"
-        >
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-          >
-            <Swords className="w-20 h-20 mx-auto mb-6 text-primary" />
-          </motion.div>
-          <h1 className="font-display text-4xl font-bold mb-4">Challenge Mode</h1>
-          <p className="text-muted-foreground mb-8 text-lg">
-            Sign in to create and join 1v1 quiz battles with your friends!
-          </p>
-          <Button variant="neon" size="lg" asChild className="w-full">
-            <Link to="/login">Sign In to Battle</Link>
-          </Button>
-        </motion.div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background overflow-hidden">
@@ -431,20 +399,20 @@ export default function Challenge() {
 
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border/30">
-        <div className="container flex items-center justify-between h-16">
-          <div className="flex items-center gap-4">
+        <div className="container flex items-center justify-between h-14 sm:h-16 px-3 sm:px-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {(step === "subject" || step === "chapter") && (
               <motion.button
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 onClick={goBack}
-                className="p-2 hover:bg-secondary rounded-lg transition-all duration-300"
+                className="p-1.5 sm:p-2 hover:bg-secondary rounded-lg transition-all duration-300"
               >
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
               </motion.button>
             )}
             <Link to="/" className="flex items-center gap-2 transition-transform duration-300 hover:scale-105">
-              <img src={mcqxLogo} alt="MCQX" className="h-14 w-auto" />
+              <img src={mcqxLogo} alt="MCQX" className="h-16 sm:h-20 w-auto" />
             </Link>
           </div>
 
@@ -452,24 +420,24 @@ export default function Challenge() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-4"
+              className="flex items-center gap-2 sm:gap-4"
             >
-              <div className="flex items-center gap-3">
-                <div className="text-sm">
+              <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+                <div>
                   <span className="text-muted-foreground">Q</span>{" "}
                   <span className="font-semibold">{currentQ + 1}</span>
                   <span className="text-muted-foreground">/{questions.length}</span>
                 </div>
                 <div className="h-4 w-px bg-border" />
                 <div className="flex items-center gap-1">
-                  <Target className="w-4 h-4 text-accent" />
+                  <Target className="w-3 h-3 sm:w-4 sm:h-4 text-accent" />
                   <span className="font-bold neon-text-green">{score}</span>
                 </div>
               </div>
             </motion.div>
           )}
 
-          <Button variant="ghost" size="sm" asChild>
+          <Button variant="ghost" size="sm" asChild className="text-xs sm:text-sm px-2 sm:px-3">
             <Link to="/dashboard">Dashboard</Link>
           </Button>
         </div>
