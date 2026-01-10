@@ -4,34 +4,43 @@ import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import mcqxLogo from "@/assets/mcqx-logo.png";
-
-const stats = [
-  { value: "12,435", label: "Students" },
-  { value: "20,000+", label: "MCQs" },
-  { value: "5.2M", label: "Solved" },
-];
-
-const steps = [
-  { icon: BookOpen, title: "Pick a chapter", description: "Choose from any subject" },
-  { icon: Zap, title: "Smash MCQs", description: "Instant feedback on each" },
-  { icon: Trophy, title: "Track & flex", description: "Save streaks, challenge friends" },
-];
-
+const stats = [{
+  value: "12,435",
+  label: "Students"
+}, {
+  value: "20,000+",
+  label: "MCQs"
+}, {
+  value: "5.2M",
+  label: "Solved"
+}];
+const steps = [{
+  icon: BookOpen,
+  title: "Pick a chapter",
+  description: "Choose from any subject"
+}, {
+  icon: Zap,
+  title: "Smash MCQs",
+  description: "Instant feedback on each"
+}, {
+  icon: Trophy,
+  title: "Track & flex",
+  description: "Save streaks, challenge friends"
+}];
 export default function Landing() {
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const navigate = useNavigate();
-
-const handleChallengeClick = () => {
+  const handleChallengeClick = () => {
     navigate("/challenge");
   };
-
-  return (
-    <div className="min-h-screen gradient-mesh-animated">
+  return <div className="min-h-screen gradient-mesh-animated">
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border/30">
         <div className="container flex items-center justify-between h-14 sm:h-16 px-3 sm:px-4">
           <Link to="/" className="flex items-center gap-2 transition-transform duration-300 hover:scale-105">
-            <img src={mcqxLogo} alt="MCQX" className="h-16 sm:h-20 w-auto" />
+            <img src={mcqxLogo} alt="MCQX" className="h-16 sm:h-20 w-auto border-2 rounded-lg" />
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
             <Button variant="ghost" size="sm" asChild className="transition-all duration-300 text-xs sm:text-sm px-2 sm:px-3">
@@ -47,49 +56,75 @@ const handleChallengeClick = () => {
       {/* Hero Section */}
       <section className="pt-24 sm:pt-32 pb-12 sm:pb-20 px-4">
         <div className="container">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center max-w-3xl mx-auto"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full glass border border-primary/30 mb-6 sm:mb-8 animate-bounce-subtle"
-            >
+          <motion.div initial={{
+          opacity: 0,
+          y: 30
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} transition={{
+          duration: 0.7,
+          ease: [0.16, 1, 0.3, 1]
+        }} className="text-center max-w-3xl mx-auto">
+            <motion.div initial={{
+            opacity: 0,
+            scale: 0.9,
+            y: 10
+          }} animate={{
+            opacity: 1,
+            scale: 1,
+            y: 0
+          }} transition={{
+            delay: 0.2,
+            duration: 0.5,
+            ease: [0.16, 1, 0.3, 1]
+          }} className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full glass border border-primary/30 mb-6 sm:mb-8 animate-bounce-subtle">
               <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-primary animate-pulse" />
               <span className="text-xs sm:text-sm text-muted-foreground">
                 CBSE Class 12 • Verified + AI-powered MCQs
               </span>
             </motion.div>
 
-            <motion.h1 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="font-display text-3xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-6 leading-tight"
-            >
+            <motion.h1 initial={{
+            opacity: 0,
+            y: 20
+          }} animate={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            delay: 0.3,
+            duration: 0.6,
+            ease: [0.16, 1, 0.3, 1]
+          }} className="font-display text-3xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-6 leading-tight">
               Crack your MCQs.{" "}
               <span className="neon-text animate-glow">Flex your score.</span>
             </motion.h1>
 
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="text-base sm:text-xl text-muted-foreground mb-8 sm:mb-10 max-w-xl mx-auto text-balance px-2"
-            >
+            <motion.p initial={{
+            opacity: 0,
+            y: 20
+          }} animate={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            delay: 0.4,
+            duration: 0.6,
+            ease: [0.16, 1, 0.3, 1]
+          }} className="text-base sm:text-xl text-muted-foreground mb-8 sm:mb-10 max-w-xl mx-auto text-balance px-2">
               Practice unlimited MCQs, get instant feedback, and challenge your friends. No signup needed to start.
             </motion.p>
 
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
-            >
+            <motion.div initial={{
+            opacity: 0,
+            y: 20
+          }} animate={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            delay: 0.5,
+            duration: 0.6,
+            ease: [0.16, 1, 0.3, 1]
+          }} className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
               <Button variant="neon" size="xl" asChild className="group">
                 <Link to="/practice">
                   Start Practice
@@ -104,27 +139,35 @@ const handleChallengeClick = () => {
           </motion.div>
 
           {/* Stats */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="flex items-center justify-center gap-6 sm:gap-8 md:gap-16 mt-10 sm:mt-16"
-          >
-            {stats.map((stat, i) => (
-              <motion.div 
-                key={i} 
-                className="text-center"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 + i * 0.1, duration: 0.5 }}
-                whileHover={{ scale: 1.05, y: -2 }}
-              >
+          <motion.div initial={{
+          opacity: 0,
+          y: 40
+        }} animate={{
+          opacity: 1,
+          y: 0
+        }} transition={{
+          delay: 0.7,
+          duration: 0.7,
+          ease: [0.16, 1, 0.3, 1]
+        }} className="flex items-center justify-center gap-6 sm:gap-8 md:gap-16 mt-10 sm:mt-16">
+            {stats.map((stat, i) => <motion.div key={i} className="text-center" initial={{
+            opacity: 0,
+            y: 20
+          }} animate={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            delay: 0.8 + i * 0.1,
+            duration: 0.5
+          }} whileHover={{
+            scale: 1.05,
+            y: -2
+          }}>
                 <div className="font-display text-2xl sm:text-3xl md:text-4xl font-bold neon-text-green">
                   {stat.value}
                 </div>
                 <div className="text-xs sm:text-sm text-muted-foreground mt-1">{stat.label}</div>
-              </motion.div>
-            ))}
+              </motion.div>)}
           </motion.div>
         </div>
       </section>
@@ -132,13 +175,19 @@ const handleChallengeClick = () => {
       {/* How it Works */}
       <section className="py-12 sm:py-20 px-4">
         <div className="container">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center mb-10 sm:mb-16"
-          >
+          <motion.div initial={{
+          opacity: 0,
+          y: 20
+        }} whileInView={{
+          opacity: 1,
+          y: 0
+        }} viewport={{
+          once: true,
+          margin: "-100px"
+        }} transition={{
+          duration: 0.6,
+          ease: [0.16, 1, 0.3, 1]
+        }} className="text-center mb-10 sm:mb-16">
             <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">
               How it works
             </h2>
@@ -146,15 +195,20 @@ const handleChallengeClick = () => {
           </motion.div>
 
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
-            {steps.map((step, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ delay: i * 0.15, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="relative group"
-              >
+            {steps.map((step, i) => <motion.div key={i} initial={{
+            opacity: 0,
+            y: 30
+          }} whileInView={{
+            opacity: 1,
+            y: 0
+          }} viewport={{
+            once: true,
+            margin: "-50px"
+          }} transition={{
+            delay: i * 0.15,
+            duration: 0.6,
+            ease: [0.16, 1, 0.3, 1]
+          }} className="relative group">
                 <div className="glass rounded-2xl p-8 h-full transition-all duration-500 hover:border-primary/50 hover:shadow-[0_0_40px_hsl(var(--neon-cyan)/0.15)] hover:-translate-y-1">
                   <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
                     <step.icon className="w-7 h-7 text-primary" />
@@ -167,8 +221,7 @@ const handleChallengeClick = () => {
                   </h3>
                   <p className="text-muted-foreground">{step.description}</p>
                 </div>
-              </motion.div>
-            ))}
+              </motion.div>)}
           </div>
         </div>
       </section>
@@ -176,13 +229,19 @@ const handleChallengeClick = () => {
       {/* CTA Section */}
       <section className="py-12 sm:py-20 px-4">
         <div className="container">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="relative max-w-3xl mx-auto text-center"
-          >
+          <motion.div initial={{
+          opacity: 0,
+          scale: 0.95
+        }} whileInView={{
+          opacity: 1,
+          scale: 1
+        }} viewport={{
+          once: true,
+          margin: "-100px"
+        }} transition={{
+          duration: 0.7,
+          ease: [0.16, 1, 0.3, 1]
+        }} className="relative max-w-3xl mx-auto text-center">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-accent/10 to-primary/20 blur-3xl opacity-50 animate-pulse-slow" />
             <div className="relative glass rounded-2xl sm:rounded-3xl p-8 sm:p-12 border border-primary/20 hover:border-primary/40 transition-all duration-500">
               <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">
@@ -221,6 +280,5 @@ const handleChallengeClick = () => {
           </p>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 }
