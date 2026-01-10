@@ -210,70 +210,20 @@ export default function Challenge() {
   };
 
   const loadQuestionsAndPlay = async (challengeData: Challenge) => {
-    // Separate DB question IDs from AI-generated IDs
-    const dbQuestionIds = challengeData.question_ids.filter(id => !id.startsWith('ai-'));
-    const aiQuestionIds = challengeData.question_ids.filter(id => id.startsWith('ai-'));
+    // All questions are now stored in the database (including AI-generated ones)
+    const { data: questionsData, error } = await supabase
+      .from("questions")
+      .select("*")
+      .in("id", challengeData.question_ids);
 
-    let allQuestions: Question[] = [];
-
-    // Fetch DB questions
-    if (dbQuestionIds.length > 0) {
-      const { data: dbQuestions, error } = await supabase
-        .from("questions")
-        .select("*")
-        .in("id", dbQuestionIds);
-
-      if (error) {
-        toast({ title: "Failed to load questions", variant: "destructive" });
-        return;
-      }
-      allQuestions = dbQuestions || [];
-    }
-
-    // If there are AI questions, regenerate them for the opponent
-    if (aiQuestionIds.length > 0) {
-      // Get chapter info to regenerate questions
-      const { data: chapterData } = await supabase
-        .from("chapters")
-        .select("name, subjects(name)")
-        .eq("id", challengeData.chapter_id)
-        .single();
-
-      if (chapterData) {
-        try {
-          const { data: aiData, error: aiError } = await supabase.functions.invoke(
-            "generate-mcqs",
-            {
-              body: {
-                chapterName: chapterData.name,
-                subjectName: (chapterData.subjects as any)?.name,
-                count: aiQuestionIds.length,
-              },
-            }
-          );
-
-          if (!aiError && aiData?.questions) {
-            // Map regenerated AI questions to the same IDs for consistency
-            const aiQuestions = aiData.questions.map((q: any, i: number) => ({
-              ...q,
-              id: aiQuestionIds[i] || `ai-regen-${Date.now()}-${i}`,
-            }));
-            allQuestions = [...allQuestions, ...aiQuestions];
-          }
-        } catch (err) {
-          console.error("Failed to regenerate AI questions:", err);
-        }
-      }
-    }
-
-    if (allQuestions.length === 0) {
+    if (error || !questionsData || questionsData.length === 0) {
       toast({ title: "Failed to load questions", variant: "destructive" });
       return;
     }
 
     // Sort questions by the order in question_ids
     const orderedQuestions = challengeData.question_ids
-      .map(id => allQuestions.find(q => q.id === id))
+      .map(id => questionsData.find(q => q.id === id))
       .filter(Boolean) as Question[];
 
     setQuestions(orderedQuestions);
@@ -284,7 +234,7 @@ export default function Challenge() {
     setShowResult(false);
   };
 
-const handleCreateChallenge = async (chapter: Chapter) => {
+  const handleCreateChallenge = async (chapter: Chapter) => {
     if (!user) {
       navigate("/login", { state: { from: `/challenge` } });
       return;
@@ -310,31 +260,48 @@ const handleCreateChallenge = async (chapter: Chapter) => {
     let allQuestions = questionsData || [];
     const targetCount = 10;
 
-    // If we don't have enough questions, generate AI ones
+    // If we don't have enough questions, generate AI ones and store them in DB
     if (allQuestions.length < targetCount) {
       try {
-        const neededCount = targetCount - allQuestions.length;
+        const neededCount = Math.max(5, targetCount - allQuestions.length);
         const { data: aiData, error: aiError } = await supabase.functions.invoke(
           "generate-mcqs",
           {
             body: {
               chapterName: chapter.name,
               subjectName: selectedSubject?.name,
-              count: Math.max(5, neededCount),
+              count: neededCount,
             },
           }
         );
 
         if (aiError) {
           console.error("Error generating AI questions:", aiError);
-        } else if (aiData?.questions) {
-          // Save AI questions to database for this challenge
-          const aiQuestions = aiData.questions.map((q: any, i: number) => ({
-            ...q,
-            id: `ai-${Date.now()}-${i}`,
+        } else if (aiData?.questions && aiData.questions.length > 0) {
+          // Insert AI questions into the database so both players get the same questions
+          const aiQuestionsToInsert = aiData.questions.map((q: any) => ({
             chapter_id: chapter.id,
+            text: q.text,
+            option_a: q.option_a,
+            option_b: q.option_b,
+            option_c: q.option_c,
+            option_d: q.option_d,
+            correct_answer: q.correct_answer,
+            explanation: q.explanation,
+            source: 'ai' as const,
+            status: 'active' as const,
           }));
-          allQuestions = [...allQuestions, ...aiQuestions];
+
+          const { data: insertedQuestions, error: insertError } = await supabase
+            .from("questions")
+            .insert(aiQuestionsToInsert)
+            .select();
+
+          if (insertError) {
+            console.error("Error inserting AI questions:", insertError);
+          } else if (insertedQuestions) {
+            allQuestions = [...allQuestions, ...insertedQuestions];
+          }
         }
       } catch (err) {
         console.error("Failed to generate AI questions:", err);
@@ -374,7 +341,7 @@ const handleCreateChallenge = async (chapter: Chapter) => {
       return;
     }
 
-    // Store AI questions in state for immediate use
+    // Store questions in state for immediate use
     setQuestions(selectedQuestions as Question[]);
     setChallenge(newChallenge);
     setChapterInfo({ name: chapter.name, subject_name: selectedSubject?.name || "" });
