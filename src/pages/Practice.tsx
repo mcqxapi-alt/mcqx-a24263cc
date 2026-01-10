@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import mcqxLogo from "@/assets/mcqx-logo.jpg";
+import mcqxLogo from "@/assets/mcqx-logo.png";
 
 type Subject = {
   id: string;

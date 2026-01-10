@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import mcqxLogo from "@/assets/mcqx-logo.jpg";
+import mcqxLogo from "@/assets/mcqx-logo.png";
 
 type Profile = {
   id: string;
