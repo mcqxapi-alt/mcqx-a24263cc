@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { ArrowLeft, CheckCircle, XCircle, Edit, Flag, Loader2 } from "lucide-react";
-import mcqxLogo from "@/assets/mcqx-logo.jpg";
+import mcqxLogo from "@/assets/mcqx-logo.png";
 
 type ReportWithQuestion = {
   id: string;

@@ -3,7 +3,7 @@ import { BookOpen, Trophy, ChevronRight, Sparkles, Zap, Swords } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import mcqxLogo from "@/assets/mcqx-logo.jpg";
+import mcqxLogo from "@/assets/mcqx-logo.png";
 
 const stats = [
   { value: "12,435", label: "Students" },

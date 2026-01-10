@@ -22,7 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import mcqxLogo from "@/assets/mcqx-logo.jpg";
+import mcqxLogo from "@/assets/mcqx-logo.png";
 
 type Subject = {
   id: string;
