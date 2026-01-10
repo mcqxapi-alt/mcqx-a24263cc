@@ -303,10 +303,13 @@ const handleCreateChallenge = async (chapter: Chapter) => {
     return 0;
   };
 
-  const question = questions[currentQ];
+  const question = questions[currentQ] ?? null;
   const correctIndex = question ? getCorrectIndex(question) : 0;
   const isCorrect = selectedAnswer !== null && selectedAnswer === correctIndex;
-  const score = answers.filter((a, i) => a !== null && a === getCorrectIndex(questions[i])).length;
+  const score = answers.filter((a, i) => {
+    const q = questions[i];
+    return q && a !== null && a === getCorrectIndex(q);
+  }).length;
 
   const handleAnswerSelect = (index: number) => {
     if (showResult) return;
@@ -326,9 +329,10 @@ const handleCreateChallenge = async (chapter: Chapter) => {
       setShowResult(false);
     } else {
       // Submit score
-      const finalScore = [...answers, selectedAnswer].filter(
-        (a, i) => a !== null && a === getCorrectIndex(questions[i])
-      ).length;
+      const finalScore = [...answers, selectedAnswer].filter((a, i) => {
+        const q = questions[i];
+        return q && a !== null && a === getCorrectIndex(q);
+      }).length;
 
       const isChallenger = challenge?.challenger_id === user?.id;
       const updateField = isChallenger ? "challenger_score" : "opponent_score";
