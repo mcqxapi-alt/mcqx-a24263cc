@@ -7,6 +7,7 @@ import { Link, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import mcqxLogo from "@/assets/mcqx-logo.png";
 
 export default function Login() {
   const { user, loading } = useAuth();
@@ -110,10 +111,7 @@ export default function Login() {
       {/* Header */}
       <header className="p-6">
         <Link to="/" className="inline-flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <Zap className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <span className="font-display font-bold text-xl">MCQX</span>
+          <img src={mcqxLogo} alt="MCQX" className="h-20 sm:h-28 w-auto" />
         </Link>
       </header>
 

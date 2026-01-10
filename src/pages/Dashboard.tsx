@@ -141,7 +141,7 @@ export default function Dashboard() {
       <header className="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border/30">
         <div className="container flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2 transition-transform duration-300 hover:scale-105">
-            <img src={mcqxLogo} alt="MCQX" className="h-14 w-auto" />
+            <img src={mcqxLogo} alt="MCQX" className="h-20 sm:h-28 w-auto" />
           </Link>
 
           <div className="flex items-center gap-3">
