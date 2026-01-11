@@ -128,16 +128,24 @@ Return ONLY a valid JSON array:
     }
 
     // Ensure each question has required fields
-    const validatedQuestions = questions.map((q: any, index: number) => ({
-      text: q.text || `Question ${index + 1}`,
-      option_a: q.option_a || 'Option A',
-      option_b: q.option_b || 'Option B',
-      option_c: q.option_c || 'Option C',
-      option_d: q.option_d || 'Option D',
-      correct_answer: Number(q.correct_answer) || 1,
-      explanation: q.explanation || 'No explanation provided',
-      source: 'ai' as const
-    }));
+    // AI returns 1-indexed correct_answer (1=A, 2=B, 3=C, 4=D)
+    // Database expects 0-indexed (0=A, 1=B, 2=C, 3=D)
+    const validatedQuestions = questions.map((q: any, index: number) => {
+      const aiAnswer = Number(q.correct_answer) || 1;
+      // Convert from 1-indexed to 0-indexed, clamping to valid range
+      const correctAnswer = Math.max(0, Math.min(3, aiAnswer - 1));
+      
+      return {
+        text: q.text || `Question ${index + 1}`,
+        option_a: q.option_a || 'Option A',
+        option_b: q.option_b || 'Option B',
+        option_c: q.option_c || 'Option C',
+        option_d: q.option_d || 'Option D',
+        correct_answer: correctAnswer,
+        explanation: q.explanation || 'No explanation provided',
+        source: 'ai' as const
+      };
+    });
 
     console.log(`Successfully generated ${validatedQuestions.length} questions`);
 
