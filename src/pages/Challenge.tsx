@@ -579,7 +579,7 @@ export default function Challenge() {
                 </motion.div>
 
                 {/* Active Challenges */}
-                <ActiveChallenges userId={user.id} />
+                {user && <ActiveChallenges userId={user.id} />}
               </motion.div>
             )}
 
@@ -919,7 +919,7 @@ export default function Challenge() {
               >
                 <ChallengeResult
                   challenge={challenge}
-                  userId={user.id}
+                  userId={user?.id || ""}
                   challengerProfile={challengerProfile}
                   opponentProfile={opponentProfile}
                   chapterInfo={chapterInfo}
