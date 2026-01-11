@@ -139,7 +139,7 @@ export default function Dashboard() {
     <div className="min-h-screen gradient-mesh-animated">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border/30">
-        <div className="container flex items-center justify-between h-16">
+        <div className="container flex items-center justify-between h-24 sm:h-32">
           <Link to="/" className="flex items-center gap-2 transition-transform duration-300 hover:scale-105">
             <img src={mcqxLogo} alt="MCQX" className="h-20 sm:h-28 w-auto" />
           </Link>
@@ -165,7 +165,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <main className="pt-24 pb-12 px-4">
+      <main className="pt-32 sm:pt-40 pb-12 px-4">
         <div className="container max-w-4xl">
           {/* Welcome Section */}
           <motion.div

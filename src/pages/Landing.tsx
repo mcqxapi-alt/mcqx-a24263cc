@@ -38,7 +38,7 @@ export default function Landing() {
   return <div className="min-h-screen gradient-mesh-animated">
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border/30">
-        <div className="container flex items-center justify-between h-14 sm:h-16 px-3 sm:px-4">
+        <div className="container flex items-center justify-between h-24 sm:h-32 px-3 sm:px-4">
           <Link to="/" className="flex items-center gap-2 transition-transform duration-300 hover:scale-105">
             <img src={mcqxLogo} alt="MCQX" className="h-20 sm:h-28 w-auto border-2 border-none shadow-none rounded-none" />
           </Link>
@@ -54,7 +54,7 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-24 sm:pt-32 pb-12 sm:pb-20 px-4">
+      <section className="pt-32 sm:pt-40 pb-12 sm:pb-20 px-4">
         <div className="container">
           <motion.div initial={{
           opacity: 0,
