@@ -123,7 +123,7 @@ export default function Dashboard() {
 
   // Redirect to login if not authenticated
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ message: "Sign in to see your streaks, saved scores & challenges!" }} replace />;
   }
 
   const accuracy = profile?.total_attempts

@@ -933,6 +933,31 @@ export default function Challenge() {
                     <Link to="/practice">Practice More</Link>
                   </Button>
                 </div>
+
+                {/* Guest Sign-In Nudge */}
+                {!user && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                    className="glass-card rounded-xl p-5 flex items-center justify-between gap-4 mt-6 mx-auto max-w-md"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                        <Trophy className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-medium">Save this battle!</p>
+                        <p className="text-sm text-muted-foreground">
+                          Sign in to track your wins
+                        </p>
+                      </div>
+                    </div>
+                    <Button variant="neon" size="sm" asChild>
+                      <Link to="/login">Sign In</Link>
+                    </Button>
+                  </motion.div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

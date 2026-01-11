@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Zap, Mail, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,11 +12,25 @@ import mcqxLogo from "@/assets/mcqx-logo.png";
 export default function Login() {
   const { user, loading } = useAuth();
   const { toast } = useToast();
+  const location = useLocation();
   const [isSignUp, setIsSignUp] = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // Show message if redirected from a protected page
+  useEffect(() => {
+    const state = location.state as { message?: string } | null;
+    if (state?.message) {
+      toast({
+        title: "Sign in required",
+        description: state.message,
+      });
+      // Clear the state so the toast doesn't show again on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, toast]);
 
   // Redirect if already logged in
   if (!loading && user) {
