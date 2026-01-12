@@ -5,21 +5,21 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold ring-offset-background transition-all duration-300 ease-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 will-change-transform",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 hover:-translate-y-0.5 active:translate-y-0 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:-translate-y-0.5 active:translate-y-0",
-        outline: "border border-border bg-transparent hover:bg-secondary hover:text-foreground hover:border-primary/50",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:-translate-y-0.5 active:translate-y-0",
-        ghost: "hover:bg-secondary hover:text-foreground",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]",
+        outline: "border border-border bg-transparent hover:bg-secondary hover:text-foreground hover:border-primary/50 active:scale-[0.98]",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]",
+        ghost: "hover:bg-secondary hover:text-foreground active:scale-[0.98]",
         link: "text-primary underline-offset-4 hover:underline",
-        // MCQX custom variants
-        neon: "bg-primary text-primary-foreground hover:shadow-[0_0_30px_hsl(168_100%_48%/0.5)] hover:-translate-y-0.5 hover:scale-[1.02] active:translate-y-0 active:scale-[0.98]",
-        "neon-outline": "border-2 border-primary text-primary bg-transparent hover:bg-primary/10 hover:shadow-[0_0_20px_hsl(168_100%_48%/0.3)] hover:-translate-y-0.5 active:translate-y-0",
-        "neon-green": "bg-accent text-accent-foreground hover:shadow-[0_0_30px_hsl(90_100%_55%/0.5)] hover:-translate-y-0.5 hover:scale-[1.02] active:translate-y-0 active:scale-[0.98]",
-        glass: "bg-card/50 backdrop-blur-xl border border-border/50 text-foreground hover:bg-card/70 hover:border-primary/30 hover:-translate-y-0.5 active:translate-y-0",
+        // MCQX custom variants with enhanced smoothness
+        neon: "bg-primary text-primary-foreground hover:shadow-[0_0_30px_hsl(168_100%_48%/0.5)] hover:-translate-y-0.5 hover:scale-[1.02] active:translate-y-0 active:scale-[0.97]",
+        "neon-outline": "border-2 border-primary text-primary bg-transparent hover:bg-primary/10 hover:shadow-[0_0_20px_hsl(168_100%_48%/0.3)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]",
+        "neon-green": "bg-accent text-accent-foreground hover:shadow-[0_0_30px_hsl(90_100%_55%/0.5)] hover:-translate-y-0.5 hover:scale-[1.02] active:translate-y-0 active:scale-[0.97]",
+        glass: "bg-card/50 backdrop-blur-xl border border-border/50 text-foreground hover:bg-card/70 hover:border-primary/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]",
       },
       size: {
         default: "h-11 px-5 py-2",

@@ -57,19 +57,46 @@
 @layer base {
   * {
     @apply border-border;
+    /* Enable GPU acceleration for all transforms */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   html {
     scroll-behavior: smooth;
+    /* Prevent layout shift during page transitions */
+    overflow-x: hidden;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, sans-serif;
+    /* Improve perceived performance */
+    text-rendering: optimizeLegibility;
+    -webkit-tap-highlight-color: transparent;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Space Grotesk', system-ui, sans-serif;
+  }
+
+  /* Global smooth transitions for interactive elements */
+  a, button, input, select, textarea {
+    transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                box-shadow 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                background-color 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                border-color 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                opacity 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
   /* Smooth scrollbar */
@@ -409,5 +436,73 @@
   /* Pulse ring for waiting states */
   .animate-pulse-ring {
     animation: pulse-ring 2s ease-in-out infinite;
+  }
+
+  /* Bounce subtle for badges/tags */
+  .animate-bounce-subtle {
+    animation: bounceSubtle 2s ease-in-out infinite;
+  }
+
+  @keyframes bounceSubtle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+
+  /* Ultra-smooth loading pulse */
+  .animate-loading {
+    animation: loadingPulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes loadingPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+  }
+
+  /* Smooth scale on tap for mobile */
+  .tap-scale {
+    @apply transition-transform duration-150;
+    transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .tap-scale:active {
+    transform: scale(0.97);
+  }
+
+  /* GPU-accelerated transforms */
+  .gpu-accelerated {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+  }
+
+  /* Smooth skeleton loader */
+  .skeleton-shine {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--muted) / 0.5) 50%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeletonShine 1.5s ease-in-out infinite;
+  }
+
+  @keyframes skeletonShine {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Micro-interaction hover glow */
+  .micro-glow {
+    @apply relative;
+  }
+
+  .micro-glow::after {
+    content: '';
+    @apply absolute inset-0 rounded-inherit opacity-0 transition-opacity duration-300 pointer-events-none;
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+  }
+
+  .micro-glow:hover::after {
+    @apply opacity-100;
   }
 }
