@@ -42,6 +42,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bookmarks_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bookmarks_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -269,6 +276,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "reports_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "reports_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -378,15 +392,76 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      questions_public: {
+        Row: {
+          chapter_id: string | null
+          created_at: string | null
+          id: string | null
+          option_a: string | null
+          option_b: string | null
+          option_c: string | null
+          option_d: string | null
+          source: Database["public"]["Enums"]["question_source"] | null
+          status: Database["public"]["Enums"]["question_status"] | null
+          text: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          chapter_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          option_a?: string | null
+          option_b?: string | null
+          option_c?: string | null
+          option_d?: string | null
+          source?: Database["public"]["Enums"]["question_source"] | null
+          status?: Database["public"]["Enums"]["question_status"] | null
+          text?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          chapter_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          option_a?: string | null
+          option_b?: string | null
+          option_c?: string | null
+          option_d?: string | null
+          source?: Database["public"]["Enums"]["question_source"] | null
+          status?: Database["public"]["Enums"]["question_status"] | null
+          text?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      get_question_answers: {
+        Args: { p_question_ids: string[] }
+        Returns: {
+          correct_answer: number
+          explanation: string
+          question_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      validate_answer: {
+        Args: { p_question_id: string; p_selected_answer: number }
+        Returns: Json
       }
     }
     Enums: {

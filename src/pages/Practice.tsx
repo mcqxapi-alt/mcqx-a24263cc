@@ -22,6 +22,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useSecureQuestions, QuestionPublic } from "@/hooks/useSecureQuestions";
 import {
   Dialog,
   DialogContent,
@@ -45,22 +46,17 @@ type Chapter = {
   subject_id: string;
 };
 
-type Question = {
-  id: string;
-  text: string;
-  option_a: string;
-  option_b: string;
-  option_c: string;
-  option_d: string;
-  correct_answer: number;
-  explanation: string | null;
-  source: "verified" | "ai";
+// Extended question type that includes validated answer data
+type Question = QuestionPublic & {
+  correct_answer?: number;
+  explanation?: string | null;
 };
 
 type Step = "subject" | "chapter" | "practice" | "result";
 
 export default function Practice() {
   const { user } = useAuth();
+  const { validateAnswer, clearCache } = useSecureQuestions();
   const [step, setStep] = useState<Step>("subject");
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
@@ -70,6 +66,7 @@ export default function Practice() {
   const [showResult, setShowResult] = useState(false);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [isReporting, setIsReporting] = useState(false);
@@ -104,21 +101,26 @@ export default function Practice() {
     enabled: !!selectedSubject,
   });
 
+  // Get correct answer - only available after validation
   const getCorrectIndex = (q?: Question | null) => {
-    const raw = Number(q?.correct_answer);
-    if (!Number.isFinite(raw)) return 0;
-
-    // In our DB/AI generation, correct_answer is typically 1..4 (1=A, 2=B, 3=C, 4=D)
-    // but the UI uses 0..3 indexes.
-    if (raw >= 1 && raw <= 4) return raw - 1;
+    if (!q?.correct_answer && q?.correct_answer !== 0) return null;
+    const raw = Number(q.correct_answer);
+    if (!Number.isFinite(raw)) return null;
+    // correct_answer is 0-indexed in our secure functions
     if (raw >= 0 && raw <= 3) return raw;
-    return 0;
+    return null;
   };
 
   const question = questions[currentQ];
-  const correctIndex = question ? getCorrectIndex(question) : 0;
-  const isCorrect = selectedAnswer !== null && selectedAnswer === correctIndex;
-  const score = answers.filter((a, i) => a !== null && a === getCorrectIndex(questions[i])).length;
+  const correctIndex = question ? getCorrectIndex(question) : null;
+  const isCorrect = selectedAnswer !== null && correctIndex !== null && selectedAnswer === correctIndex;
+  
+  // Score only counts questions that have been validated
+  const score = answers.filter((a, i) => {
+    const q = questions[i];
+    const cIdx = getCorrectIndex(q);
+    return a !== null && cIdx !== null && a === cIdx;
+  }).length;
   const totalQuestions = questions.length;
   const accuracy = answers.length > 0 ? Math.round((score / answers.length) * 100) : 0;
 
@@ -130,13 +132,13 @@ export default function Practice() {
   const handleChapterSelect = async (chapter: Chapter) => {
     setSelectedChapter(chapter);
     setIsGenerating(true);
+    clearCache(); // Clear any cached answer validations
 
-    // Fetch verified questions for this chapter
+    // Fetch questions from the secure public view (no correct_answer exposed)
     const { data, error } = await supabase
-      .from("questions")
+      .from("questions_public")
       .select("*")
       .eq("chapter_id", chapter.id)
-      .eq("status", "active")
       .limit(20);
 
     if (error) {
@@ -166,11 +168,16 @@ export default function Practice() {
         if (aiError) {
           console.error("Error generating AI questions:", aiError);
         } else if (aiData?.questions) {
-          const aiQuestions = aiData.questions.map((q: any, i: number) => ({
-            ...q,
-            id: `ai-${Date.now()}-${i}`,
-          }));
-          allQuestions = [...allQuestions, ...aiQuestions];
+          // AI questions are now stored in DB, fetch them again from public view
+          const { data: refreshedData } = await supabase
+            .from("questions_public")
+            .select("*")
+            .eq("chapter_id", chapter.id)
+            .limit(20);
+          
+          if (refreshedData) {
+            allQuestions = refreshedData as Question[];
+          }
         }
       } catch (err) {
         console.error("Failed to generate AI questions:", err);
@@ -197,10 +204,35 @@ export default function Practice() {
     setSelectedAnswer(index);
   };
 
-  const handleSubmit = () => {
-    if (selectedAnswer === null) return;
-    setShowResult(true);
-    setAnswers([...answers, selectedAnswer]);
+  const handleSubmit = async () => {
+    if (selectedAnswer === null || !question) return;
+    setIsValidating(true);
+    
+    try {
+      // Validate answer server-side
+      const result = await validateAnswer(question.id, selectedAnswer);
+      
+      // Update the question with the correct answer and explanation
+      const updatedQuestions = [...questions];
+      updatedQuestions[currentQ] = {
+        ...question,
+        correct_answer: result.correct_answer,
+        explanation: result.explanation,
+      };
+      setQuestions(updatedQuestions);
+      
+      setShowResult(true);
+      setAnswers([...answers, selectedAnswer]);
+    } catch (err) {
+      console.error("Error validating answer:", err);
+      toast({
+        title: "Error validating answer",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsValidating(false);
+    }
   };
 
   const handleNext = () => {
@@ -662,9 +694,16 @@ export default function Practice() {
                       size="lg"
                       className="flex-1 h-14 text-lg"
                       onClick={handleSubmit}
-                      disabled={selectedAnswer === null}
+                      disabled={selectedAnswer === null || isValidating}
                     >
-                      Submit Answer
+                      {isValidating ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Checking...
+                        </>
+                      ) : (
+                        "Submit Answer"
+                      )}
                     </Button>
                   ) : (
                     <motion.div
