@@ -266,6 +266,7 @@ export default function Challenge() {
           "generate-mcqs",
           {
             body: {
+              chapterId: chapter.id,
               chapterName: chapter.name,
               subjectName: selectedSubject?.name,
               count: neededCount,
@@ -275,16 +276,10 @@ export default function Challenge() {
 
         if (aiError) {
           console.error("Error generating AI questions:", aiError);
-        } else if (aiData?.questions && aiData.questions.length > 0) {
-          // AI questions are stored in DB by the edge function, refresh using RPC
-          const { data: refreshedData } = await supabase.rpc("get_public_questions", {
-            p_chapter_id: chapter.id,
-            p_limit: 20,
-          });
-          
-          if (refreshedData) {
-            allQuestions = refreshedData as any[];
-          }
+        } else if (aiData?.questions && Array.isArray(aiData.questions) && aiData.questions.length > 0) {
+          // The backend function persists generated questions and returns them with DB ids.
+          // Merge them into the current pool.
+          allQuestions = [...allQuestions, ...(aiData.questions as any[])];
         }
       } catch (err) {
         console.error("Failed to generate AI questions:", err);

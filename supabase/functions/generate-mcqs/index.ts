@@ -1,9 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const isUuid = (value: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -11,7 +15,14 @@ serve(async (req) => {
   }
 
   try {
-    const { chapterName, subjectName, count = 5 } = await req.json();
+    const { chapterId, chapterName, subjectName, count = 5 } = await req.json();
+
+    if (!chapterId || typeof chapterId !== 'string' || !isUuid(chapterId)) {
+      return new Response(
+        JSON.stringify({ error: 'chapterId (uuid) is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     if (!chapterName || !subjectName) {
       return new Response(
@@ -149,8 +160,43 @@ Return ONLY a valid JSON array:
 
     console.log(`Successfully generated ${validatedQuestions.length} questions`);
 
+    // Persist questions to DB so the client can fetch them without ever receiving correct_answer.
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Backend is not configured');
+    }
+
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false },
+    });
+
+    const toInsert = validatedQuestions.map((q) => ({
+      chapter_id: chapterId,
+      text: q.text,
+      option_a: q.option_a,
+      option_b: q.option_b,
+      option_c: q.option_c,
+      option_d: q.option_d,
+      correct_answer: q.correct_answer,
+      explanation: q.explanation,
+      source: 'ai',
+      status: 'active',
+    }));
+
+    const { data: inserted, error: insertError } = await supabaseAdmin
+      .from('questions')
+      .insert(toInsert)
+      .select('id, chapter_id, text, option_a, option_b, option_c, option_d, source, status, created_at, updated_at');
+
+    if (insertError) {
+      console.error('Failed to insert questions:', insertError);
+      throw new Error('Failed to save generated questions');
+    }
+
     return new Response(
-      JSON.stringify({ questions: validatedQuestions }),
+      JSON.stringify({ questions: inserted ?? [] }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
