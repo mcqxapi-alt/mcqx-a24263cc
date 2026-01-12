@@ -21,6 +21,7 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { useSecureQuestions, QuestionPublic } from "@/hooks/useSecureQuestions";
 import { useToast } from "@/hooks/use-toast";
 import mcqxLogo from "@/assets/mcqx-logo.png";
 
@@ -36,15 +37,10 @@ type Chapter = {
   subject_id: string;
 };
 
-type Question = {
-  id: string;
-  text: string;
-  option_a: string;
-  option_b: string;
-  option_c: string;
-  option_d: string;
-  correct_answer: number;
-  explanation: string | null;
+// Extended question type that includes validated answer data
+type Question = QuestionPublic & {
+  correct_answer?: number;
+  explanation?: string | null;
 };
 
 type Challenge = {
@@ -66,6 +62,7 @@ export default function Challenge() {
   const { id: challengeId } = useParams();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { validateAnswer, clearCache } = useSecureQuestions();
   const { toast } = useToast();
   
   const [step, setStep] = useState<Step>("menu");
@@ -79,6 +76,7 @@ export default function Challenge() {
   const [answers, setAnswers] = useState<(number | null)[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
   const [opponentProfile, setOpponentProfile] = useState<{ display_name: string | null } | null>(null);
   const [challengerProfile, setChallengerProfile] = useState<{ display_name: string | null } | null>(null);
   const [chapterInfo, setChapterInfo] = useState<{ name: string; subject_name: string } | null>(null);
@@ -210,9 +208,11 @@ export default function Challenge() {
   };
 
   const loadQuestionsAndPlay = async (challengeData: Challenge) => {
-    // All questions are now stored in the database (including AI-generated ones)
+    clearCache(); // Clear any cached answer validations
+    
+    // Fetch questions from secure public view (no correct_answer exposed)
     const { data: questionsData, error } = await supabase
-      .from("questions")
+      .from("questions_public")
       .select("*")
       .in("id", challengeData.question_ids);
 
@@ -223,7 +223,7 @@ export default function Challenge() {
 
     // Sort questions by the order in question_ids
     const orderedQuestions = challengeData.question_ids
-      .map(id => questionsData.find(q => q.id === id))
+      .map(id => questionsData.find((q: any) => q.id === id))
       .filter(Boolean) as Question[];
 
     setQuestions(orderedQuestions);
@@ -242,13 +242,13 @@ export default function Challenge() {
 
     setIsCreating(true);
     setSelectedChapter(chapter);
+    clearCache();
 
-    // Fetch verified questions for this chapter
+    // Fetch questions from secure public view
     const { data: questionsData, error: questionsError } = await supabase
-      .from("questions")
+      .from("questions_public")
       .select("*")
       .eq("chapter_id", chapter.id)
-      .eq("status", "active")
       .limit(20);
 
     if (questionsError) {
@@ -278,29 +278,15 @@ export default function Challenge() {
         if (aiError) {
           console.error("Error generating AI questions:", aiError);
         } else if (aiData?.questions && aiData.questions.length > 0) {
-          // Insert AI questions into the database so both players get the same questions
-          const aiQuestionsToInsert = aiData.questions.map((q: any) => ({
-            chapter_id: chapter.id,
-            text: q.text,
-            option_a: q.option_a,
-            option_b: q.option_b,
-            option_c: q.option_c,
-            option_d: q.option_d,
-            correct_answer: q.correct_answer,
-            explanation: q.explanation,
-            source: 'ai' as const,
-            status: 'active' as const,
-          }));
-
-          const { data: insertedQuestions, error: insertError } = await supabase
-            .from("questions")
-            .insert(aiQuestionsToInsert)
-            .select();
-
-          if (insertError) {
-            console.error("Error inserting AI questions:", insertError);
-          } else if (insertedQuestions) {
-            allQuestions = [...allQuestions, ...insertedQuestions];
+          // AI questions are stored in DB by the edge function, refresh from public view
+          const { data: refreshedData } = await supabase
+            .from("questions_public")
+            .select("*")
+            .eq("chapter_id", chapter.id)
+            .limit(20);
+          
+          if (refreshedData) {
+            allQuestions = refreshedData;
           }
         }
       } catch (err) {
@@ -321,7 +307,7 @@ export default function Challenge() {
     // Shuffle and take 5-10 questions
     const shuffled = allQuestions.sort(() => Math.random() - 0.5);
     const selectedQuestions = shuffled.slice(0, Math.min(10, shuffled.length));
-    const selectedIds = selectedQuestions.map(q => q.id);
+    const selectedIds = selectedQuestions.map((q: any) => q.id);
 
     // Create challenge
     const { data: newChallenge, error: createError } = await supabase
@@ -341,7 +327,7 @@ export default function Challenge() {
       return;
     }
 
-    // Store questions in state for immediate use
+    // Store questions in state for immediate use (without correct_answer)
     setQuestions(selectedQuestions as Question[]);
     setChallenge(newChallenge);
     setChapterInfo({ name: chapter.name, subject_name: selectedSubject?.name || "" });
@@ -356,20 +342,24 @@ export default function Challenge() {
     toast({ title: "Link copied!", description: "Share it with your friend to start the battle!" });
   };
 
+  // Get correct answer - only available after validation
   const getCorrectIndex = (q?: Question | null) => {
-    const raw = Number(q?.correct_answer);
-    if (!Number.isFinite(raw)) return 0;
-    if (raw >= 1 && raw <= 4) return raw - 1;
+    if (!q?.correct_answer && q?.correct_answer !== 0) return null;
+    const raw = Number(q.correct_answer);
+    if (!Number.isFinite(raw)) return null;
     if (raw >= 0 && raw <= 3) return raw;
-    return 0;
+    return null;
   };
 
   const question = questions[currentQ] ?? null;
-  const correctIndex = question ? getCorrectIndex(question) : 0;
-  const isCorrect = selectedAnswer !== null && selectedAnswer === correctIndex;
+  const correctIndex = question ? getCorrectIndex(question) : null;
+  const isCorrect = selectedAnswer !== null && correctIndex !== null && selectedAnswer === correctIndex;
+  
+  // Score only counts questions that have been validated
   const score = answers.filter((a, i) => {
     const q = questions[i];
-    return q && a !== null && a === getCorrectIndex(q);
+    const cIdx = getCorrectIndex(q);
+    return a !== null && cIdx !== null && a === cIdx;
   }).length;
 
   const handleAnswerSelect = (index: number) => {
@@ -377,10 +367,35 @@ export default function Challenge() {
     setSelectedAnswer(index);
   };
 
-  const handleSubmit = () => {
-    if (selectedAnswer === null) return;
-    setShowResult(true);
-    setAnswers([...answers, selectedAnswer]);
+  const handleSubmit = async () => {
+    if (selectedAnswer === null || !question) return;
+    setIsValidating(true);
+    
+    try {
+      // Validate answer server-side
+      const result = await validateAnswer(question.id, selectedAnswer);
+      
+      // Update the question with the correct answer and explanation
+      const updatedQuestions = [...questions];
+      updatedQuestions[currentQ] = {
+        ...question,
+        correct_answer: result.correct_answer,
+        explanation: result.explanation,
+      };
+      setQuestions(updatedQuestions);
+      
+      setShowResult(true);
+      setAnswers([...answers, selectedAnswer]);
+    } catch (err) {
+      console.error("Error validating answer:", err);
+      toast({
+        title: "Error validating answer",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsValidating(false);
+    }
   };
 
   const handleNext = async () => {
@@ -389,10 +404,11 @@ export default function Challenge() {
       setSelectedAnswer(null);
       setShowResult(false);
     } else {
-      // Submit score
-      const finalScore = [...answers, selectedAnswer].filter((a, i) => {
+      // Submit score - count only validated answers
+      const finalScore = answers.filter((a, i) => {
         const q = questions[i];
-        return q && a !== null && a === getCorrectIndex(q);
+        const cIdx = getCorrectIndex(q);
+        return a !== null && cIdx !== null && a === cIdx;
       }).length;
 
       const isChallenger = challenge?.challenger_id === user?.id;
@@ -889,10 +905,17 @@ export default function Challenge() {
                       variant="neon"
                       size="lg"
                       className="flex-1 h-14 text-lg"
-                      disabled={selectedAnswer === null}
+                      disabled={selectedAnswer === null || isValidating}
                       onClick={handleSubmit}
                     >
-                      Submit Answer
+                      {isValidating ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Checking...
+                        </>
+                      ) : (
+                        "Submit Answer"
+                      )}
                     </Button>
                   ) : (
                     <Button
