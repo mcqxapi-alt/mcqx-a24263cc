@@ -134,12 +134,11 @@ export default function Practice() {
     setIsGenerating(true);
     clearCache(); // Clear any cached answer validations
 
-    // Fetch questions from the secure public view (no correct_answer exposed)
-    const { data, error } = await supabase
-      .from("questions_public")
-      .select("*")
-      .eq("chapter_id", chapter.id)
-      .limit(20);
+    // Fetch questions using secure RPC (no correct_answer exposed)
+    const { data, error } = await supabase.rpc("get_public_questions", {
+      p_chapter_id: chapter.id,
+      p_limit: 20,
+    });
 
     if (error) {
       console.error("Error fetching questions:", error);
@@ -168,12 +167,11 @@ export default function Practice() {
         if (aiError) {
           console.error("Error generating AI questions:", aiError);
         } else if (aiData?.questions) {
-          // AI questions are now stored in DB, fetch them again from public view
-          const { data: refreshedData } = await supabase
-            .from("questions_public")
-            .select("*")
-            .eq("chapter_id", chapter.id)
-            .limit(20);
+          // AI questions are now stored in DB, fetch them again using RPC
+          const { data: refreshedData } = await supabase.rpc("get_public_questions", {
+            p_chapter_id: chapter.id,
+            p_limit: 20,
+          });
           
           if (refreshedData) {
             allQuestions = refreshedData as Question[];

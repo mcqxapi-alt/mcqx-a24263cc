@@ -210,11 +210,10 @@ export default function Challenge() {
   const loadQuestionsAndPlay = async (challengeData: Challenge) => {
     clearCache(); // Clear any cached answer validations
     
-    // Fetch questions from secure public view (no correct_answer exposed)
-    const { data: questionsData, error } = await supabase
-      .from("questions_public")
-      .select("*")
-      .in("id", challengeData.question_ids);
+    // Fetch questions using secure RPC (no correct_answer exposed)
+    const { data: questionsData, error } = await supabase.rpc("get_questions_by_ids", {
+      p_question_ids: challengeData.question_ids,
+    });
 
     if (error || !questionsData || questionsData.length === 0) {
       toast({ title: "Failed to load questions", variant: "destructive" });
@@ -244,12 +243,11 @@ export default function Challenge() {
     setSelectedChapter(chapter);
     clearCache();
 
-    // Fetch questions from secure public view
-    const { data: questionsData, error: questionsError } = await supabase
-      .from("questions_public")
-      .select("*")
-      .eq("chapter_id", chapter.id)
-      .limit(20);
+    // Fetch questions using secure RPC
+    const { data: questionsData, error: questionsError } = await supabase.rpc("get_public_questions", {
+      p_chapter_id: chapter.id,
+      p_limit: 20,
+    });
 
     if (questionsError) {
       toast({ title: "Failed to load questions", variant: "destructive" });
@@ -278,15 +276,14 @@ export default function Challenge() {
         if (aiError) {
           console.error("Error generating AI questions:", aiError);
         } else if (aiData?.questions && aiData.questions.length > 0) {
-          // AI questions are stored in DB by the edge function, refresh from public view
-          const { data: refreshedData } = await supabase
-            .from("questions_public")
-            .select("*")
-            .eq("chapter_id", chapter.id)
-            .limit(20);
+          // AI questions are stored in DB by the edge function, refresh using RPC
+          const { data: refreshedData } = await supabase.rpc("get_public_questions", {
+            p_chapter_id: chapter.id,
+            p_limit: 20,
+          });
           
           if (refreshedData) {
-            allQuestions = refreshedData;
+            allQuestions = refreshedData as any[];
           }
         }
       } catch (err) {

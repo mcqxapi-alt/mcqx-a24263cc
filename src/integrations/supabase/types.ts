@@ -42,13 +42,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "bookmarks_question_id_fkey"
-            columns: ["question_id"]
-            isOneToOne: false
-            referencedRelation: "questions_public"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "bookmarks_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -276,13 +269,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "reports_question_id_fkey"
-            columns: ["question_id"]
-            isOneToOne: false
-            referencedRelation: "questions_public"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "reports_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -392,64 +378,47 @@ export type Database = {
       }
     }
     Views: {
-      questions_public: {
-        Row: {
-          chapter_id: string | null
-          created_at: string | null
-          id: string | null
-          option_a: string | null
-          option_b: string | null
-          option_c: string | null
-          option_d: string | null
-          source: Database["public"]["Enums"]["question_source"] | null
-          status: Database["public"]["Enums"]["question_status"] | null
-          text: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          chapter_id?: string | null
-          created_at?: string | null
-          id?: string | null
-          option_a?: string | null
-          option_b?: string | null
-          option_c?: string | null
-          option_d?: string | null
-          source?: Database["public"]["Enums"]["question_source"] | null
-          status?: Database["public"]["Enums"]["question_status"] | null
-          text?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          chapter_id?: string | null
-          created_at?: string | null
-          id?: string | null
-          option_a?: string | null
-          option_b?: string | null
-          option_c?: string | null
-          option_d?: string | null
-          source?: Database["public"]["Enums"]["question_source"] | null
-          status?: Database["public"]["Enums"]["question_status"] | null
-          text?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "questions_chapter_id_fkey"
-            columns: ["chapter_id"]
-            isOneToOne: false
-            referencedRelation: "chapters"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
+      get_public_questions: {
+        Args: { p_chapter_id: string; p_limit?: number }
+        Returns: {
+          chapter_id: string
+          created_at: string
+          id: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          source: Database["public"]["Enums"]["question_source"]
+          status: Database["public"]["Enums"]["question_status"]
+          text: string
+          updated_at: string
+        }[]
+      }
       get_question_answers: {
         Args: { p_question_ids: string[] }
         Returns: {
           correct_answer: number
           explanation: string
           question_id: string
+        }[]
+      }
+      get_questions_by_ids: {
+        Args: { p_question_ids: string[] }
+        Returns: {
+          chapter_id: string
+          created_at: string
+          id: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          source: Database["public"]["Enums"]["question_source"]
+          status: Database["public"]["Enums"]["question_status"]
+          text: string
+          updated_at: string
         }[]
       }
       has_role: {

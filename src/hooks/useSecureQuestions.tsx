@@ -36,17 +36,16 @@ export function useSecureQuestions() {
   const [isValidating, setIsValidating] = useState(false);
 
   /**
-   * Fetch questions from the public view (no correct_answer exposed)
+   * Fetch questions for a chapter using secure RPC (no correct_answer exposed)
    */
   const fetchQuestionsForChapter = useCallback(async (
     chapterId: string,
     limit: number = 20
   ): Promise<QuestionPublic[]> => {
-    const { data, error } = await supabase
-      .from("questions_public")
-      .select("*")
-      .eq("chapter_id", chapterId)
-      .limit(limit);
+    const { data, error } = await supabase.rpc("get_public_questions", {
+      p_chapter_id: chapterId,
+      p_limit: limit,
+    });
 
     if (error) {
       console.error("Error fetching questions:", error);
@@ -57,15 +56,14 @@ export function useSecureQuestions() {
   }, []);
 
   /**
-   * Fetch questions by their IDs (for challenges)
+   * Fetch questions by their IDs using secure RPC (for challenges)
    */
   const fetchQuestionsByIds = useCallback(async (
     questionIds: string[]
   ): Promise<QuestionPublic[]> => {
-    const { data, error } = await supabase
-      .from("questions_public")
-      .select("*")
-      .in("id", questionIds);
+    const { data, error } = await supabase.rpc("get_questions_by_ids", {
+      p_question_ids: questionIds,
+    });
 
     if (error) {
       console.error("Error fetching questions by IDs:", error);
@@ -73,7 +71,7 @@ export function useSecureQuestions() {
     }
 
     // Sort by the order of input IDs
-    const questionsMap = new Map((data || []).map(q => [q.id, q]));
+    const questionsMap = new Map((data || []).map((q: any) => [q.id, q]));
     return questionIds
       .map(id => questionsMap.get(id))
       .filter(Boolean) as QuestionPublic[];
