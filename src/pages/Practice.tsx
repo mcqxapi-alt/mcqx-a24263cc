@@ -61,6 +61,7 @@ export default function Practice() {
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [seenQuestionIds, setSeenQuestionIds] = useState<Set<string>>(new Set());
   const [currentQ, setCurrentQ] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -129,15 +130,16 @@ export default function Practice() {
     setStep("chapter");
   };
 
-  const handleChapterSelect = async (chapter: Chapter) => {
+  const handleChapterSelect = async (chapter: Chapter, excludeIds: Set<string> = new Set()) => {
     setSelectedChapter(chapter);
     setIsGenerating(true);
     clearCache(); // Clear any cached answer validations
 
-    // Fetch questions using secure RPC (no correct_answer exposed)
+    // Fetch more questions than needed so we can exclude previously seen ones
+    const fetchLimit = 50;
     const { data, error } = await supabase.rpc("get_public_questions", {
       p_chapter_id: chapter.id,
-      p_limit: 20,
+      p_limit: fetchLimit,
     });
 
     if (error) {
@@ -146,13 +148,17 @@ export default function Practice() {
       return;
     }
 
-    let allQuestions: Question[] = data ? ([...data] as Question[]) : [];
+    // Filter out previously seen questions
+    let availableQuestions: Question[] = data
+      ? ([...data] as Question[]).filter((q) => !excludeIds.has(q.id))
+      : [];
+    
     const targetCount = 10;
 
-    // If we don't have enough questions, generate AI ones
-    if (allQuestions.length < targetCount) {
+    // If we don't have enough unseen questions, generate AI ones
+    if (availableQuestions.length < targetCount) {
       try {
-        const neededCount = targetCount - allQuestions.length;
+        const neededCount = targetCount - availableQuestions.length;
         const { data: aiData, error: aiError } = await supabase.functions.invoke(
           "generate-mcqs",
           {
@@ -168,9 +174,11 @@ export default function Practice() {
         if (aiError) {
           console.error("Error generating AI questions:", aiError);
         } else if (aiData?.questions && Array.isArray(aiData.questions)) {
-          // The backend function persists generated questions and returns them with DB ids.
-          // Merge them into the current pool.
-          allQuestions = [...allQuestions, ...(aiData.questions as Question[])];
+          // Filter AI questions too in case they were persisted before
+          const newAiQuestions = (aiData.questions as Question[]).filter(
+            (q) => !excludeIds.has(q.id)
+          );
+          availableQuestions = [...availableQuestions, ...newAiQuestions];
         }
       } catch (err) {
         console.error("Failed to generate AI questions:", err);
@@ -179,8 +187,15 @@ export default function Practice() {
 
     setIsGenerating(false);
 
-    if (allQuestions.length > 0) {
-      const shuffled = allQuestions.sort(() => Math.random() - 0.5);
+    if (availableQuestions.length > 0) {
+      // Shuffle and take up to targetCount
+      const shuffled = availableQuestions.sort(() => Math.random() - 0.5).slice(0, targetCount);
+      
+      // Track these as seen for future retries
+      const newSeenIds = new Set(excludeIds);
+      shuffled.forEach((q) => newSeenIds.add(q.id));
+      setSeenQuestionIds(newSeenIds);
+      
       setQuestions(shuffled);
       setStep("practice");
       setCurrentQ(0);
@@ -188,7 +203,10 @@ export default function Practice() {
       setSelectedAnswer(null);
       setShowResult(false);
     } else {
-      alert("Unable to load questions. Please try again.");
+      toast({
+        title: "No more questions available",
+        description: "You've practiced all available questions for this chapter!",
+      });
     }
   };
 
@@ -243,6 +261,7 @@ export default function Practice() {
     setSelectedSubject(null);
     setSelectedChapter(null);
     setQuestions([]);
+    setSeenQuestionIds(new Set()); // Reset seen questions for new subject
     setCurrentQ(0);
     setAnswers([]);
     setSelectedAnswer(null);
@@ -256,7 +275,8 @@ export default function Practice() {
       setAnswers([]);
       setSelectedAnswer(null);
       setShowResult(false);
-      handleChapterSelect(selectedChapter);
+      // Pass seen question IDs to get different questions on retry
+      handleChapterSelect(selectedChapter, seenQuestionIds);
     }
   };
 
