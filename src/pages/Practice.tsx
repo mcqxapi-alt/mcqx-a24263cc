@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { RichText } from "@/components/RichText";
 import mcqxLogo from "@/assets/mcqx-logo.png";
 
 type Subject = {
@@ -575,7 +576,7 @@ export default function Practice() {
                       </motion.span>
                     )}
                   </div>
-                  <p className="text-lg sm:text-xl leading-relaxed font-medium">{question.text}</p>
+                  <RichText as="p" className="text-lg sm:text-xl leading-relaxed font-medium" text={question.text} />
                 </motion.div>
 
                 {/* Options */}
@@ -644,9 +645,9 @@ export default function Practice() {
                           ) : (
                             letter
                           )}
-                        </motion.span>
-                        <span className="relative z-10 flex-1 text-base">{option}</span>
-                      </motion.button>
+                         </motion.span>
+                         <RichText as="span" className="relative z-10 flex-1 text-base" text={option} />
+                       </motion.button>
                     );
                   })}
                 </div>
@@ -690,11 +691,13 @@ export default function Practice() {
                           >
                             {isCorrect ? "Correct!" : "Incorrect"}
                           </span>
-                        </motion.div>
-                        <p className="text-muted-foreground leading-relaxed">
-                          {question.explanation || "Keep practicing to master this topic!"}
-                        </p>
-                      </div>
+                         </motion.div>
+                         <RichText
+                           as="p"
+                           className="text-muted-foreground leading-relaxed"
+                           text={question.explanation || "Keep practicing to master this topic!"}
+                         />
+                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>

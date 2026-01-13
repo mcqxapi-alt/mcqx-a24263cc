@@ -23,6 +23,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useSecureQuestions, QuestionPublic } from "@/hooks/useSecureQuestions";
 import { useToast } from "@/hooks/use-toast";
+import { RichText } from "@/components/RichText";
 import mcqxLogo from "@/assets/mcqx-logo.png";
 
 type Subject = {
@@ -814,7 +815,7 @@ export default function Challenge() {
                     <span className="shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center text-lg font-bold text-primary">
                       {currentQ + 1}
                     </span>
-                    <p className="text-xl leading-relaxed pt-2">{question.text}</p>
+                    <RichText as="p" className="text-xl leading-relaxed pt-2" text={question.text} />
                   </div>
 
                   <div className="space-y-4">
@@ -856,12 +857,12 @@ export default function Challenge() {
                               ? "bg-primary text-primary-foreground"
                               : "bg-secondary group-hover:bg-primary/20"
                           }`}>
-                            {variant === "correct" ? <Check className="w-5 h-5" /> : 
-                             variant === "wrong" ? <X className="w-5 h-5" /> : 
-                             String.fromCharCode(65 + index)}
-                          </span>
-                          <span className="text-lg">{option}</span>
-                        </motion.button>
+                             {variant === "correct" ? <Check className="w-5 h-5" /> : 
+                              variant === "wrong" ? <X className="w-5 h-5" /> : 
+                              String.fromCharCode(65 + index)}
+                           </span>
+                           <RichText as="span" className="text-lg" text={option} />
+                         </motion.button>
                       );
                     })}
                   </div>
@@ -880,9 +881,9 @@ export default function Challenge() {
                         <Sparkles className="w-4 h-4 text-primary" />
                       </div>
                       <span className="font-semibold text-lg">Explanation</span>
-                    </div>
-                    <p className="text-muted-foreground leading-relaxed">{question.explanation}</p>
-                  </motion.div>
+                      </div>
+                      <RichText as="p" className="text-muted-foreground leading-relaxed" text={question.explanation} />
+                    </motion.div>
                 )}
 
                 {/* Actions */}

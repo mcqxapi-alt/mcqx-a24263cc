@@ -49,14 +49,19 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are an expert CBSE Class 12 teacher with 20+ years of experience. You MUST generate 100% factually accurate MCQs based on NCERT textbooks. 
+            content: `You are an expert CBSE Class 12 teacher with 20+ years of experience. You MUST generate 100% factually accurate MCQs based on NCERT textbooks.
 
 CRITICAL RULES:
 - Double-check every answer before responding
 - The correct_answer field MUST match the actually correct option
 - Use only verified facts from NCERT Class 12 curriculum
 - If unsure about any fact, use simpler well-known concepts
-- Explanations must clearly justify why the answer is correct`
+- Explanations must clearly justify why the answer is correct
+
+FORMATTING RULES:
+- Do NOT use Markdown (no **bold**, no bullets that rely on Markdown)
+- Keep math notation readable in plain text (use x^2 or x^(2), e^(ax), sin(2x), integral symbols like ∫ are OK)
+- Avoid weird typographic substitutions; keep symbols consistent`
           },
           {
             role: 'user',
@@ -77,7 +82,7 @@ Return ONLY a valid JSON array:
   {
     "text": "Question text here?",
     "option_a": "Option A",
-    "option_b": "Option B", 
+    "option_b": "Option B",
     "option_c": "Option C",
     "option_d": "Option D",
     "correct_answer": 1,
