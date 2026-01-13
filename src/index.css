@@ -117,6 +117,42 @@
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--muted-foreground) / 0.5);
   }
+
+  /* KaTeX styling for dark mode */
+  .katex {
+    font-size: 1.1em;
+    color: hsl(var(--foreground));
+  }
+
+  .katex-wrapper {
+    display: inline;
+  }
+
+  .katex-wrapper.block {
+    display: block;
+  }
+
+  .katex .mord,
+  .katex .mop,
+  .katex .mbin,
+  .katex .mrel,
+  .katex .mopen,
+  .katex .mclose,
+  .katex .mpunct,
+  .katex .minner {
+    color: hsl(var(--foreground));
+  }
+
+  /* Math expression styling */
+  .katex-display {
+    margin: 0.75rem 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .katex-display > .katex {
+    white-space: nowrap;
+  }
 }
 
 @layer components {

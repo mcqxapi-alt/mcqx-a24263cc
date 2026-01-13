@@ -58,10 +58,18 @@ CRITICAL RULES:
 - If unsure about any fact, use simpler well-known concepts
 - Explanations must clearly justify why the answer is correct
 
-FORMATTING RULES:
-- Do NOT use Markdown (no **bold**, no bullets that rely on Markdown)
-- Keep math notation readable in plain text (use x^2 or x^(2), e^(ax), sin(2x), integral symbols like ∫ are OK)
-- Avoid weird typographic substitutions; keep symbols consistent`
+MATH FORMATTING RULES (IMPORTANT):
+- Use LaTeX notation wrapped in single dollar signs for inline math: $\\frac{1}{2}$, $x^2$, $\\sqrt{x}$
+- Use double dollar signs for display/block math: $$\\int_0^1 x^2 dx$$
+- For fractions use: $\\frac{numerator}{denominator}$
+- For integrals use: $\\int$, $\\int_a^b$, $\\iint$, $\\oint$
+- For limits use: $\\lim_{x \\to a}$
+- For matrices use: $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$
+- For square roots use: $\\sqrt{x}$, $\\sqrt[n]{x}$
+- For Greek letters use: $\\alpha$, $\\beta$, $\\theta$, $\\pi$, etc.
+- For trigonometry use: $\\sin$, $\\cos$, $\\tan$, etc.
+- For summation/product use: $\\sum_{i=1}^{n}$, $\\prod_{i=1}^{n}$
+- Keep text outside math expressions plain (no Markdown)`
           },
           {
             role: 'user',
@@ -70,23 +78,23 @@ FORMATTING RULES:
 IMPORTANT: Verify each answer is 100% correct before including it. Use only NCERT-verified facts.
 
 For each question:
-1. Question text (clear, unambiguous)
+1. Question text (clear, unambiguous, use LaTeX for math: $...$)
 2. Four distinct options (A, B, C, D) - only ONE should be correct
 3. The correct answer number (1=A, 2=B, 3=C, 4=D)
-4. Explanation proving why the answer is correct
+4. Explanation proving why the answer is correct (use LaTeX for math)
 
 VERIFY: Before outputting, mentally solve each question to confirm the correct_answer matches the right option.
 
 Return ONLY a valid JSON array:
 [
   {
-    "text": "Question text here?",
-    "option_a": "Option A",
-    "option_b": "Option B",
-    "option_c": "Option C",
-    "option_d": "Option D",
+    "text": "Find the value of $\\\\frac{d}{dx}(x^2)$",
+    "option_a": "$2x$",
+    "option_b": "$x^2$",
+    "option_c": "$2$",
+    "option_d": "$x$",
     "correct_answer": 1,
-    "explanation": "Clear explanation proving this is correct"
+    "explanation": "Using the power rule, $\\\\frac{d}{dx}(x^n) = nx^{n-1}$, so $\\\\frac{d}{dx}(x^2) = 2x$"
   }
 ]`
           }
