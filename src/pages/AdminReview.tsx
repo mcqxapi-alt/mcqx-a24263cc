@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Button } from "@/components/ui/button";
+import { RichText } from "@/components/RichText";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -268,7 +269,7 @@ export default function AdminReview() {
                   {report.question && (
                     <div className="space-y-3">
                       <div>
-                        <p className="font-medium mb-2">{report.question.text}</p>
+                        <RichText as="p" className="font-medium mb-2" text={report.question.text} />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           {["A", "B", "C", "D"].map((letter, idx) => {
                             const optionKey = `option_${letter.toLowerCase()}` as keyof typeof report.question;
@@ -283,7 +284,7 @@ export default function AdminReview() {
                                 }`}
                               >
                                 <span className="font-medium mr-2">{letter}.</span>
-                                {report.question![optionKey]}
+                                <RichText as="span" text={String(report.question![optionKey] ?? "")} />
                                 {isCorrect && (
                                   <Badge className="ml-2 bg-green-500">Correct</Badge>
                                 )}
@@ -296,7 +297,7 @@ export default function AdminReview() {
                       {report.question.explanation && (
                         <div className="bg-muted/30 rounded-lg p-4">
                           <p className="text-sm font-medium mb-1">Explanation:</p>
-                          <p className="text-sm text-muted-foreground">{report.question.explanation}</p>
+                          <RichText as="p" className="text-sm text-muted-foreground" text={report.question.explanation} />
                         </div>
                       )}
                     </div>
