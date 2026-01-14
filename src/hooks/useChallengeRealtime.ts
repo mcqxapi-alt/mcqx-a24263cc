@@ -37,7 +37,7 @@ type UseChallengeRealtimeOptions = {
   userId: string | null;
   onChallengeUpdate?: (challenge: RealtimeChallenge) => void;
   onOpponentProgress?: (progress: ChallengeProgress) => void;
-  onOpponentJoined?: () => void;
+  onOpponentJoined?: (opponentId: string) => void;
   onBothReady?: (startedAt: string) => void;
   onOpponentFinished?: () => void;
 };
@@ -75,10 +75,10 @@ export function useChallengeRealtime({
           const newData = payload.new as RealtimeChallenge;
           onChallengeUpdate?.(newData);
 
-          // Check if opponent just joined
+          // Check if opponent just joined - pass the new opponent_id
           if (payload.old && !(payload.old as any).opponent_id && newData.opponent_id) {
-            console.log("[Realtime] Opponent joined!");
-            onOpponentJoined?.();
+            console.log("[Realtime] Opponent joined!", newData.opponent_id);
+            onOpponentJoined?.(newData.opponent_id);
           }
 
           // Check if both are now ready

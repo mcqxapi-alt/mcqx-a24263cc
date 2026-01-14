@@ -79,14 +79,14 @@ export default function Challenge() {
     setOpponentProgress(progress.current_question);
   }, []);
 
-  const handleOpponentJoined = useCallback(async () => {
-    if (!challenge) return;
+  const handleOpponentJoined = useCallback(async (opponentId: string) => {
+    console.log("[Challenge] Opponent joined with ID:", opponentId);
     
-    // Fetch opponent profile
+    // Fetch opponent profile using the ID from the realtime event
     const { data: opponentData } = await supabase
       .from("profiles")
       .select("display_name")
-      .eq("id", challenge.opponent_id!)
+      .eq("id", opponentId)
       .single();
     setOpponentProfile(opponentData);
     
@@ -94,9 +94,10 @@ export default function Challenge() {
     setStep("lobby");
     
     toast({ title: "Opponent joined!", description: "Get ready to battle!" });
-  }, [challenge, toast]);
+  }, [toast]);
 
   const handleBothReady = useCallback((startedAt: string) => {
+    console.log("[Challenge] Both ready! Starting countdown at:", startedAt);
     setStep("countdown");
   }, []);
 
