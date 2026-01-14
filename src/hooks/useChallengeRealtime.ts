@@ -81,13 +81,11 @@ export function useChallengeRealtime({
             onOpponentJoined?.(newData.opponent_id);
           }
 
-          // Check if both are now ready
-          if (
-            newData.challenger_ready &&
-            newData.opponent_ready &&
-            newData.started_at &&
-            (!(payload.old as any)?.challenger_ready || !(payload.old as any)?.opponent_ready)
-          ) {
+          // Check if the match is scheduled to start (server sets started_at when both are ready)
+          // IMPORTANT: don't rely on ready flags changing in the same UPDATE as started_at.
+          // In our flow, ready is updated first, then started_at/status are updated in a second UPDATE.
+          const startedAtJustSet = !!newData.started_at && !(payload.old as any)?.started_at;
+          if (newData.challenger_ready && newData.opponent_ready && newData.started_at && startedAtJustSet) {
             console.log("[Realtime] Both ready, starting at:", newData.started_at);
             onBothReady?.(newData.started_at);
           }
