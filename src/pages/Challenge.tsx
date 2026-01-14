@@ -90,22 +90,34 @@ export default function Challenge() {
       .single();
     setOpponentProfile(opponentData);
     
-    // Move to lobby
-    setStep("lobby");
-    
-    toast({ title: "Opponent joined!", description: "Get ready to battle!" });
+    // Only move to lobby if we're not already playing
+    setStep(currentStep => {
+      if (currentStep === "play" || currentStep === "waiting" || currentStep === "result") {
+        return currentStep; // Don't interrupt gameplay
+      }
+      toast({ title: "Opponent joined!", description: "Get ready to battle!" });
+      return "lobby";
+    });
   }, [toast]);
 
   const handleBothReady = useCallback((startedAt: string) => {
-    console.log("[Challenge] Both ready! Starting game...");
-    // Update local challenge state with started_at so ChallengePlay can use it
-    setChallenge(prev => prev ? { ...prev, started_at: startedAt, status: "playing" } : prev);
-    setIsStartingGame(true);
-    // Brief delay to show "Starting Quiz..." then go to play
-    setTimeout(() => {
-      setIsStartingGame(false);
-      setStep("play");
-    }, 1500);
+    // Only trigger if we're still in the lobby - prevents glitches during gameplay
+    setStep(currentStep => {
+      if (currentStep !== "lobby") {
+        console.log("[Challenge] Ignoring handleBothReady - not in lobby, current step:", currentStep);
+        return currentStep;
+      }
+      console.log("[Challenge] Both ready! Starting game...");
+      // Update local challenge state with started_at so ChallengePlay can use it
+      setChallenge(prev => prev ? { ...prev, started_at: startedAt, status: "playing" } : prev);
+      setIsStartingGame(true);
+      // Brief delay to show "Starting Quiz..." then go to play
+      setTimeout(() => {
+        setIsStartingGame(false);
+        setStep("play");
+      }, 1500);
+      return currentStep; // Keep lobby during animation
+    });
   }, []);
 
   const handleOpponentFinished = useCallback(() => {
