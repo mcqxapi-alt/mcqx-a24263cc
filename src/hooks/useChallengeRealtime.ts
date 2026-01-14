@@ -1,6 +1,8 @@
-import { useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+
+export type ConnectionStatus = "connecting" | "connected" | "reconnecting" | "disconnected";
 
 export type ChallengeStatus = "open" | "lobby" | "playing" | "finished" | "closed";
 
@@ -53,6 +55,7 @@ export function useChallengeRealtime({
 }: UseChallengeRealtimeOptions) {
   const channelRef = useRef<RealtimeChannel | null>(null);
   const progressChannelRef = useRef<RealtimeChannel | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("connecting");
 
   // Subscribe to challenge updates
   useEffect(() => {
@@ -106,6 +109,11 @@ export function useChallengeRealtime({
       )
       .subscribe((status) => {
         console.log("[Realtime] Subscription status:", status);
+        if (status === "SUBSCRIBED") {
+          setConnectionStatus("connected");
+        } else if (status === "TIMED_OUT" || status === "CLOSED" || status === "CHANNEL_ERROR") {
+          setConnectionStatus("disconnected");
+        }
       });
 
     channelRef.current = channel;
@@ -281,6 +289,7 @@ export function useChallengeRealtime({
   );
 
   return {
+    connectionStatus,
     updateProgress,
     setReady,
     recordAnswer,
