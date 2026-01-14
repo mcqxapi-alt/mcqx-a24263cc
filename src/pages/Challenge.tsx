@@ -336,12 +336,13 @@ export default function Challenge() {
     }
 
     let allQuestions = questionsData || [];
-    const targetCount = 10;
+    const minRequired = 5;
 
-    // Generate AI questions if needed
-    if (allQuestions.length < targetCount) {
+    // Only generate AI questions if we don't have enough to play
+    // This avoids the slow AI call when we have sufficient questions
+    if (allQuestions.length < minRequired) {
       try {
-        const neededCount = Math.max(5, targetCount - allQuestions.length);
+        const neededCount = 10; // Generate a batch for future use
         const { data: aiData, error: aiError } = await supabase.functions.invoke(
           "generate-mcqs",
           {
@@ -362,7 +363,7 @@ export default function Challenge() {
       }
     }
 
-    if (allQuestions.length < 5) {
+    if (allQuestions.length < minRequired) {
       toast({ 
         title: "Unable to load questions", 
         description: "Please try again or select a different chapter.",
@@ -691,7 +692,10 @@ export default function Challenge() {
                       <div className="absolute inset-0 blur-2xl bg-primary/40 animate-pulse-ring" />
                       <Loader2 className="w-12 h-12 animate-spin text-primary relative" />
                     </div>
-                    <p className="text-muted-foreground font-medium">Creating challenge...</p>
+                    <div className="text-center">
+                      <p className="text-foreground font-medium">Setting up your battle arena...</p>
+                      <p className="text-muted-foreground text-sm mt-1">Loading questions</p>
+                    </div>
                   </motion.div>
                 ) : (
                   <div className="space-y-3">
