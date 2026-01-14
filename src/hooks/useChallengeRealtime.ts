@@ -58,6 +58,8 @@ export function useChallengeRealtime({
   useEffect(() => {
     if (!challengeId) return;
 
+    console.log("[Realtime] Subscribing to challenge:", challengeId);
+
     const channel = supabase
       .channel(`challenge:${challengeId}`)
       .on(
@@ -69,11 +71,13 @@ export function useChallengeRealtime({
           filter: `id=eq.${challengeId}`,
         },
         (payload) => {
+          console.log("[Realtime] Challenge update received:", payload.new);
           const newData = payload.new as RealtimeChallenge;
           onChallengeUpdate?.(newData);
 
           // Check if opponent just joined
           if (payload.old && !(payload.old as any).opponent_id && newData.opponent_id) {
+            console.log("[Realtime] Opponent joined!");
             onOpponentJoined?.();
           }
 
@@ -84,6 +88,7 @@ export function useChallengeRealtime({
             newData.started_at &&
             (!(payload.old as any)?.challenger_ready || !(payload.old as any)?.opponent_ready)
           ) {
+            console.log("[Realtime] Both ready, starting at:", newData.started_at);
             onBothReady?.(newData.started_at);
           }
 
@@ -95,16 +100,20 @@ export function useChallengeRealtime({
               newData[opponentFinishedField] &&
               !(payload.old as any)?.[opponentFinishedField]
             ) {
+              console.log("[Realtime] Opponent finished!");
               onOpponentFinished?.();
             }
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("[Realtime] Subscription status:", status);
+      });
 
     channelRef.current = channel;
 
     return () => {
+      console.log("[Realtime] Unsubscribing from challenge:", challengeId);
       channel.unsubscribe();
     };
   }, [challengeId, userId, onChallengeUpdate, onOpponentJoined, onBothReady, onOpponentFinished]);
