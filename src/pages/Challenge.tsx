@@ -49,6 +49,7 @@ export default function Challenge() {
   const { toast } = useToast();
   
   const [step, setStep] = useState<Step>("menu");
+  const [countdownStartedAt, setCountdownStartedAt] = useState<string | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [challenge, setChallenge] = useState<RealtimeChallenge | null>(null);
@@ -98,6 +99,7 @@ export default function Challenge() {
 
   const handleBothReady = useCallback((startedAt: string) => {
     console.log("[Challenge] Both ready! Starting countdown at:", startedAt);
+    setCountdownStartedAt(startedAt);
     setStep("countdown");
   }, []);
 
@@ -418,16 +420,18 @@ export default function Challenge() {
     setIsSettingReady(true);
     const startedAt = await setReady(isChallenger);
     setIsSettingReady(false);
-    
+
     // If both players are ready, immediately start countdown
     // (don't rely solely on realtime callback which can be delayed)
     if (startedAt) {
       console.log("[Challenge] Both ready! Starting countdown at:", startedAt);
+      setCountdownStartedAt(startedAt);
       setStep("countdown");
     }
   };
 
   const handleCountdownComplete = () => {
+    setCountdownStartedAt(null);
     setStep("play");
   };
 
@@ -496,6 +500,7 @@ export default function Challenge() {
     : null;
   const myName = isChallenger ? challengerName : (opponentName || "You");
   const theirName = isChallenger ? (opponentName || "Opponent") : challengerName;
+  const countdownAt = countdownStartedAt || challenge?.started_at || null;
 
   return (
     <div className="min-h-screen bg-background overflow-hidden">
@@ -535,12 +540,9 @@ export default function Challenge() {
 
       {/* Countdown overlay */}
       <AnimatePresence>
-        {step === "countdown" && challenge?.started_at && (
-          <ChallengeCountdown 
-            startedAt={challenge.started_at} 
-            onComplete={handleCountdownComplete} 
-          />
-        )}
+        {step === "countdown" && countdownAt ? (
+          <ChallengeCountdown startedAt={countdownAt} onComplete={handleCountdownComplete} />
+        ) : null}
       </AnimatePresence>
 
       <main className="relative pt-32 sm:pt-40 pb-12 px-4 min-h-screen">

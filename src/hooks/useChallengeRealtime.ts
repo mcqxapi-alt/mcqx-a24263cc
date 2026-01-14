@@ -204,30 +204,35 @@ export function useChallengeRealtime({
       if (data?.challenger_ready && data?.opponent_ready) {
         // Set start time (4 seconds from now for countdown)
         const startTime = new Date(Date.now() + 4000).toISOString();
-        const { error } = await supabase
+
+        // IMPORTANT: Prevent both clients from overwriting started_at.
+        // Use `.is(column, null)` (not `.eq(column, null)`) to reliably filter NULL.
+        const { data: updated, error } = await supabase
           .from("challenges")
           .update({
             started_at: startTime,
             status: "playing",
           })
           .eq("id", challengeId)
-          .eq("started_at", null); // Only set if not already set (prevent race)
+          .is("started_at", null)
+          .select("started_at");
 
-        if (!error) {
-          console.log("[Realtime] Set start time to:", startTime);
-          return startTime;
+        if (!error && updated && updated.length > 0 && (updated[0] as any)?.started_at) {
+          const startedAt = (updated[0] as any).started_at as string;
+          console.log("[Realtime] Set start time to:", startedAt);
+          return startedAt;
         }
-        
-        // If update failed due to race, fetch the actual started_at
+
+        // Another client likely set it first (or the update didn't match). Fetch the actual started_at.
         const { data: refreshed } = await supabase
           .from("challenges")
           .select("started_at")
           .eq("id", challengeId)
           .single();
-        
+
         return refreshed?.started_at || null;
       }
-      
+
       return null;
     },
     [challengeId]
