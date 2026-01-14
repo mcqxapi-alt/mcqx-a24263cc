@@ -136,14 +136,30 @@ Return ONLY a valid JSON array:
     try {
       // Try to extract JSON from the response (in case there's extra text)
       const jsonMatch = content.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        questions = JSON.parse(jsonMatch[0]);
-      } else {
-        questions = JSON.parse(content);
-      }
+      let jsonStr = jsonMatch ? jsonMatch[0] : content;
+      
+      // Fix common JSON issues with LaTeX backslashes
+      // The AI sometimes returns invalid escape sequences like \f, \s, \t that break JSON
+      // We need to properly escape backslashes that aren't already part of valid escape sequences
+      jsonStr = jsonStr.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+      
+      questions = JSON.parse(jsonStr);
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError);
-      throw new Error('Failed to parse AI-generated questions');
+      
+      // Fallback: try a more aggressive cleanup
+      try {
+        let jsonStr = content.match(/\[[\s\S]*\]/)?.[0] || content;
+        // Replace all backslashes with double backslashes, then fix over-escaped ones
+        jsonStr = jsonStr
+          .replace(/\\\\/g, '<<<DOUBLE_BACKSLASH>>>')
+          .replace(/\\/g, '\\\\')
+          .replace(/<<<DOUBLE_BACKSLASH>>>/g, '\\\\');
+        questions = JSON.parse(jsonStr);
+      } catch (fallbackError) {
+        console.error('Fallback parse also failed:', fallbackError);
+        throw new Error('Failed to parse AI-generated questions');
+      }
     }
 
     // Validate the structure
