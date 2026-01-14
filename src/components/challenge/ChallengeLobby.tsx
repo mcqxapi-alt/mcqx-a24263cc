@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
-import { Users, Check, Copy, Loader2 } from "lucide-react";
+import { Users, Check, Copy, Loader2, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import type { ConnectionStatus } from "@/hooks/useChallengeRealtime";
 
 type ChallengeLobbyProps = {
   challengeId: string;
@@ -14,6 +15,7 @@ type ChallengeLobbyProps = {
   questionCount: number;
   onReady: () => void;
   isSettingReady: boolean;
+  connectionStatus: ConnectionStatus;
 };
 
 export function ChallengeLobby({
@@ -27,6 +29,7 @@ export function ChallengeLobby({
   questionCount,
   onReady,
   isSettingReady,
+  connectionStatus,
 }: ChallengeLobbyProps) {
   const { toast } = useToast();
   const myReady = isChallenger ? challengerReady : opponentReady;
@@ -55,6 +58,31 @@ export function ChallengeLobby({
       >
         <Users className="w-5 h-5 text-primary" />
         <span className="text-sm font-medium">Live Duel Lobby</span>
+        <span className="mx-1 text-muted-foreground">•</span>
+        {connectionStatus === "connected" && (
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-green-500 text-xs font-medium">Live</span>
+          </div>
+        )}
+        {connectionStatus === "connecting" && (
+          <div className="flex items-center gap-1.5">
+            <Loader2 className="w-3 h-3 text-yellow-500 animate-spin" />
+            <span className="text-yellow-500 text-xs font-medium">Connecting...</span>
+          </div>
+        )}
+        {connectionStatus === "reconnecting" && (
+          <div className="flex items-center gap-1.5">
+            <Loader2 className="w-3 h-3 text-orange-500 animate-spin" />
+            <span className="text-orange-500 text-xs font-medium">Reconnecting...</span>
+          </div>
+        )}
+        {connectionStatus === "disconnected" && (
+          <div className="flex items-center gap-1.5">
+            <WifiOff className="w-3 h-3 text-red-500" />
+            <span className="text-red-500 text-xs font-medium">Disconnected</span>
+          </div>
+        )}
       </motion.div>
 
       <h2 className="font-display text-4xl font-bold mb-3">Ready to Battle?</h2>

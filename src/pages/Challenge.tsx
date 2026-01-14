@@ -106,7 +106,7 @@ export default function Challenge() {
   }, []);
 
   // Setup realtime subscriptions
-  const { setReady, updateProgress, recordAnswer, finishChallenge } = useChallengeRealtime({
+  const { connectionStatus, setReady, updateProgress, recordAnswer, finishChallenge } = useChallengeRealtime({
     challengeId: challenge?.id || null,
     userId: user?.id || null,
     onChallengeUpdate: handleChallengeUpdate,
@@ -744,6 +744,7 @@ export default function Challenge() {
                 questionCount={questions.length}
                 onReady={handleReady}
                 isSettingReady={isSettingReady}
+                connectionStatus={connectionStatus}
               />
             )}
 
