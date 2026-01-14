@@ -177,8 +177,8 @@ export function useChallengeRealtime({
 
   // Set ready status
   const setReady = useCallback(
-    async (isChallenger: boolean) => {
-      if (!challengeId) return;
+    async (isChallenger: boolean): Promise<string | null> => {
+      if (!challengeId) return null;
 
       const updateField = isChallenger ? "challenger_ready" : "opponent_ready";
 
@@ -191,21 +191,44 @@ export function useChallengeRealtime({
       // Check if both are ready now
       const { data } = await supabase
         .from("challenges")
-        .select("challenger_ready, opponent_ready")
+        .select("challenger_ready, opponent_ready, started_at")
         .eq("id", challengeId)
         .single();
+
+      // If started_at is already set by the other player, return it
+      if (data?.started_at) {
+        console.log("[Realtime] Game already starting at:", data.started_at);
+        return data.started_at;
+      }
 
       if (data?.challenger_ready && data?.opponent_ready) {
         // Set start time (4 seconds from now for countdown)
         const startTime = new Date(Date.now() + 4000).toISOString();
-        await supabase
+        const { error } = await supabase
           .from("challenges")
           .update({
             started_at: startTime,
             status: "playing",
           })
-          .eq("id", challengeId);
+          .eq("id", challengeId)
+          .eq("started_at", null); // Only set if not already set (prevent race)
+
+        if (!error) {
+          console.log("[Realtime] Set start time to:", startTime);
+          return startTime;
+        }
+        
+        // If update failed due to race, fetch the actual started_at
+        const { data: refreshed } = await supabase
+          .from("challenges")
+          .select("started_at")
+          .eq("id", challengeId)
+          .single();
+        
+        return refreshed?.started_at || null;
       }
+      
+      return null;
     },
     [challengeId]
   );

@@ -416,8 +416,15 @@ export default function Challenge() {
   const handleReady = async () => {
     if (!challenge) return;
     setIsSettingReady(true);
-    await setReady(isChallenger);
+    const startedAt = await setReady(isChallenger);
     setIsSettingReady(false);
+    
+    // If both players are ready, immediately start countdown
+    // (don't rely solely on realtime callback which can be delayed)
+    if (startedAt) {
+      console.log("[Challenge] Both ready! Starting countdown at:", startedAt);
+      setStep("countdown");
+    }
   };
 
   const handleCountdownComplete = () => {
