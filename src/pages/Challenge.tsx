@@ -482,7 +482,11 @@ export default function Challenge() {
 
   // Get display names
   const challengerName = challengerProfile?.display_name || "Challenger";
-  const opponentName = opponentProfile?.display_name || null;
+  // Important: opponent might not have a readable/created profile row, so we must not
+  // use profile presence as the "has joined" signal.
+  const opponentName = challenge?.opponent_id
+    ? opponentProfile?.display_name || "Opponent"
+    : null;
   const myName = isChallenger ? challengerName : (opponentName || "You");
   const theirName = isChallenger ? (opponentName || "Opponent") : challengerName;
 
