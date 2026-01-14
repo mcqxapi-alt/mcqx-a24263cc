@@ -63,7 +63,7 @@ export function ChallengeResult({
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="text-center py-8"
+      className="text-center py-4 px-2"
     >
       {isComplete && result ? (
         <>
@@ -73,11 +73,11 @@ export function ChallengeResult({
             transition={{ type: "spring", delay: 0.2 }}
           >
             {result === "win" ? (
-              <Crown className="w-20 h-20 mx-auto text-yellow-500" />
+              <Crown className="w-16 h-16 sm:w-20 sm:h-20 mx-auto text-yellow-500" />
             ) : result === "draw" ? (
-              <Swords className="w-20 h-20 mx-auto text-primary" />
+              <Swords className="w-16 h-16 sm:w-20 sm:h-20 mx-auto text-primary" />
             ) : (
-              <Trophy className="w-20 h-20 mx-auto text-muted-foreground" />
+              <Trophy className="w-16 h-16 sm:w-20 sm:h-20 mx-auto text-muted-foreground" />
             )}
           </motion.div>
 
@@ -85,7 +85,7 @@ export function ChallengeResult({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="font-display text-4xl font-bold mt-6"
+            className="font-display text-2xl sm:text-3xl font-bold mt-4"
           >
             {result === "win" ? (
               <span className="text-yellow-500">🏆 Victory!</span>
@@ -101,34 +101,34 @@ export function ChallengeResult({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
-              className="text-muted-foreground mt-2"
+              className="text-muted-foreground text-sm mt-1"
             >
               {chapterInfo.subject_name} • {chapterInfo.name}
             </motion.p>
           )}
 
-          {/* Score comparison */}
+          {/* Score comparison - Compact */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="flex items-center justify-center gap-8 py-8"
+            className="flex items-center justify-center gap-5 sm:gap-8 py-6"
           >
             <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-1">You</p>
-              <p className="font-display text-5xl font-bold neon-text">{myScore}</p>
-              <div className="flex items-center justify-center gap-1 mt-2 text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground mb-0.5">You</p>
+              <p className="font-display text-4xl sm:text-5xl font-bold neon-text">{myScore}</p>
+              <div className="flex items-center justify-center gap-1 mt-1.5 text-xs text-muted-foreground">
                 <Clock className="w-3 h-3" />
                 <span>{formatTime(myTimeMs)}</span>
               </div>
             </div>
             
-            <div className="text-3xl font-bold text-muted-foreground">vs</div>
+            <div className="text-2xl font-bold text-muted-foreground">vs</div>
             
             <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-1">{theirName}</p>
-              <p className="font-display text-5xl font-bold text-muted-foreground">{theirScore}</p>
-              <div className="flex items-center justify-center gap-1 mt-2 text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground mb-0.5">{theirName}</p>
+              <p className="font-display text-4xl sm:text-5xl font-bold text-muted-foreground">{theirScore}</p>
+              <div className="flex items-center justify-center gap-1 mt-1.5 text-xs text-muted-foreground">
                 <Clock className="w-3 h-3" />
                 <span>{formatTime(theirTimeMs)}</span>
               </div>
@@ -141,7 +141,7 @@ export function ChallengeResult({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6 }}
-              className="text-sm text-muted-foreground mb-6"
+              className="text-xs text-muted-foreground mb-4"
             >
               Same score — {result === "win" ? "you were faster!" : "opponent was faster!"}
             </motion.p>
@@ -149,28 +149,28 @@ export function ChallengeResult({
         </>
       ) : (
         <>
-          <Trophy className="w-20 h-20 mx-auto text-primary" />
-          <h2 className="font-display text-3xl font-bold mt-6">Challenge Complete!</h2>
-          <p className="text-muted-foreground mt-2">
+          <Trophy className="w-16 h-16 mx-auto text-primary" />
+          <h2 className="font-display text-2xl font-bold mt-4">Challenge Complete!</h2>
+          <p className="text-muted-foreground mt-1 text-sm">
             Your score: <span className="font-bold text-primary">{myScore}</span>
           </p>
-          <p className="text-sm text-muted-foreground mt-4">
+          <p className="text-xs text-muted-foreground mt-3">
             Waiting for opponent to complete...
           </p>
         </>
       )}
 
-      {/* Actions */}
+      {/* Actions - Stack on mobile */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.7 }}
-        className="flex gap-3 justify-center mt-8"
+        className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center mt-6"
       >
-        <Button variant="neon-outline" size="lg" asChild>
+        <Button variant="neon-outline" size="lg" className="h-11" asChild>
           <Link to="/challenge">New Challenge</Link>
         </Button>
-        <Button variant="neon" size="lg" asChild>
+        <Button variant="neon" size="lg" className="h-11" asChild>
           <Link to="/practice">Practice More</Link>
         </Button>
       </motion.div>
@@ -181,20 +181,20 @@ export function ChallengeResult({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
-          className="glass-card rounded-xl p-5 flex items-center justify-between gap-4 mt-6 mx-auto max-w-md"
+          className="glass-card rounded-xl p-4 flex items-center justify-between gap-3 mt-5"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-              <Trophy className="w-5 h-5 text-primary" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+              <Trophy className="w-4 h-4 text-primary" />
             </div>
             <div className="text-left">
-              <p className="font-medium">Save this battle!</p>
-              <p className="text-sm text-muted-foreground">
-                Sign in to track your wins
+              <p className="font-medium text-sm">Save this battle!</p>
+              <p className="text-xs text-muted-foreground">
+                Sign in to track wins
               </p>
             </div>
           </div>
-          <Button variant="neon" size="sm" asChild>
+          <Button variant="neon" size="sm" className="shrink-0" asChild>
             <Link to="/login">Sign In</Link>
           </Button>
         </motion.div>

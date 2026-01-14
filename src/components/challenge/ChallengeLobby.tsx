@@ -35,9 +35,6 @@ export function ChallengeLobby({
 }: ChallengeLobbyProps) {
   const { toast } = useToast();
   const myReady = isChallenger ? challengerReady : opponentReady;
-  const theirReady = isChallenger ? opponentReady : challengerReady;
-  const myName = isChallenger ? challengerName : (opponentName || "You");
-  const theirName = isChallenger ? (opponentName || "Opponent") : challengerName;
 
   const copyShareLink = () => {
     const link = `${window.location.origin}/challenge/${challengeId}`;
@@ -50,73 +47,74 @@ export function ChallengeLobby({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="text-center py-8"
+      className="text-center py-4 px-2"
     >
+      {/* Status Badge */}
       <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", stiffness: 200 }}
-        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full glass-card mb-6"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-card mb-4"
       >
-        <Users className="w-5 h-5 text-primary" />
-        <span className="text-sm font-medium">Live Duel Lobby</span>
-        <span className="mx-1 text-muted-foreground">•</span>
+        <Users className="w-4 h-4 text-primary" />
+        <span className="text-xs font-medium">Live Duel</span>
+        <span className="mx-0.5 text-muted-foreground">•</span>
         {connectionStatus === "connected" && (
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+          <div className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
             <span className="text-green-500 text-xs font-medium">Live</span>
           </div>
         )}
         {connectionStatus === "connecting" && (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <Loader2 className="w-3 h-3 text-yellow-500 animate-spin" />
-            <span className="text-yellow-500 text-xs font-medium">Connecting...</span>
+            <span className="text-yellow-500 text-xs">Connecting</span>
           </div>
         )}
         {connectionStatus === "reconnecting" && (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <Loader2 className="w-3 h-3 text-orange-500 animate-spin" />
-            <span className="text-orange-500 text-xs font-medium">Reconnecting...</span>
+            <span className="text-orange-500 text-xs">Reconnecting</span>
           </div>
         )}
         {connectionStatus === "disconnected" && (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <WifiOff className="w-3 h-3 text-red-500" />
-            <span className="text-red-500 text-xs font-medium">Disconnected</span>
+            <span className="text-red-500 text-xs">Offline</span>
           </div>
         )}
       </motion.div>
 
-      <h2 className="font-display text-4xl font-bold mb-3">Ready to Battle?</h2>
+      <h2 className="font-display text-2xl sm:text-3xl font-bold mb-2">Ready to Battle?</h2>
       
       {chapterInfo && (
-        <p className="text-primary font-medium mb-2">
+        <p className="text-primary text-sm font-medium mb-1">
           {chapterInfo.subject_name} • {chapterInfo.name}
         </p>
       )}
       
-      <p className="text-muted-foreground mb-10">
+      <p className="text-muted-foreground text-sm mb-6">
         {questionCount} questions • Same questions • Same time
       </p>
 
-      {/* VS Display */}
-      <div className="flex items-center justify-center gap-6 mb-10">
+      {/* VS Display - Mobile optimized */}
+      <div className="flex items-center justify-center gap-3 sm:gap-6 mb-6">
         {/* Challenger */}
         <motion.div
-          initial={{ x: -30, opacity: 0 }}
+          initial={{ x: -20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className={`glass-card rounded-2xl p-6 w-40 ${
-            challengerReady ? "border-2 border-green-500 shadow-[0_0_30px_hsl(142_71%_45%/0.2)]" : ""
+          className={`glass-card rounded-xl p-3 sm:p-4 w-28 sm:w-36 ${
+            challengerReady ? "border-2 border-green-500 shadow-[0_0_20px_hsl(142_71%_45%/0.2)]" : ""
           }`}
         >
-          <div className={`w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold ${
+          <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full mx-auto mb-2 flex items-center justify-center text-lg font-bold ${
             challengerReady ? "bg-green-500/20 text-green-500" : "bg-secondary"
           }`}>
-            {challengerReady ? <Check className="w-8 h-8" /> : challengerName.charAt(0).toUpperCase()}
+            {challengerReady ? <Check className="w-6 h-6" /> : challengerName.charAt(0).toUpperCase()}
           </div>
-          <p className="font-semibold truncate">{isChallenger ? "You" : challengerName}</p>
-          <p className={`text-sm ${challengerReady ? "text-green-500" : "text-muted-foreground"}`}>
+          <p className="font-semibold text-sm truncate">{isChallenger ? "You" : challengerName}</p>
+          <p className={`text-xs ${challengerReady ? "text-green-500" : "text-muted-foreground"}`}>
             {challengerReady ? "Ready!" : "Waiting..."}
           </p>
         </motion.div>
@@ -125,45 +123,44 @@ export function ChallengeLobby({
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: "spring", delay: 0.2 }}
-          className="text-3xl font-bold text-primary"
+          className="text-xl sm:text-2xl font-bold text-primary"
         >
           VS
         </motion.div>
 
         {/* Opponent */}
         <motion.div
-          initial={{ x: 30, opacity: 0 }}
+          initial={{ x: 20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className={`glass-card rounded-2xl p-6 w-40 ${
-            opponentReady ? "border-2 border-green-500 shadow-[0_0_30px_hsl(142_71%_45%/0.2)]" : ""
+          className={`glass-card rounded-xl p-3 sm:p-4 w-28 sm:w-36 ${
+            opponentReady ? "border-2 border-green-500 shadow-[0_0_20px_hsl(142_71%_45%/0.2)]" : ""
           }`}
         >
-          <div className={`w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold ${
+          <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full mx-auto mb-2 flex items-center justify-center text-lg font-bold ${
             opponentReady ? "bg-green-500/20 text-green-500" : "bg-secondary"
           }`}>
-            {opponentReady ? <Check className="w-8 h-8" /> : opponentName ? opponentName.charAt(0).toUpperCase() : "?"}
+            {opponentReady ? <Check className="w-6 h-6" /> : opponentName ? opponentName.charAt(0).toUpperCase() : "?"}
           </div>
-          <p className="font-semibold truncate">{!isChallenger ? "You" : (opponentName || "Opponent")}</p>
-          <p className={`text-sm ${opponentReady ? "text-green-500" : "text-muted-foreground"}`}>
+          <p className="font-semibold text-sm truncate">{!isChallenger ? "You" : (opponentName || "Opponent")}</p>
+          <p className={`text-xs ${opponentReady ? "text-green-500" : "text-muted-foreground"}`}>
             {opponentReady ? "Ready!" : opponentName ? "Waiting..." : "Not joined"}
           </p>
         </motion.div>
       </div>
 
-      {/* Rules */}
+      {/* Rules - Compact for mobile */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="glass-card rounded-xl p-5 mb-8 max-w-md mx-auto text-left"
+        className="glass-card rounded-xl p-4 mb-6 text-left"
       >
-        <h4 className="font-semibold mb-3 text-center">⚡ Battle Rules</h4>
-        <ul className="text-sm text-muted-foreground space-y-2">
-          <li>• Both players get the same questions in the same order</li>
-          <li>• Game starts when both players are ready</li>
-          <li>• Answers are locked once submitted</li>
-          <li>• Winner is decided by accuracy, then speed</li>
+        <h4 className="font-semibold text-sm mb-2 text-center">⚡ Battle Rules</h4>
+        <ul className="text-xs text-muted-foreground space-y-1">
+          <li>• Same questions, same order</li>
+          <li>• Game starts when both ready</li>
+          <li>• Winner by accuracy, then speed</li>
         </ul>
       </motion.div>
 
@@ -172,17 +169,17 @@ export function ChallengeLobby({
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center gap-4"
+          className="flex flex-col items-center gap-3"
         >
           <motion.div
             animate={{ scale: [1, 1.1, 1] }}
             transition={{ duration: 1, repeat: Infinity }}
-            className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center"
+            className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center"
           >
-            <Loader2 className="w-10 h-10 text-primary animate-spin" />
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
           </motion.div>
-          <p className="text-xl font-semibold text-primary">Starting Quiz...</p>
-          <p className="text-muted-foreground text-sm">Get ready!</p>
+          <p className="text-lg font-semibold text-primary">Starting Quiz...</p>
+          <p className="text-muted-foreground text-xs">Get ready!</p>
         </motion.div>
       ) : opponentName ? (
         <motion.div
@@ -194,13 +191,13 @@ export function ChallengeLobby({
             <Button
               variant="neon"
               size="lg"
-              className="h-14 px-12 text-lg"
+              className="h-12 px-8 text-base w-full max-w-xs"
               onClick={onReady}
               disabled={isSettingReady}
             >
               {isSettingReady ? (
                 <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Getting Ready...
                 </>
               ) : (
@@ -208,9 +205,9 @@ export function ChallengeLobby({
               )}
             </Button>
           ) : (
-            <div className="flex items-center justify-center gap-2 text-green-500 font-semibold">
-              <Check className="w-5 h-5" />
-              <span>Waiting for opponent to ready up...</span>
+            <div className="flex items-center justify-center gap-2 text-green-500 font-medium text-sm">
+              <Check className="w-4 h-4" />
+              <span>Waiting for opponent...</span>
             </div>
           )}
         </motion.div>
@@ -219,17 +216,17 @@ export function ChallengeLobby({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="space-y-4"
+          className="space-y-3"
         >
-          <p className="text-muted-foreground">Share this link with your opponent:</p>
-          <div className="glass-card rounded-xl p-4 flex items-center gap-3 max-w-md mx-auto">
+          <p className="text-muted-foreground text-sm">Share link with opponent:</p>
+          <div className="glass-card rounded-xl p-3 flex items-center gap-2">
             <input
               readOnly
               value={`${window.location.origin}/challenge/${challengeId}`}
-              className="flex-1 bg-transparent text-sm truncate outline-none font-mono"
+              className="flex-1 bg-transparent text-xs truncate outline-none font-mono min-w-0"
             />
-            <Button variant="neon" size="sm" onClick={copyShareLink}>
-              <Copy className="w-4 h-4 mr-2" />
+            <Button variant="neon" size="sm" onClick={copyShareLink} className="shrink-0">
+              <Copy className="w-4 h-4 mr-1" />
               Copy
             </Button>
           </div>

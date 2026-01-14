@@ -112,29 +112,29 @@ export function ChallengePlay({
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="space-y-6"
+      className="space-y-4"
     >
-      {/* Progress bar with opponent indicator */}
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <div className="flex items-center gap-2">
+      {/* Progress bar with opponent indicator - Compact */}
+      <div className="space-y-1.5">
+        <div className="flex justify-between text-xs sm:text-sm">
+          <div className="flex items-center gap-1.5">
             <span className="text-muted-foreground">Q</span>
             <span className="font-semibold">{currentQ + 1}</span>
             <span className="text-muted-foreground">/{questions.length}</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <div className="flex items-center gap-1">
-              <Target className="w-4 h-4 text-accent" />
+              <Target className="w-3.5 h-3.5 text-accent" />
               <span className="font-bold text-accent">{score}</span>
             </div>
-            <div className="flex items-center gap-1 text-muted-foreground text-sm">
+            <div className="flex items-center gap-1 text-muted-foreground">
               <User className="w-3 h-3" />
-              <span>Opponent: {opponentProgress}/{questions.length}</span>
+              <span className="text-xs">{opponentProgress}/{questions.length}</span>
             </div>
           </div>
         </div>
         
-        <div className="relative h-3 rounded-full bg-secondary/50 overflow-hidden backdrop-blur-sm">
+        <div className="relative h-2 rounded-full bg-secondary/50 overflow-hidden backdrop-blur-sm">
           {/* Your progress */}
           <motion.div
             className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-accent progress-glow rounded-full z-10"
@@ -144,7 +144,7 @@ export function ChallengePlay({
           />
           {/* Opponent progress indicator */}
           <motion.div
-            className="absolute top-0 bottom-0 w-1 bg-muted-foreground/50 rounded-full"
+            className="absolute top-0 bottom-0 w-0.5 bg-muted-foreground/50 rounded-full"
             initial={{ left: 0 }}
             animate={{ left: `${(opponentProgress / questions.length) * 100}%` }}
             transition={{ duration: 0.3 }}
@@ -152,22 +152,22 @@ export function ChallengePlay({
         </div>
       </div>
 
-      {/* Question */}
+      {/* Question - Mobile optimized */}
       <motion.div
         key={currentQ}
-        initial={{ opacity: 0, y: 30, scale: 0.98 }}
+        initial={{ opacity: 0, y: 20, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="glass-card rounded-3xl p-8"
+        className="glass-card rounded-2xl p-4 sm:p-6"
       >
-        <div className="flex items-start gap-5 mb-8">
-          <span className="shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center text-lg font-bold text-primary">
+        <div className="flex items-start gap-3 mb-5">
+          <span className="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center text-sm font-bold text-primary">
             {currentQ + 1}
           </span>
-          <RichText as="p" className="text-xl leading-relaxed pt-2" text={question.text} />
+          <RichText as="p" className="text-base sm:text-lg leading-relaxed pt-1" text={question.text} />
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-2.5">
           {getOptions(question).map((option, index) => {
             const isSelected = selectedAnswer === index;
             const isCorrectOption = index === correctIndex;
@@ -180,24 +180,23 @@ export function ChallengePlay({
             return (
               <motion.button
                 key={index}
-                initial={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 0, x: -15 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.08, duration: 0.4 }}
-                whileHover={!showResult ? { scale: 1.02, x: 4 } : {}}
+                transition={{ delay: index * 0.06, duration: 0.3 }}
                 whileTap={!showResult ? { scale: 0.98 } : {}}
                 onClick={() => handleAnswerSelect(index)}
                 disabled={showResult}
-                className={`w-full p-5 rounded-2xl text-left transition-all duration-400 flex items-center gap-4 ${
+                className={`w-full p-3 sm:p-4 rounded-xl text-left transition-all duration-300 flex items-center gap-3 active:scale-[0.98] ${
                   variant === "correct"
-                    ? "bg-green-500/20 border-2 border-green-500 shadow-[0_0_30px_hsl(var(--neon-green)/0.3)]"
+                    ? "bg-green-500/20 border-2 border-green-500 shadow-[0_0_20px_hsl(var(--neon-green)/0.3)]"
                     : variant === "wrong"
-                    ? "bg-red-500/20 border-2 border-red-500 shadow-[0_0_30px_hsl(0_84%_60%/0.3)]"
+                    ? "bg-red-500/20 border-2 border-red-500 shadow-[0_0_20px_hsl(0_84%_60%/0.3)]"
                     : isSelected
-                    ? "glass-card border-2 border-primary shadow-[0_0_30px_hsl(var(--primary)/0.2)]"
+                    ? "glass-card border-2 border-primary shadow-[0_0_20px_hsl(var(--primary)/0.2)]"
                     : "glass-card"
                 }`}
               >
-                <span className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+                <span className={`shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-sm font-bold transition-all duration-300 ${
                   variant === "correct"
                     ? "bg-green-500 text-white"
                     : variant === "wrong"
@@ -206,39 +205,39 @@ export function ChallengePlay({
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary"
                 }`}>
-                  {variant === "correct" ? <Check className="w-5 h-5" /> : 
-                   variant === "wrong" ? <X className="w-5 h-5" /> : 
+                  {variant === "correct" ? <Check className="w-4 h-4" /> : 
+                   variant === "wrong" ? <X className="w-4 h-4" /> : 
                    String.fromCharCode(65 + index)}
                 </span>
-                <RichText as="span" className="text-lg" text={option} />
+                <RichText as="span" className="text-sm sm:text-base" text={option} />
               </motion.button>
             );
           })}
         </div>
       </motion.div>
 
-      {/* Explanation */}
+      {/* Explanation - Compact */}
       {showResult && question.explanation && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.4 }}
-          className="glass-card rounded-2xl p-6"
+          className="glass-card rounded-xl p-4"
         >
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-primary" />
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-6 h-6 rounded-md bg-primary/20 flex items-center justify-center">
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
             </div>
-            <span className="font-semibold text-lg">Explanation</span>
+            <span className="font-semibold text-sm">Explanation</span>
           </div>
-          <RichText as="p" className="text-muted-foreground leading-relaxed" text={question.explanation} />
+          <RichText as="p" className="text-muted-foreground text-sm leading-relaxed" text={question.explanation} />
         </motion.div>
       )}
 
-      {/* Actions */}
+      {/* Actions - Full width on mobile */}
       <motion.div 
-        className="flex gap-4"
-        initial={{ opacity: 0, y: 20 }}
+        className="pt-2"
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
@@ -246,13 +245,13 @@ export function ChallengePlay({
           <Button
             variant="neon"
             size="lg"
-            className="flex-1 h-14 text-lg"
+            className="w-full h-12 text-base"
             disabled={selectedAnswer === null || isValidating}
             onClick={handleSubmit}
           >
             {isValidating ? (
               <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Checking...
               </>
             ) : (
@@ -263,7 +262,7 @@ export function ChallengePlay({
           <Button
             variant="neon"
             size="lg"
-            className="flex-1 h-14 text-lg group"
+            className="w-full h-12 text-base group"
             onClick={handleNext}
           >
             {currentQ < questions.length - 1 ? "Next Question" : "Finish"}
