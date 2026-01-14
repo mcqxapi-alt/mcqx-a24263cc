@@ -2,3 +2,6 @@ project_id = "uzscharnnojiavsswstv"
 
 [functions.generate-mcqs]
 verify_jwt = false
+
+[functions.pregenerate-questions]
+verify_jwt = false
