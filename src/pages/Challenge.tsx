@@ -17,7 +17,6 @@ import { useToast } from "@/hooks/use-toast";
 import mcqxLogo from "@/assets/mcqx-logo.png";
 import { useChallengeRealtime, RealtimeChallenge, ChallengeProgress } from "@/hooks/useChallengeRealtime";
 import { ChallengeLobby } from "@/components/challenge/ChallengeLobby";
-import { ChallengeCountdown } from "@/components/challenge/ChallengeCountdown";
 import { ChallengePlay } from "@/components/challenge/ChallengePlay";
 import { ChallengeWait } from "@/components/challenge/ChallengeWait";
 import { ChallengeResult } from "@/components/challenge/ChallengeResult";
@@ -39,7 +38,7 @@ type Question = QuestionPublic & {
   explanation?: string | null;
 };
 
-type Step = "menu" | "subject" | "chapter" | "lobby" | "countdown" | "play" | "waiting" | "result";
+type Step = "menu" | "subject" | "chapter" | "lobby" | "play" | "waiting" | "result";
 
 export default function Challenge() {
   const { id: challengeId } = useParams();
@@ -49,7 +48,7 @@ export default function Challenge() {
   const { toast } = useToast();
   
   const [step, setStep] = useState<Step>("menu");
-  const [countdownStartedAt, setCountdownStartedAt] = useState<string | null>(null);
+  const [isStartingGame, setIsStartingGame] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [challenge, setChallenge] = useState<RealtimeChallenge | null>(null);
@@ -98,9 +97,15 @@ export default function Challenge() {
   }, [toast]);
 
   const handleBothReady = useCallback((startedAt: string) => {
-    console.log("[Challenge] Both ready! Starting countdown at:", startedAt);
-    setCountdownStartedAt(startedAt);
-    setStep("countdown");
+    console.log("[Challenge] Both ready! Starting game...");
+    // Update local challenge state with started_at so ChallengePlay can use it
+    setChallenge(prev => prev ? { ...prev, started_at: startedAt, status: "playing" } : prev);
+    setIsStartingGame(true);
+    // Brief delay to show "Starting Quiz..." then go to play
+    setTimeout(() => {
+      setIsStartingGame(false);
+      setStep("play");
+    }, 1500);
   }, []);
 
   const handleOpponentFinished = useCallback(() => {
@@ -421,18 +426,17 @@ export default function Challenge() {
     const startedAt = await setReady(isChallenger);
     setIsSettingReady(false);
 
-    // If both players are ready, immediately start countdown
-    // (don't rely solely on realtime callback which can be delayed)
+    // If both players are ready, show "Starting Quiz..." briefly then go to play
     if (startedAt) {
-      console.log("[Challenge] Both ready! Starting countdown at:", startedAt);
-      setCountdownStartedAt(startedAt);
-      setStep("countdown");
+      console.log("[Challenge] Both ready! Starting game...");
+      // Update local challenge state with started_at so ChallengePlay can use it
+      setChallenge(prev => prev ? { ...prev, started_at: startedAt, status: "playing" } : prev);
+      setIsStartingGame(true);
+      setTimeout(() => {
+        setIsStartingGame(false);
+        setStep("play");
+      }, 1500);
     }
-  };
-
-  const handleCountdownComplete = () => {
-    setCountdownStartedAt(null);
-    setStep("play");
   };
 
   const handleAnswerSubmit = async (questionIndex: number, selectedAnswer: number, timeTakenMs: number, isCorrect: boolean) => {
@@ -500,7 +504,6 @@ export default function Challenge() {
     : null;
   const myName = isChallenger ? challengerName : (opponentName || "You");
   const theirName = isChallenger ? (opponentName || "Opponent") : challengerName;
-  const countdownAt = countdownStartedAt || challenge?.started_at || null;
 
   return (
     <div className="min-h-screen bg-background overflow-hidden">
@@ -537,13 +540,6 @@ export default function Challenge() {
           </Button>
         </div>
       </header>
-
-      {/* Countdown overlay */}
-      <AnimatePresence>
-        {step === "countdown" && countdownAt ? (
-          <ChallengeCountdown startedAt={countdownAt} onComplete={handleCountdownComplete} />
-        ) : null}
-      </AnimatePresence>
 
       <main className="relative pt-32 sm:pt-40 pb-12 px-4 min-h-screen">
         <div className="container max-w-2xl">
@@ -754,6 +750,7 @@ export default function Challenge() {
                 onReady={handleReady}
                 isSettingReady={isSettingReady}
                 connectionStatus={connectionStatus}
+                isStarting={isStartingGame}
               />
             )}
 
