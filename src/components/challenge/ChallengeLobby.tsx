@@ -16,6 +16,7 @@ type ChallengeLobbyProps = {
   onReady: () => void;
   isSettingReady: boolean;
   connectionStatus: ConnectionStatus;
+  isStarting: boolean;
 };
 
 export function ChallengeLobby({
@@ -30,6 +31,7 @@ export function ChallengeLobby({
   onReady,
   isSettingReady,
   connectionStatus,
+  isStarting,
 }: ChallengeLobbyProps) {
   const { toast } = useToast();
   const myReady = isChallenger ? challengerReady : opponentReady;
@@ -166,7 +168,23 @@ export function ChallengeLobby({
       </motion.div>
 
       {/* Actions */}
-      {opponentName ? (
+      {isStarting ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center gap-4"
+        >
+          <motion.div
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 1, repeat: Infinity }}
+            className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center"
+          >
+            <Loader2 className="w-10 h-10 text-primary animate-spin" />
+          </motion.div>
+          <p className="text-xl font-semibold text-primary">Starting Quiz...</p>
+          <p className="text-muted-foreground text-sm">Get ready!</p>
+        </motion.div>
+      ) : opponentName ? (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
