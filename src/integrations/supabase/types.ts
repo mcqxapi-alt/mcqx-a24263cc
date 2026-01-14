@@ -50,41 +50,100 @@ export type Database = {
           },
         ]
       }
+      challenge_progress: {
+        Row: {
+          challenge_id: string
+          current_question: number
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          current_question?: number
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          current_question?: number
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_progress_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       challenges: {
         Row: {
+          challenger_answers: Json | null
+          challenger_finished_at: string | null
           challenger_id: string
+          challenger_ready: boolean
           challenger_score: number | null
+          challenger_time_ms: number | null
           chapter_id: string
           completed_at: string | null
           created_at: string
           id: string
+          opponent_answers: Json | null
+          opponent_finished_at: string | null
           opponent_id: string | null
+          opponent_ready: boolean
           opponent_score: number | null
+          opponent_time_ms: number | null
           question_ids: string[]
+          started_at: string | null
           status: Database["public"]["Enums"]["challenge_status"]
         }
         Insert: {
+          challenger_answers?: Json | null
+          challenger_finished_at?: string | null
           challenger_id: string
+          challenger_ready?: boolean
           challenger_score?: number | null
+          challenger_time_ms?: number | null
           chapter_id: string
           completed_at?: string | null
           created_at?: string
           id?: string
+          opponent_answers?: Json | null
+          opponent_finished_at?: string | null
           opponent_id?: string | null
+          opponent_ready?: boolean
           opponent_score?: number | null
+          opponent_time_ms?: number | null
           question_ids: string[]
+          started_at?: string | null
           status?: Database["public"]["Enums"]["challenge_status"]
         }
         Update: {
+          challenger_answers?: Json | null
+          challenger_finished_at?: string | null
           challenger_id?: string
+          challenger_ready?: boolean
           challenger_score?: number | null
+          challenger_time_ms?: number | null
           chapter_id?: string
           completed_at?: string | null
           created_at?: string
           id?: string
+          opponent_answers?: Json | null
+          opponent_finished_at?: string | null
           opponent_id?: string | null
+          opponent_ready?: boolean
           opponent_score?: number | null
+          opponent_time_ms?: number | null
           question_ids?: string[]
+          started_at?: string | null
           status?: Database["public"]["Enums"]["challenge_status"]
         }
         Relationships: [
@@ -507,7 +566,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
-      challenge_status: "open" | "closed"
+      challenge_status: "open" | "closed" | "lobby" | "playing" | "finished"
       question_source: "verified" | "ai"
       question_status: "active" | "flagged" | "retired"
     }
@@ -638,7 +697,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
-      challenge_status: ["open", "closed"],
+      challenge_status: ["open", "closed", "lobby", "playing", "finished"],
       question_source: ["verified", "ai"],
       question_status: ["active", "flagged", "retired"],
     },
