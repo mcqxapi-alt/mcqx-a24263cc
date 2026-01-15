@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Share2, MessageCircle, Linkedin, Copy, Check, X } from "lucide-react";
+import { Share2, MessageCircle, Linkedin, Copy, Check, X, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "@/hooks/use-toast";
 
 type ShareScoreButtonProps = {
   score: number;
@@ -26,6 +27,7 @@ export function ShareScoreButton({
 }: ShareScoreButtonProps) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
 
   const getEmoji = () => {
     if (accuracy >= 90) return "🔥";
@@ -52,6 +54,8 @@ ${getFlexMessage()}
 Think you can beat me? 👀
 https://mcqx.lovable.app/practice`;
 
+  const shortShareMessage = `${getEmoji()} ${score}/${totalQuestions} (${accuracy}%) on MCQX! ${subjectName} - ${chapterName}. ${getFlexMessage()} Beat my score? 👀`;
+
   const handleWhatsAppShare = () => {
     const encodedMessage = encodeURIComponent(shareMessage);
     window.open(`https://wa.me/?text=${encodedMessage}`, "_blank");
@@ -59,7 +63,6 @@ https://mcqx.lovable.app/practice`;
   };
 
   const handleLinkedInShare = () => {
-    // LinkedIn share URL with pre-filled text
     const linkedInMessage = `${getEmoji()} Just scored ${score}/${totalQuestions} (${accuracy}%) on MCQX practicing ${subjectName} - ${chapterName}! ${getFlexMessage()} #MCQX #Learning #CBSE`;
     const encodedMessage = encodeURIComponent(linkedInMessage);
     const url = encodeURIComponent("https://mcqx.lovable.app/practice");
@@ -68,6 +71,33 @@ https://mcqx.lovable.app/practice`;
       "_blank"
     );
     setOpen(false);
+  };
+
+  const handleNativeShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `MCQX Score: ${score}/${totalQuestions}`,
+          text: shortShareMessage,
+          url: "https://mcqx.lovable.app/practice",
+        });
+        setOpen(false);
+      } catch (err) {
+        // User cancelled or error
+        if ((err as Error).name !== "AbortError") {
+          toast({
+            title: "Sharing failed",
+            description: "Try copying the message instead.",
+            variant: "destructive",
+          });
+        }
+      }
+    } else {
+      toast({
+        title: "Not supported",
+        description: "Native sharing isn't available on this device. Try copying instead!",
+      });
+    }
   };
 
   const handleCopyToClipboard = async () => {
@@ -79,6 +109,8 @@ https://mcqx.lovable.app/practice`;
       console.error("Failed to copy:", err);
     }
   };
+
+  const supportsNativeShare = typeof navigator !== "undefined" && !!navigator.share;
 
   return (
     <>
@@ -118,32 +150,44 @@ https://mcqx.lovable.app/practice`;
             </div>
 
             {/* Share Options */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className={`grid ${supportsNativeShare ? "grid-cols-4" : "grid-cols-3"} gap-3`}>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleWhatsAppShare}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-[#25D366]/10 hover:bg-[#25D366]/20 transition-colors border border-[#25D366]/30"
+                className="flex flex-col items-center gap-2 p-3 rounded-xl bg-[#25D366]/10 hover:bg-[#25D366]/20 transition-colors border border-[#25D366]/30"
               >
-                <MessageCircle className="w-6 h-6 text-[#25D366]" />
-                <span className="text-xs font-medium">WhatsApp</span>
+                <MessageCircle className="w-5 h-5 text-[#25D366]" />
+                <span className="text-[10px] font-medium">WhatsApp</span>
               </motion.button>
 
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleLinkedInShare}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-[#0A66C2]/10 hover:bg-[#0A66C2]/20 transition-colors border border-[#0A66C2]/30"
+                className="flex flex-col items-center gap-2 p-3 rounded-xl bg-[#0A66C2]/10 hover:bg-[#0A66C2]/20 transition-colors border border-[#0A66C2]/30"
               >
-                <Linkedin className="w-6 h-6 text-[#0A66C2]" />
-                <span className="text-xs font-medium">LinkedIn</span>
+                <Linkedin className="w-5 h-5 text-[#0A66C2]" />
+                <span className="text-[10px] font-medium">LinkedIn</span>
               </motion.button>
+
+              {supportsNativeShare && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleNativeShare}
+                  className="flex flex-col items-center gap-2 p-3 rounded-xl bg-gradient-to-br from-[#833AB4]/10 via-[#E1306C]/10 to-[#F77737]/10 hover:from-[#833AB4]/20 hover:via-[#E1306C]/20 hover:to-[#F77737]/20 transition-colors border border-[#E1306C]/30"
+                >
+                  <Instagram className="w-5 h-5 text-[#E1306C]" />
+                  <span className="text-[10px] font-medium">Stories</span>
+                </motion.button>
+              )}
 
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleCopyToClipboard}
-                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-primary/10 hover:bg-primary/20 transition-colors border border-primary/30 relative"
+                className="flex flex-col items-center gap-2 p-3 rounded-xl bg-primary/10 hover:bg-primary/20 transition-colors border border-primary/30 relative"
               >
                 <AnimatePresence mode="wait">
                   {copied ? (
@@ -153,7 +197,7 @@ https://mcqx.lovable.app/practice`;
                       animate={{ scale: 1 }}
                       exit={{ scale: 0 }}
                     >
-                      <Check className="w-6 h-6 text-accent" />
+                      <Check className="w-5 h-5 text-accent" />
                     </motion.div>
                   ) : (
                     <motion.div
@@ -162,11 +206,11 @@ https://mcqx.lovable.app/practice`;
                       animate={{ scale: 1 }}
                       exit={{ scale: 0 }}
                     >
-                      <Copy className="w-6 h-6 text-primary" />
+                      <Copy className="w-5 h-5 text-primary" />
                     </motion.div>
                   )}
                 </AnimatePresence>
-                <span className="text-xs font-medium">
+                <span className="text-[10px] font-medium">
                   {copied ? "Copied!" : "Copy"}
                 </span>
               </motion.button>
