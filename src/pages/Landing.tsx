@@ -43,9 +43,15 @@ export default function Landing() {
             <img src={mcqxLogo} alt="MCQX" className="h-20 sm:h-28 w-auto border-2 border-none shadow-none rounded-none" />
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
-            <Button variant="ghost" size="sm" asChild className="transition-all duration-300 text-xs sm:text-sm px-2 sm:px-3">
-              <Link to="/login">Sign In</Link>
-            </Button>
+            {user ? (
+              <Button variant="ghost" size="sm" asChild className="transition-all duration-300 text-xs sm:text-sm px-2 sm:px-3">
+                <Link to="/dashboard">Dashboard</Link>
+              </Button>
+            ) : (
+              <Button variant="ghost" size="sm" asChild className="transition-all duration-300 text-xs sm:text-sm px-2 sm:px-3">
+                <Link to="/login">Sign In</Link>
+              </Button>
+            )}
             <Button variant="neon" size="sm" asChild className="text-xs sm:text-sm px-2 sm:px-4">
               <Link to="/practice">Start Practice</Link>
             </Button>
