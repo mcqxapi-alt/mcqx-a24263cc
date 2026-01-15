@@ -35,6 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { RichText } from "@/components/RichText";
 import mcqxLogo from "@/assets/mcqx-logo.png";
+import { ShareScoreButton } from "@/components/ShareScoreButton";
 
 type Subject = {
   id: string;
@@ -937,10 +938,13 @@ export default function Practice() {
                     <Users className="w-4 h-4" />
                     Challenge Friend
                   </Button>
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <Share2 className="w-4 h-4" />
-                    Share Score
-                  </Button>
+                  <ShareScoreButton
+                    score={score}
+                    totalQuestions={totalQuestions}
+                    accuracy={accuracy}
+                    subjectName={selectedSubject?.name || ""}
+                    chapterName={selectedChapter?.name || ""}
+                  />
                 </motion.div>
 
                 {/* Sign In CTA */}
