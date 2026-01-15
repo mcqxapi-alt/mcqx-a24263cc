@@ -23,7 +23,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useSecureQuestions, QuestionPublic } from "@/hooks/useSecureQuestions";
-import { useSmartQuestions } from "@/hooks/useSmartQuestions";
+import { useSmartQuestions, QuestionWithRecycled } from "@/hooks/useSmartQuestions";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -49,8 +50,8 @@ type Chapter = {
   subject_id: string;
 };
 
-// Extended question type that includes validated answer data
-type Question = QuestionPublic & {
+// Extended question type that includes validated answer data and recycled flag
+type Question = QuestionWithRecycled & {
   correct_answer?: number;
   explanation?: string | null;
 };
@@ -60,7 +61,8 @@ type Step = "subject" | "chapter" | "practice" | "result";
 export default function Practice() {
   const { user } = useAuth();
   const { validateAnswer, clearCache } = useSecureQuestions();
-  const { fetchSmartQuestions, recordQuestionProgress } = useSmartQuestions();
+  const [shownPowerUserToast, setShownPowerUserToast] = useState(false);
+  const { fetchSmartQuestions, recordQuestionProgress, incrementRecycleCount } = useSmartQuestions();
   const [step, setStep] = useState<Step>("subject");
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
@@ -144,7 +146,7 @@ export default function Practice() {
 
     try {
       // Use smart question fetching
-      const { questions: fetchedQuestions } = await fetchSmartQuestions(
+      const { questions: fetchedQuestions, isPowerUser } = await fetchSmartQuestions(
         user?.id || null,
         chapter.id,
         chapter.name,
@@ -156,6 +158,15 @@ export default function Practice() {
         // For guests, track seen questions in memory
         if (!user) {
           fetchedQuestions.forEach(q => guestSeenIds.current.add(q.id));
+        }
+
+        // Show power user toast (only once per session)
+        if (isPowerUser && !shownPowerUserToast) {
+          setShownPowerUserToast(true);
+          toast({
+            title: "🎉 Power User Unlocked!",
+            description: "You've mastered 100+ questions in this chapter. We'll mix in review questions to strengthen your memory.",
+          });
         }
 
         setQuestions(fetchedQuestions as Question[]);
@@ -217,6 +228,11 @@ export default function Practice() {
           selectedChapter.id,
           result.is_correct
         );
+
+        // Increment recycle count if this was a recycled question
+        if (question.is_recycled) {
+          incrementRecycleCount(user.id, question.id);
+        }
       }
     } catch (err) {
       console.error("Error validating answer:", err);
@@ -621,17 +637,31 @@ export default function Practice() {
                       <BookOpen className="w-4 h-4" />
                       Question {currentQ + 1}
                     </span>
-                    {question.source === "ai" && (
-                      <motion.span
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", delay: 0.2 }}
-                        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20"
-                      >
-                        <Sparkles className="w-3 h-3 animate-pulse" />
-                        AI-Generated
-                      </motion.span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {question.is_recycled && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", delay: 0.15 }}
+                        >
+                          <Badge variant="secondary" className="text-xs gap-1">
+                            <RotateCcw className="w-3 h-3" />
+                            Review
+                          </Badge>
+                        </motion.div>
+                      )}
+                      {question.source === "ai" && (
+                        <motion.span
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", delay: 0.2 }}
+                          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20"
+                        >
+                          <Sparkles className="w-3 h-3 animate-pulse" />
+                          AI-Generated
+                        </motion.span>
+                      )}
+                    </div>
                   </div>
                   <RichText as="p" className="text-lg sm:text-xl leading-relaxed font-medium" text={question.text} />
                 </motion.div>

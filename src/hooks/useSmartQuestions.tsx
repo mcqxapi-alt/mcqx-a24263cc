@@ -2,9 +2,18 @@ import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { QuestionPublic } from "./useSecureQuestions";
 
+// Power user threshold - users with 100+ attempts get mixed questions
+const POWER_USER_THRESHOLD = 100;
+
+// Extended type that includes recycled flag
+export type QuestionWithRecycled = QuestionPublic & {
+  is_recycled?: boolean;
+};
+
 /**
  * Hook for smart question management:
  * - Authenticated users: Get unseen questions, track progress
+ * - Power users (100+ attempts): Get mixed questions (70% new, 30% recycled)
  * - Guests: Get random questions without tracking
  * - Generates AI questions only when pool is exhausted
  */
@@ -29,6 +38,69 @@ export function useSmartQuestions() {
     }
 
     return (data || []) as QuestionPublic[];
+  }, []);
+
+  /**
+   * Fetch mixed questions for power users (100+ attempts in chapter)
+   * Returns 70% new questions, 30% recycled (prioritizing incorrect ones)
+   */
+  const fetchMixedQuestionsForPowerUser = useCallback(async (
+    userId: string,
+    chapterId: string,
+    limit: number = 10
+  ): Promise<QuestionWithRecycled[]> => {
+    const { data, error } = await supabase.rpc("get_mixed_questions_for_power_user", {
+      p_user_id: userId,
+      p_chapter_id: chapterId,
+      p_limit: limit,
+      p_recycle_ratio: 0.3,
+      p_min_days_ago: 7,
+      p_max_recycle_count: 3,
+    });
+
+    if (error) {
+      console.error("Error fetching mixed questions:", error);
+      throw error;
+    }
+
+    return (data || []) as QuestionWithRecycled[];
+  }, []);
+
+  /**
+   * Count user's total attempts in a chapter
+   */
+  const countUserChapterAttempts = useCallback(async (
+    userId: string,
+    chapterId: string
+  ): Promise<number> => {
+    const { data, error } = await supabase.rpc("count_user_chapter_attempts", {
+      p_user_id: userId,
+      p_chapter_id: chapterId,
+    });
+
+    if (error) {
+      console.error("Error counting user attempts:", error);
+      return 0;
+    }
+
+    return data as number;
+  }, []);
+
+  /**
+   * Increment recycle count when a recycled question is answered
+   */
+  const incrementRecycleCount = useCallback(async (
+    userId: string,
+    questionId: string
+  ): Promise<void> => {
+    const { error } = await supabase.rpc("increment_recycle_count", {
+      p_user_id: userId,
+      p_question_id: questionId,
+    });
+
+    if (error) {
+      console.error("Error incrementing recycle count:", error);
+    }
   }, []);
 
   /**
@@ -95,7 +167,8 @@ export function useSmartQuestions() {
 
   /**
    * Smart question fetching with AI fallback
-   * - For authenticated users: fetches unseen questions, generates AI if needed
+   * - For power users (100+ attempts): mixed questions with recycling
+   * - For regular authenticated users: fetches unseen questions, generates AI if needed
    * - For guests: fetches random questions, generates AI if pool is small
    */
   const fetchSmartQuestions = useCallback(async (
@@ -104,16 +177,28 @@ export function useSmartQuestions() {
     chapterName: string,
     subjectName: string,
     targetCount: number = 10
-  ): Promise<{ questions: QuestionPublic[]; generatedCount: number }> => {
-    let questions: QuestionPublic[] = [];
+  ): Promise<{ questions: QuestionWithRecycled[]; generatedCount: number; isPowerUser: boolean }> => {
+    let questions: QuestionWithRecycled[] = [];
     let generatedCount = 0;
+    let isPowerUser = false;
 
     if (userId) {
-      // Authenticated user: fetch unseen questions
-      questions = await fetchUnseenQuestionsForUser(userId, chapterId, targetCount + 10);
+      // Check if user is a power user (100+ attempts in this chapter)
+      const attemptCount = await countUserChapterAttempts(userId, chapterId);
+      isPowerUser = attemptCount >= POWER_USER_THRESHOLD;
+
+      if (isPowerUser) {
+        // Power user: get mixed questions (70% new, 30% recycled)
+        questions = await fetchMixedQuestionsForPowerUser(userId, chapterId, targetCount + 10);
+      } else {
+        // Regular user: only unseen questions
+        const unseenQuestions = await fetchUnseenQuestionsForUser(userId, chapterId, targetCount + 10);
+        questions = unseenQuestions.map(q => ({ ...q, is_recycled: false }));
+      }
     } else {
       // Guest: fetch random questions
-      questions = await fetchRandomQuestionsForGuest(chapterId, targetCount + 10);
+      const randomQuestions = await fetchRandomQuestionsForGuest(chapterId, targetCount + 10);
+      questions = randomQuestions.map(q => ({ ...q, is_recycled: false }));
     }
 
     // If we don't have enough questions, generate AI ones
@@ -135,7 +220,7 @@ export function useSmartQuestions() {
         if (aiError) {
           console.error("Error generating AI questions:", aiError);
         } else if (aiData?.questions && Array.isArray(aiData.questions)) {
-          const aiQuestions = aiData.questions as QuestionPublic[];
+          const aiQuestions = aiData.questions.map((q: QuestionPublic) => ({ ...q, is_recycled: false })) as QuestionWithRecycled[];
           generatedCount = aiQuestions.length;
           
           // For authenticated users, filter out any AI questions they've already seen
@@ -155,14 +240,17 @@ export function useSmartQuestions() {
     // Shuffle and limit to target count
     const shuffled = questions.sort(() => Math.random() - 0.5).slice(0, targetCount);
 
-    return { questions: shuffled, generatedCount };
-  }, [fetchUnseenQuestionsForUser, fetchRandomQuestionsForGuest]);
+    return { questions: shuffled, generatedCount, isPowerUser };
+  }, [fetchUnseenQuestionsForUser, fetchRandomQuestionsForGuest, fetchMixedQuestionsForPowerUser, countUserChapterAttempts]);
 
   return {
     fetchUnseenQuestionsForUser,
     fetchRandomQuestionsForGuest,
+    fetchMixedQuestionsForPowerUser,
     countUnseenQuestions,
+    countUserChapterAttempts,
     recordQuestionProgress,
+    incrementRecycleCount,
     fetchSmartQuestions,
   };
 }
