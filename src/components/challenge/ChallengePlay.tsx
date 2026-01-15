@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Check, X, Sparkles, Loader2, ChevronRight, Target, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RichText } from "@/components/RichText";
@@ -112,7 +112,7 @@ export function ChallengePlay({
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="space-y-4"
+      className="space-y-4 gpu-accelerated"
     >
       {/* Progress bar with opponent indicator - Compact */}
       <div className="space-y-1.5">
@@ -152,69 +152,89 @@ export function ChallengePlay({
         </div>
       </div>
 
-      {/* Question - Mobile optimized */}
-      <motion.div
-        key={currentQ}
-        initial={{ opacity: 0, y: 20, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        className="glass-card rounded-2xl p-4 sm:p-6"
-      >
-        <div className="flex items-start gap-3 mb-5">
-          <span className="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center text-sm font-bold text-primary">
-            {currentQ + 1}
-          </span>
-          <RichText as="p" className="text-base sm:text-lg leading-relaxed pt-1" text={question.text} />
-        </div>
+      {/* Question - Mobile optimized with smooth transitions */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentQ}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
+          className="glass-card rounded-2xl p-4 sm:p-6 gpu-accelerated"
+        >
+          <div className="flex items-start gap-3 mb-5">
+            <motion.span 
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1, duration: 0.3 }}
+              className="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center text-sm font-bold text-primary"
+            >
+              {currentQ + 1}
+            </motion.span>
+            <RichText as="p" className="text-base sm:text-lg leading-relaxed pt-1" text={question.text} />
+          </div>
 
-        <div className="space-y-2.5">
-          {getOptions(question).map((option, index) => {
-            const isSelected = selectedAnswer === index;
-            const isCorrectOption = index === correctIndex;
-            let variant = "default";
-            if (showResult) {
-              if (isCorrectOption) variant = "correct";
-              else if (isSelected && !isCorrectOption) variant = "wrong";
-            }
+          <div className="space-y-2">
+            {getOptions(question).map((option, index) => {
+              const isSelected = selectedAnswer === index;
+              const isCorrectOption = index === correctIndex;
+              let variant = "default";
+              if (showResult) {
+                if (isCorrectOption) variant = "correct";
+                else if (isSelected && !isCorrectOption) variant = "wrong";
+              }
 
-            return (
-              <motion.button
-                key={index}
-                initial={{ opacity: 0, x: -15 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.06, duration: 0.3 }}
-                whileTap={!showResult ? { scale: 0.98 } : {}}
-                onClick={() => handleAnswerSelect(index)}
-                disabled={showResult}
-                className={`w-full p-3 sm:p-4 rounded-xl text-left transition-all duration-300 flex items-center gap-3 active:scale-[0.98] ${
-                  variant === "correct"
-                    ? "bg-green-500/20 border-2 border-green-500 shadow-[0_0_20px_hsl(var(--neon-green)/0.3)]"
-                    : variant === "wrong"
-                    ? "bg-red-500/20 border-2 border-red-500 shadow-[0_0_20px_hsl(0_84%_60%/0.3)]"
-                    : isSelected
-                    ? "glass-card border-2 border-primary shadow-[0_0_20px_hsl(var(--primary)/0.2)]"
-                    : "glass-card"
-                }`}
-              >
-                <span className={`shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-sm font-bold transition-all duration-300 ${
-                  variant === "correct"
-                    ? "bg-green-500 text-white"
-                    : variant === "wrong"
-                    ? "bg-red-500 text-white"
-                    : isSelected
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary"
-                }`}>
-                  {variant === "correct" ? <Check className="w-4 h-4" /> : 
-                   variant === "wrong" ? <X className="w-4 h-4" /> : 
-                   String.fromCharCode(65 + index)}
-                </span>
-                <RichText as="span" className="text-sm sm:text-base" text={option} />
-              </motion.button>
-            );
-          })}
-        </div>
-      </motion.div>
+              return (
+                <motion.button
+                  key={index}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ 
+                    delay: index * 0.04, 
+                    duration: 0.25,
+                    ease: [0.32, 0.72, 0, 1]
+                  }}
+                  whileTap={!showResult ? { scale: 0.97, transition: { duration: 0.1 } } : {}}
+                  onClick={() => handleAnswerSelect(index)}
+                  disabled={showResult}
+                  className={`w-full p-3.5 sm:p-4 rounded-xl text-left flex items-center gap-3 gpu-accelerated touch-manipulation ${
+                    variant === "correct"
+                      ? "bg-green-500/20 border-2 border-green-500 shadow-[0_0_20px_hsl(var(--neon-green)/0.3)]"
+                      : variant === "wrong"
+                      ? "bg-red-500/20 border-2 border-red-500 shadow-[0_0_20px_hsl(0_84%_60%/0.3)]"
+                      : isSelected
+                      ? "glass-card border-2 border-primary shadow-[0_0_15px_hsl(var(--primary)/0.15)]"
+                      : "glass-card border border-transparent hover:border-primary/20"
+                  }`}
+                  style={{ 
+                    transition: 'background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease'
+                  }}
+                >
+                  <motion.span 
+                    animate={isSelected && !showResult ? { scale: [1, 1.1, 1] } : {}}
+                    transition={{ duration: 0.2 }}
+                    className={`shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-sm font-bold ${
+                      variant === "correct"
+                        ? "bg-green-500 text-white"
+                        : variant === "wrong"
+                        ? "bg-red-500 text-white"
+                        : isSelected
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary"
+                    }`}
+                    style={{ transition: 'background-color 0.2s ease, color 0.2s ease' }}
+                  >
+                    {variant === "correct" ? <Check className="w-4 h-4" /> : 
+                     variant === "wrong" ? <X className="w-4 h-4" /> : 
+                     String.fromCharCode(65 + index)}
+                  </motion.span>
+                  <RichText as="span" className="text-sm sm:text-base" text={option} />
+                </motion.button>
+              );
+            })}
+          </div>
+        </motion.div>
+      </AnimatePresence>
 
       {/* Explanation - Compact */}
       {showResult && question.explanation && (
@@ -234,42 +254,55 @@ export function ChallengePlay({
         </motion.div>
       )}
 
-      {/* Actions - Full width on mobile */}
-      <motion.div 
-        className="pt-2"
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
-        {!showResult ? (
-          <Button
-            variant="neon"
-            size="lg"
-            className="w-full h-12 text-base"
-            disabled={selectedAnswer === null || isValidating}
-            onClick={handleSubmit}
-          >
-            {isValidating ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Checking...
-              </>
-            ) : (
-              "Lock Answer"
-            )}
-          </Button>
-        ) : (
-          <Button
-            variant="neon"
-            size="lg"
-            className="w-full h-12 text-base group"
-            onClick={handleNext}
-          >
-            {currentQ < questions.length - 1 ? "Next Question" : "Finish"}
-            <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-          </Button>
-        )}
-      </motion.div>
+      {/* Actions - Full width on mobile with smooth state transitions */}
+      <div className="pt-2 gpu-accelerated">
+        <AnimatePresence mode="wait">
+          {!showResult ? (
+            <motion.div
+              key="submit"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Button
+                variant="neon"
+                size="lg"
+                className="w-full h-12 text-base touch-manipulation"
+                disabled={selectedAnswer === null || isValidating}
+                onClick={handleSubmit}
+              >
+                {isValidating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Checking...
+                  </>
+                ) : (
+                  "Lock Answer"
+                )}
+              </Button>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="next"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Button
+                variant="neon"
+                size="lg"
+                className="w-full h-12 text-base group touch-manipulation"
+                onClick={handleNext}
+              >
+                {currentQ < questions.length - 1 ? "Next Question" : "Finish"}
+                <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </motion.div>
   );
 }
