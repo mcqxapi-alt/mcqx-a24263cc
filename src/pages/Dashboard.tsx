@@ -1,22 +1,19 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Link, Navigate } from "react-router-dom";
-import {
-  Flame,
-  Target,
-  Trophy,
-  BookOpen,
-  Bookmark,
-  Clock,
-  ChevronRight,
-  LogOut,
-  Loader2,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Navigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import mcqxLogo from "@/assets/mcqx-logo.png";
+
+// Dashboard Components
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { HeroStats } from "@/components/dashboard/HeroStats";
+import { ActionCards } from "@/components/dashboard/ActionCards";
+import { PerformanceSection } from "@/components/dashboard/PerformanceSection";
+import { ChallengeArena } from "@/components/dashboard/ChallengeArena";
+import { SmartSuggestions } from "@/components/dashboard/SmartSuggestions";
+import { AchievementsBadges } from "@/components/dashboard/AchievementsBadges";
+import { RecentSessions } from "@/components/dashboard/RecentSessions";
 
 type Profile = {
   id: string;
@@ -37,11 +34,14 @@ type Session = {
   chapters?: { name: string; subjects?: { name: string; icon: string } };
 };
 
-type Bookmark = {
+type Challenge = {
   id: string;
-  question_id: string;
-  created_at: string;
-  questions?: { text: string; chapter_id: string };
+  challenger_id: string;
+  opponent_id: string | null;
+  challenger_score: number | null;
+  opponent_score: number | null;
+  completed_at: string | null;
+  status: string;
 };
 
 export default function Dashboard() {
@@ -87,22 +87,20 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
-  // Fetch bookmarks
-  const { data: bookmarks = [], isLoading: loadingBookmarks } = useQuery({
-    queryKey: ["bookmarks", user?.id],
+  // Fetch challenges for wins/losses
+  const { data: challenges = [] } = useQuery({
+    queryKey: ["challenges", user?.id],
     queryFn: async () => {
       if (!user) return [];
       const { data, error } = await supabase
-        .from("bookmarks")
-        .select(`
-          *,
-          questions:question_id (text, chapter_id)
-        `)
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(5);
+        .from("challenges")
+        .select("*")
+        .or(`challenger_id.eq.${user.id},opponent_id.eq.${user.id}`)
+        .eq("status", "finished")
+        .order("completed_at", { ascending: false })
+        .limit(10);
       if (error) throw error;
-      return data as Bookmark[];
+      return data as Challenge[];
     },
     enabled: !!user,
   });
@@ -126,221 +124,107 @@ export default function Dashboard() {
     return <Navigate to="/login" state={{ message: "Sign in to see your streaks, saved scores & challenges!" }} replace />;
   }
 
+  // Calculate stats
   const accuracy = profile?.total_attempts
     ? Math.round((profile.total_correct / profile.total_attempts) * 100)
     : 0;
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  };
+  // Calculate challenge wins/losses
+  const challengeWins = challenges.filter(c => {
+    if (c.challenger_id === user.id) {
+      return (c.challenger_score || 0) > (c.opponent_score || 0);
+    }
+    return (c.opponent_score || 0) > (c.challenger_score || 0);
+  }).length;
+
+  const challengeLosses = challenges.filter(c => {
+    if (c.challenger_id === user.id) {
+      return (c.challenger_score || 0) < (c.opponent_score || 0);
+    }
+    return (c.opponent_score || 0) < (c.challenger_score || 0);
+  }).length;
+
+  // Format challenges for display
+  const recentChallenges = challenges.slice(0, 4).map(c => {
+    const isChallenger = c.challenger_id === user.id;
+    const userScore = isChallenger ? (c.challenger_score || 0) : (c.opponent_score || 0);
+    const opponentScore = isChallenger ? (c.opponent_score || 0) : (c.challenger_score || 0);
+    return {
+      id: c.id,
+      opponentName: "Opponent", // We'd need to join profiles for real names
+      won: userScore > opponentScore,
+      userScore,
+      opponentScore,
+      completedAt: c.completed_at || new Date().toISOString(),
+    };
+  });
 
   return (
     <div className="min-h-screen gradient-mesh-animated">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border/30">
-        <div className="container flex items-center justify-between h-24 sm:h-32">
-          <Link to="/" className="flex items-center gap-2 transition-transform duration-300 hover:scale-105">
-            <img src={mcqxLogo} alt="MCQX" className="h-20 sm:h-28 w-auto" />
-          </Link>
+      <DashboardHeader
+        displayName={profile?.display_name || null}
+        avatarUrl={profile?.avatar_url || null}
+        email={user.email}
+        onSignOut={handleSignOut}
+        signingOut={signingOut}
+      />
 
-          <div className="flex items-center gap-3">
-            <Button variant="neon" size="sm" asChild>
-              <Link to="/practice">Practice</Link>
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleSignOut}
-              disabled={signingOut}
-              className="hover:bg-destructive/10 hover:text-destructive transition-colors duration-300"
-            >
-              {signingOut ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <LogOut className="w-5 h-5" />
-              )}
-            </Button>
-          </div>
-        </div>
-      </header>
+      <main className="pt-24 sm:pt-28 pb-12 px-4">
+        <div className="container max-w-5xl">
+          {/* Hero Section - Your Today Panel */}
+          <HeroStats
+            displayName={profile?.display_name || null}
+            email={user.email}
+            accuracy={accuracy}
+            totalAttempts={profile?.total_attempts || 0}
+            challengeWins={challengeWins}
+            challengeLosses={challengeLosses}
+            streakDays={profile?.streak_days || 0}
+          />
 
-      <main className="pt-32 sm:pt-40 pb-12 px-4">
-        <div className="container max-w-4xl">
-          {/* Welcome Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="mb-8"
-          >
-            <h1 className="font-display text-3xl font-bold mb-2">
-              Hey, {profile?.display_name || user.email?.split("@")[0]} 👋
-            </h1>
-            <p className="text-muted-foreground">Ready to crush some MCQs today?</p>
-          </motion.div>
+          {/* Primary Action Zone */}
+          <ActionCards />
 
-          {/* Stats Grid */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
-          >
-            {[
-              { icon: Flame, value: profile?.streak_days || 0, label: "Day Streak", color: "accent", glow: true },
-              { icon: BookOpen, value: profile?.total_attempts || 0, label: "MCQs Cracked", color: "primary", glow: false },
-              { icon: Target, value: `${accuracy}%`, label: "Accuracy", color: "accent", glow: false },
-              { icon: Trophy, value: profile?.total_correct || 0, label: "Correct", color: "primary", glow: false },
-            ].map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 + i * 0.05, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                whileHover={{ y: -3, scale: 1.02 }}
-                className="glass rounded-2xl p-5 transition-all duration-300 hover:border-primary/40"
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className={`w-10 h-10 rounded-xl bg-${stat.color}/20 flex items-center justify-center`}>
-                    <stat.icon className={`w-5 h-5 text-${stat.color}`} />
-                  </div>
-                </div>
-                <div className={`text-3xl font-bold ${stat.glow ? 'neon-text-green' : ''}`}>{stat.value}</div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
-              </motion.div>
-            ))}
-          </motion.div>
+          {/* Performance & Insights */}
+          <PerformanceSection
+            totalAttempts={profile?.total_attempts || 0}
+            totalCorrect={profile?.total_correct || 0}
+          />
 
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Recent Sessions */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="glass rounded-2xl p-6 transition-all duration-300 hover:border-primary/30"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-display text-xl font-semibold flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-primary" />
-                  Recent Sessions
-                </h2>
-              </div>
+          {/* Challenge Arena */}
+          <ChallengeArena
+            recentChallenges={recentChallenges}
+            currentStreak={profile?.streak_days || 0}
+          />
 
-              {loadingSessions ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                </div>
-              ) : sessions.length > 0 ? (
-                <div className="space-y-3">
-                  {sessions.map((session, i) => (
-                    <motion.div
-                      key={session.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.4 + i * 0.05, duration: 0.3 }}
-                      whileHover={{ x: 4, scale: 1.01 }}
-                      className="flex items-center justify-between p-3 rounded-xl bg-secondary/50 hover:bg-secondary transition-all duration-300 cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">
-                          {session.chapters?.subjects?.icon || "📚"}
-                        </span>
-                        <div>
-                          <div className="font-medium text-sm">
-                            {session.chapters?.name || "Unknown Chapter"}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {formatDate(session.completed_at)}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold text-accent">
-                          {session.score}/{session.total_questions}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {Math.round((session.score / session.total_questions) * 100)}%
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No sessions yet</p>
-                  <Button variant="neon" size="sm" className="mt-3" asChild>
-                    <Link to="/practice">Start Practicing</Link>
-                  </Button>
-                </div>
-              )}
-            </motion.div>
+          {/* AI Smart Suggestions */}
+          <SmartSuggestions
+            lastPracticeDate={profile?.last_practice_date || null}
+          />
 
-            {/* Bookmarks */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.35, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="glass rounded-2xl p-6 transition-all duration-300 hover:border-primary/30"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-display text-xl font-semibold flex items-center gap-2">
-                  <Bookmark className="w-5 h-5 text-primary" />
-                  Bookmarked Questions
-                </h2>
-              </div>
+          {/* Badges & Achievements */}
+          <AchievementsBadges
+            totalCorrect={profile?.total_correct || 0}
+            totalAttempts={profile?.total_attempts || 0}
+            streakDays={profile?.streak_days || 0}
+            challengeWins={challengeWins}
+          />
 
-              {loadingBookmarks ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                </div>
-              ) : bookmarks.length > 0 ? (
-                <div className="space-y-3">
-                  {bookmarks.map((bookmark, i) => (
-                    <motion.div
-                      key={bookmark.id}
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.45 + i * 0.05, duration: 0.3 }}
-                      whileHover={{ x: 4, scale: 1.01 }}
-                      className="p-3 rounded-xl bg-secondary/50 hover:bg-secondary transition-all duration-300 cursor-pointer"
-                    >
-                      <p className="text-sm line-clamp-2">
-                        {bookmark.questions?.text || "Question unavailable"}
-                      </p>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        {formatDate(bookmark.created_at)}
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Bookmark className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No bookmarks yet</p>
-                  <p className="text-xs mt-1">
-                    Flag tricky questions to review later
-                  </p>
-                </div>
-              )}
-            </motion.div>
-          </div>
+          {/* Recent Sessions */}
+          <RecentSessions
+            sessions={sessions}
+            isLoading={loadingSessions}
+          />
 
-          {/* CTA */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-8 text-center"
-          >
-            <Button variant="neon" size="lg" asChild className="group">
-              <Link to="/practice" className="inline-flex items-center gap-2">
-                Start New Practice
-                <ChevronRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
-              </Link>
-            </Button>
-          </motion.div>
+          {/* Footer */}
+          <footer className="mt-12 pt-6 border-t border-border/30 text-center text-sm text-muted-foreground">
+            <div className="flex justify-center gap-6">
+              <a href="#" className="hover:text-primary transition-colors">Help</a>
+              <a href="#" className="hover:text-primary transition-colors">Feedback</a>
+              <a href="#" className="hover:text-primary transition-colors">About MCQX</a>
+            </div>
+          </footer>
         </div>
       </main>
     </div>
