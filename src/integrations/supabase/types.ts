@@ -420,6 +420,7 @@ export type Database = {
           chapter_id: string
           id: string
           question_id: string
+          recycle_count: number
           user_id: string
           was_correct: boolean | null
         }
@@ -428,6 +429,7 @@ export type Database = {
           chapter_id: string
           id?: string
           question_id: string
+          recycle_count?: number
           user_id: string
           was_correct?: boolean | null
         }
@@ -436,6 +438,7 @@ export type Database = {
           chapter_id?: string
           id?: string
           question_id?: string
+          recycle_count?: number
           user_id?: string
           was_correct?: boolean | null
         }
@@ -470,6 +473,34 @@ export type Database = {
       count_unseen_questions: {
         Args: { p_chapter_id: string; p_user_id: string }
         Returns: number
+      }
+      count_user_chapter_attempts: {
+        Args: { p_chapter_id: string; p_user_id: string }
+        Returns: number
+      }
+      get_mixed_questions_for_power_user: {
+        Args: {
+          p_chapter_id: string
+          p_limit?: number
+          p_max_recycle_count?: number
+          p_min_days_ago?: number
+          p_recycle_ratio?: number
+          p_user_id: string
+        }
+        Returns: {
+          chapter_id: string
+          created_at: string
+          id: string
+          is_recycled: boolean
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          source: Database["public"]["Enums"]["question_source"]
+          status: Database["public"]["Enums"]["question_status"]
+          text: string
+          updated_at: string
+        }[]
       }
       get_public_questions: {
         Args: { p_chapter_id: string; p_limit?: number }
@@ -549,6 +580,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_recycle_count: {
+        Args: { p_question_id: string; p_user_id: string }
+        Returns: undefined
       }
       record_question_progress: {
         Args: {
