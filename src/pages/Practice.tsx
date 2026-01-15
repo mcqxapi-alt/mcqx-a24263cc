@@ -230,12 +230,85 @@ export default function Practice() {
     }
   };
 
+  // Save session to database when practice is complete
+  const saveSession = async () => {
+    if (!user || !selectedChapter || questions.length === 0) return;
+
+    try {
+      // Calculate counts by source
+      const verifiedCount = questions.filter(q => q.source === 'verified').length;
+      const aiCount = questions.filter(q => q.source === 'ai').length;
+
+      // Insert session record
+      const { error: sessionError } = await supabase.from("sessions").insert({
+        user_id: user.id,
+        chapter_id: selectedChapter.id,
+        question_ids: questions.map(q => q.id),
+        answers: answers,
+        score: score,
+        total_questions: totalQuestions,
+        verified_count: verifiedCount,
+        ai_count: aiCount,
+      });
+
+      if (sessionError) {
+        console.error("Error saving session:", sessionError);
+        return;
+      }
+
+      // Update profile stats
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          total_attempts: supabase.rpc ? undefined : undefined, // Will use raw SQL below
+          total_correct: supabase.rpc ? undefined : undefined,
+          last_practice_date: new Date().toISOString().split('T')[0],
+        })
+        .eq("id", user.id);
+
+      // Use RPC or direct increment for stats
+      const { data: currentProfile } = await supabase
+        .from("profiles")
+        .select("total_attempts, total_correct, streak_days, last_practice_date")
+        .eq("id", user.id)
+        .single();
+
+      if (currentProfile) {
+        const today = new Date().toISOString().split('T')[0];
+        const lastPractice = currentProfile.last_practice_date;
+        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+        
+        // Calculate new streak
+        let newStreak = currentProfile.streak_days;
+        if (lastPractice === yesterday) {
+          newStreak = currentProfile.streak_days + 1;
+        } else if (lastPractice !== today) {
+          newStreak = 1; // Reset streak if not consecutive
+        }
+
+        await supabase
+          .from("profiles")
+          .update({
+            total_attempts: (currentProfile.total_attempts || 0) + totalQuestions,
+            total_correct: (currentProfile.total_correct || 0) + score,
+            streak_days: newStreak,
+            last_practice_date: today,
+          })
+          .eq("id", user.id);
+      }
+    } catch (err) {
+      console.error("Error saving session data:", err);
+    }
+  };
+
   const handleNext = () => {
     if (currentQ < totalQuestions - 1) {
       setCurrentQ(currentQ + 1);
       setSelectedAnswer(null);
       setShowResult(false);
     } else {
+      // Save session before showing results (non-blocking)
+      saveSession();
       setStep("result");
     }
   };
