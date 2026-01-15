@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Crown, Swords, Trophy, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { VictoryConfetti } from "./VictoryConfetti";
 
 type ChallengeResultProps = {
   isChallenger: boolean;
@@ -58,13 +59,16 @@ export function ChallengeResult({
   showGuestNudge,
 }: ChallengeResultProps) {
   const result = determineWinner(myScore, theirScore, myTimeMs, theirTimeMs);
+  const showConfetti = isComplete && result === "win";
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="text-center py-4 px-2"
-    >
+    <>
+      <VictoryConfetti trigger={showConfetti} />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="text-center py-4 px-2 relative"
+      >
       {isComplete && result ? (
         <>
           <motion.div
@@ -199,6 +203,7 @@ export function ChallengeResult({
           </Button>
         </motion.div>
       )}
-    </motion.div>
+      </motion.div>
+    </>
   );
 }
