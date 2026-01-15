@@ -900,10 +900,20 @@ export default function Practice() {
                     variant="neon"
                     size="lg"
                     onClick={handleRetryChapter}
+                    disabled={isGenerating}
                     className="h-14"
                   >
-                    <RotateCcw className="w-5 h-5 mr-2" />
-                    Try Again
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      <>
+                        <RotateCcw className="w-5 h-5 mr-2" />
+                        Try Again
+                      </>
+                    )}
                   </Button>
                   <Button
                     variant="neon-outline"
