@@ -316,11 +316,50 @@ export function useChallengeRealtime({
     [challengeId]
   );
 
+  // Leave duel - cancel ready state and optionally close challenge
+  const leaveDuel = useCallback(
+    async (isChallenger: boolean) => {
+      if (!challengeId) return;
+
+      if (isChallenger) {
+        // Challenger leaving closes the challenge
+        await supabase
+          .from("challenges")
+          .update({
+            status: "closed",
+            challenger_ready: false,
+          })
+          .eq("id", challengeId);
+      } else {
+        // Opponent leaving removes them and resets challenge to open
+        await supabase
+          .from("challenges")
+          .update({
+            opponent_id: null,
+            opponent_ready: false,
+            status: "open",
+          })
+          .eq("id", challengeId);
+      }
+
+      // Cleanup progress record
+      if (userId) {
+        await supabase
+          .from("challenge_progress")
+          .delete()
+          .eq("challenge_id", challengeId)
+          .eq("user_id", userId);
+      }
+    },
+    [challengeId, userId]
+  );
+
   return {
     connectionStatus,
     updateProgress,
     setReady,
     recordAnswer,
     finishChallenge,
+    leaveDuel,
   };
 }

@@ -56,6 +56,7 @@ export default function Challenge() {
   const [isCreating, setIsCreating] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [isSettingReady, setIsSettingReady] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
   const [opponentProgress, setOpponentProgress] = useState(0);
   const [myScore, setMyScore] = useState(0);
   const [myTimeMs, setMyTimeMs] = useState(0);
@@ -125,7 +126,7 @@ export default function Challenge() {
   }, []);
 
   // Setup realtime subscriptions
-  const { connectionStatus, setReady, updateProgress, recordAnswer, finishChallenge } = useChallengeRealtime({
+  const { connectionStatus, setReady, updateProgress, recordAnswer, finishChallenge, leaveDuel } = useChallengeRealtime({
     challengeId: challenge?.id || null,
     userId: user?.id || null,
     onChallengeUpdate: handleChallengeUpdate,
@@ -451,6 +452,18 @@ export default function Challenge() {
     }
   };
 
+  const handleLeaveDuel = async () => {
+    if (!challenge) return;
+    setIsLeaving(true);
+    await leaveDuel(isChallenger);
+    setIsLeaving(false);
+    toast({ 
+      title: isChallenger ? "Duel cancelled" : "Left duel",
+      description: isChallenger ? "The challenge has been closed." : "You've left the challenge."
+    });
+    navigate("/challenge");
+  };
+
   const handleAnswerSubmit = async (questionIndex: number, selectedAnswer: number, timeTakenMs: number, isCorrect: boolean) => {
     if (!challenge) return;
     await updateProgress(questionIndex + 1);
@@ -760,7 +773,9 @@ export default function Challenge() {
                 chapterInfo={chapterInfo}
                 questionCount={questions.length}
                 onReady={handleReady}
+                onLeaveDuel={handleLeaveDuel}
                 isSettingReady={isSettingReady}
+                isLeaving={isLeaving}
                 connectionStatus={connectionStatus}
                 isStarting={isStartingGame}
               />

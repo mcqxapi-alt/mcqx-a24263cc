@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Users, Check, Copy, Loader2, WifiOff } from "lucide-react";
+import { Users, Check, Copy, Loader2, WifiOff, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import type { ConnectionStatus } from "@/hooks/useChallengeRealtime";
@@ -14,7 +14,9 @@ type ChallengeLobbyProps = {
   chapterInfo: { name: string; subject_name: string } | null;
   questionCount: number;
   onReady: () => void;
+  onLeaveDuel: () => void;
   isSettingReady: boolean;
+  isLeaving: boolean;
   connectionStatus: ConnectionStatus;
   isStarting: boolean;
 };
@@ -29,7 +31,9 @@ export function ChallengeLobby({
   chapterInfo,
   questionCount,
   onReady,
+  onLeaveDuel,
   isSettingReady,
+  isLeaving,
   connectionStatus,
   isStarting,
 }: ChallengeLobbyProps) {
@@ -186,6 +190,7 @@ export function ChallengeLobby({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
+          className="space-y-3"
         >
           {!myReady ? (
             <Button
@@ -193,7 +198,7 @@ export function ChallengeLobby({
               size="lg"
               className="h-12 px-8 text-base w-full max-w-xs"
               onClick={onReady}
-              disabled={isSettingReady}
+              disabled={isSettingReady || isLeaving}
             >
               {isSettingReady ? (
                 <>
@@ -210,6 +215,25 @@ export function ChallengeLobby({
               <span>Waiting for opponent...</span>
             </div>
           )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-destructive"
+            onClick={onLeaveDuel}
+            disabled={isLeaving || isSettingReady}
+          >
+            {isLeaving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                Leaving...
+              </>
+            ) : (
+              <>
+                <LogOut className="w-4 h-4 mr-1" />
+                Leave Duel
+              </>
+            )}
+          </Button>
         </motion.div>
       ) : (
         <motion.div
@@ -230,6 +254,25 @@ export function ChallengeLobby({
               Copy
             </Button>
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-destructive"
+            onClick={onLeaveDuel}
+            disabled={isLeaving}
+          >
+            {isLeaving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                Leaving...
+              </>
+            ) : (
+              <>
+                <LogOut className="w-4 h-4 mr-1" />
+                Cancel Duel
+              </>
+            )}
+          </Button>
         </motion.div>
       )}
     </motion.div>
