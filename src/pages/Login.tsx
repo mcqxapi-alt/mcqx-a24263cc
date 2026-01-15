@@ -93,7 +93,7 @@ export default function Login() {
     setSubmitting(true);
 
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({
+      const { error, data } = await supabase.auth.signUp({
         email: email.trim(),
         password,
         options: {
@@ -106,6 +106,15 @@ export default function Login() {
           description: error.message,
           variant: "destructive",
         });
+      } else if (data.user && !data.session) {
+        // Email confirmation required
+        toast({
+          title: "Check your email!",
+          description: "We've sent you a confirmation link. Please verify your email to continue.",
+          duration: 10000,
+        });
+        setEmail("");
+        setPassword("");
       } else {
         toast({
           title: "Account created!",
@@ -118,11 +127,19 @@ export default function Login() {
         password,
       });
       if (error) {
-        toast({
-          title: "Sign in failed",
-          description: error.message,
-          variant: "destructive",
-        });
+        if (error.message.includes("Email not confirmed")) {
+          toast({
+            title: "Email not verified",
+            description: "Please check your inbox and click the confirmation link we sent you.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Sign in failed",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
       }
     }
 
