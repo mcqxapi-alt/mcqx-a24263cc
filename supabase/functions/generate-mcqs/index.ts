@@ -9,6 +9,50 @@ const corsHeaders = {
 const isUuid = (value: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
+// Helper to call backup Google Gemini API
+async function callGeminiBackup(systemPrompt: string, userPrompt: string): Promise<{ content: string | null; error: string | null }> {
+  const GOOGLE_GEMINI_API_KEY = Deno.env.get('GOOGLE_GEMINI_API_KEY');
+  
+  if (!GOOGLE_GEMINI_API_KEY) {
+    return { content: null, error: 'No backup AI configured (GOOGLE_GEMINI_API_KEY not set)' };
+  }
+
+  console.log('Attempting backup AI provider (Google Gemini)...');
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: userPrompt }] }],
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini backup error:', response.status, errorText);
+      return { content: null, error: `Gemini API returned ${response.status}` };
+    }
+
+    const data = await response.json();
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!content) {
+      return { content: null, error: 'No content in Gemini response' };
+    }
+
+    console.log('Backup AI (Gemini) responded successfully');
+    return { content, error: null };
+  } catch (err) {
+    console.error('Gemini backup exception:', err);
+    return { content: null, error: err instanceof Error ? err.message : 'Unknown Gemini error' };
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -32,24 +76,10 @@ serve(async (req) => {
     }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
-    }
 
     console.log(`Generating ${count} MCQs for ${subjectName} - ${chapterName}`);
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          {
-            role: 'system',
-            content: `You are an expert CBSE Class 12 teacher with 20+ years of experience. You MUST generate 100% factually accurate MCQs based on NCERT textbooks.
+    const systemPrompt = `You are an expert CBSE Class 12 teacher with 20+ years of experience. You MUST generate 100% factually accurate MCQs based on NCERT textbooks.
 
 CRITICAL RULES:
 - Double-check every answer before responding
@@ -69,11 +99,9 @@ MATH FORMATTING RULES (IMPORTANT):
 - For Greek letters use: $\\alpha$, $\\beta$, $\\theta$, $\\pi$, etc.
 - For trigonometry use: $\\sin$, $\\cos$, $\\tan$, etc.
 - For summation/product use: $\\sum_{i=1}^{n}$, $\\prod_{i=1}^{n}$
-- Keep text outside math expressions plain (no Markdown)`
-          },
-          {
-            role: 'user',
-            content: `Generate exactly ${count} MCQ questions for CBSE Class 12 ${subjectName}, chapter: "${chapterName}".
+- Keep text outside math expressions plain (no Markdown)`;
+
+    const userPrompt = `Generate exactly ${count} MCQ questions for CBSE Class 12 ${subjectName}, chapter: "${chapterName}".
 
 IMPORTANT: Verify each answer is 100% correct before including it. Use only NCERT-verified facts.
 
@@ -96,40 +124,71 @@ Return ONLY a valid JSON array:
     "correct_answer": 1,
     "explanation": "Using the power rule, $\\\\frac{d}{dx}(x^n) = nx^{n-1}$, so $\\\\frac{d}{dx}(x^2) = 2x$"
   }
-]`
-          }
-        ],
-      }),
-    });
+]`;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('AI gateway error:', response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+    let content: string | null = null;
+    let usedProvider = 'lovable';
+
+    // Try Lovable AI first
+    if (LOVABLE_API_KEY) {
+      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        content = data.choices?.[0]?.message?.content;
+        console.log('Using Lovable AI Gateway');
+      } else if (response.status === 402 || response.status === 429) {
+        // Credits exhausted or rate limited - try backup
+        console.log(`Lovable AI unavailable (${response.status}), trying backup...`);
+        const backup = await callGeminiBackup(systemPrompt, userPrompt);
+        if (backup.content) {
+          content = backup.content;
+          usedProvider = 'gemini-backup';
+        } else {
+          // Return appropriate error based on original status
+          const errorMsg = response.status === 402 
+            ? 'AI credits exhausted and no backup available.'
+            : 'Rate limit exceeded and no backup available.';
+          return new Response(
+            JSON.stringify({ error: errorMsg }),
+            { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      } else {
+        const errorText = await response.text();
+        console.error('AI gateway error:', response.status, errorText);
+        throw new Error(`AI gateway returned ${response.status}`);
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'AI credits exhausted. Please add credits to continue.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+    } else {
+      // No Lovable API key, try backup directly
+      console.log('No LOVABLE_API_KEY, trying backup...');
+      const backup = await callGeminiBackup(systemPrompt, userPrompt);
+      if (backup.content) {
+        content = backup.content;
+        usedProvider = 'gemini-backup';
+      } else {
+        throw new Error('No AI provider configured');
       }
-      
-      throw new Error(`AI gateway returned ${response.status}`);
     }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
     
     if (!content) {
       throw new Error('No content in AI response');
     }
 
-    console.log('Raw AI response:', content);
+    console.log(`Raw AI response (${usedProvider}):`, content.substring(0, 200) + '...');
 
     // Parse the JSON from the response
     let questions;
@@ -139,8 +198,6 @@ Return ONLY a valid JSON array:
       let jsonStr = jsonMatch ? jsonMatch[0] : content;
       
       // Fix common JSON issues with LaTeX backslashes
-      // The AI sometimes returns invalid escape sequences like \f, \s, \t that break JSON
-      // We need to properly escape backslashes that aren't already part of valid escape sequences
       jsonStr = jsonStr.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
       
       questions = JSON.parse(jsonStr);
@@ -150,7 +207,6 @@ Return ONLY a valid JSON array:
       // Fallback: try a more aggressive cleanup
       try {
         let jsonStr = content.match(/\[[\s\S]*\]/)?.[0] || content;
-        // Replace all backslashes with double backslashes, then fix over-escaped ones
         jsonStr = jsonStr
           .replace(/\\\\/g, '<<<DOUBLE_BACKSLASH>>>')
           .replace(/\\/g, '\\\\')
@@ -187,7 +243,7 @@ Return ONLY a valid JSON array:
       };
     });
 
-    console.log(`Successfully generated ${validatedQuestions.length} questions`);
+    console.log(`Successfully generated ${validatedQuestions.length} questions via ${usedProvider}`);
 
     // Persist questions to DB so the client can fetch them without ever receiving correct_answer.
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
@@ -225,7 +281,7 @@ Return ONLY a valid JSON array:
     }
 
     return new Response(
-      JSON.stringify({ questions: inserted ?? [] }),
+      JSON.stringify({ questions: inserted ?? [], provider: usedProvider }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

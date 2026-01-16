@@ -6,6 +6,113 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper to call backup Google Gemini API
+async function callGeminiBackup(systemPrompt: string, userPrompt: string): Promise<{ content: string | null; error: string | null }> {
+  const GOOGLE_GEMINI_API_KEY = Deno.env.get('GOOGLE_GEMINI_API_KEY');
+  
+  if (!GOOGLE_GEMINI_API_KEY) {
+    return { content: null, error: 'No backup AI configured (GOOGLE_GEMINI_API_KEY not set)' };
+  }
+
+  console.log('Attempting backup AI provider (Google Gemini)...');
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GOOGLE_GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: userPrompt }] }],
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini backup error:', response.status, errorText);
+      return { content: null, error: `Gemini API returned ${response.status}` };
+    }
+
+    const data = await response.json();
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!content) {
+      return { content: null, error: 'No content in Gemini response' };
+    }
+
+    console.log('Backup AI (Gemini) responded successfully');
+    return { content, error: null };
+  } catch (err) {
+    console.error('Gemini backup exception:', err);
+    return { content: null, error: err instanceof Error ? err.message : 'Unknown Gemini error' };
+  }
+}
+
+// Helper to call AI with automatic fallback
+async function callAIWithFallback(systemPrompt: string, userPrompt: string): Promise<{ content: string | null; provider: string; error: string | null }> {
+  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+
+  // Try Lovable AI first
+  if (LOVABLE_API_KEY) {
+    try {
+      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const content = data.choices?.[0]?.message?.content;
+        if (content) {
+          return { content, provider: 'lovable', error: null };
+        }
+      } else if (response.status === 402 || response.status === 429) {
+        console.log(`Lovable AI unavailable (${response.status}), trying backup...`);
+        const backup = await callGeminiBackup(systemPrompt, userPrompt);
+        if (backup.content) {
+          return { content: backup.content, provider: 'gemini-backup', error: null };
+        }
+        return { content: null, provider: 'none', error: backup.error || 'Backup failed' };
+      } else {
+        console.error('Lovable AI error:', response.status);
+        // Try backup for other errors too
+        const backup = await callGeminiBackup(systemPrompt, userPrompt);
+        if (backup.content) {
+          return { content: backup.content, provider: 'gemini-backup', error: null };
+        }
+        return { content: null, provider: 'none', error: `AI error: ${response.status}` };
+      }
+    } catch (err) {
+      console.error('Lovable AI exception:', err);
+      // Try backup on network errors
+      const backup = await callGeminiBackup(systemPrompt, userPrompt);
+      if (backup.content) {
+        return { content: backup.content, provider: 'gemini-backup', error: null };
+      }
+      return { content: null, provider: 'none', error: err instanceof Error ? err.message : 'Unknown error' };
+    }
+  }
+
+  // No Lovable API key, try backup directly
+  const backup = await callGeminiBackup(systemPrompt, userPrompt);
+  if (backup.content) {
+    return { content: backup.content, provider: 'gemini-backup', error: null };
+  }
+  return { content: null, provider: 'none', error: 'No AI provider configured' };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -14,9 +121,8 @@ serve(async (req) => {
   try {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !LOVABLE_API_KEY) {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       throw new Error('Missing required environment variables');
     }
 
@@ -89,6 +195,18 @@ serve(async (req) => {
 
     const results: any[] = [];
 
+    const systemPrompt = `You are an expert CBSE Class 12 teacher. Generate 100% factually accurate MCQs based on NCERT textbooks.
+
+RULES:
+- Double-check every answer
+- Use only verified NCERT facts
+- correct_answer uses 1=A, 2=B, 3=C, 4=D
+
+MATH FORMATTING:
+- Use LaTeX: $\\frac{1}{2}$, $x^2$, $\\sqrt{x}$
+- For fractions: $\\frac{num}{den}$
+- Greek letters: $\\alpha$, $\\beta$, $\\pi$`;
+
     // Process chapters sequentially to avoid rate limits
     for (const chapter of chaptersToProcess) {
       const subjectName = (chapter.subjects as any)?.name || 'General';
@@ -99,65 +217,31 @@ serve(async (req) => {
 
       console.log(`Generating ${neededCount} questions for ${subjectName} - ${chapter.name}`);
 
+      const userPrompt = `Generate exactly ${neededCount} MCQ questions for CBSE Class 12 ${subjectName}, chapter: "${chapter.name}".
+
+Return ONLY a valid JSON array with objects having: text, option_a, option_b, option_c, option_d, correct_answer (1-4), explanation.`;
+
       try {
-        const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
-            messages: [
-              {
-                role: 'system',
-                content: `You are an expert CBSE Class 12 teacher. Generate 100% factually accurate MCQs based on NCERT textbooks.
+        const aiResult = await callAIWithFallback(systemPrompt, userPrompt);
 
-RULES:
-- Double-check every answer
-- Use only verified NCERT facts
-- correct_answer uses 1=A, 2=B, 3=C, 4=D
-
-MATH FORMATTING:
-- Use LaTeX: $\\frac{1}{2}$, $x^2$, $\\sqrt{x}$
-- For fractions: $\\frac{num}{den}$
-- Greek letters: $\\alpha$, $\\beta$, $\\pi$`
-              },
-              {
-                role: 'user',
-                content: `Generate exactly ${neededCount} MCQ questions for CBSE Class 12 ${subjectName}, chapter: "${chapter.name}".
-
-Return ONLY a valid JSON array with objects having: text, option_a, option_b, option_c, option_d, correct_answer (1-4), explanation.`
-              }
-            ],
-          }),
-        });
-
-        if (!response.ok) {
-          console.error(`AI error for ${chapter.name}: ${response.status}`);
-          results.push({ chapter: chapter.name, status: 'error', error: `AI returned ${response.status}` });
+        if (!aiResult.content) {
+          results.push({ chapter: chapter.name, status: 'error', error: aiResult.error || 'No AI response' });
           continue;
         }
 
-        const data = await response.json();
-        const content = data.choices?.[0]?.message?.content;
-
-        if (!content) {
-          results.push({ chapter: chapter.name, status: 'error', error: 'No content in response' });
-          continue;
-        }
+        console.log(`AI response received via ${aiResult.provider} for ${chapter.name}`);
 
         // Parse JSON with backslash fixing
         let questions;
         try {
-          const jsonMatch = content.match(/\[[\s\S]*\]/);
-          let jsonStr = jsonMatch ? jsonMatch[0] : content;
+          const jsonMatch = aiResult.content.match(/\[[\s\S]*\]/);
+          let jsonStr = jsonMatch ? jsonMatch[0] : aiResult.content;
           jsonStr = jsonStr.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
           questions = JSON.parse(jsonStr);
         } catch (parseError) {
           // Fallback parsing
           try {
-            let jsonStr = content.match(/\[[\s\S]*\]/)?.[0] || content;
+            let jsonStr = aiResult.content.match(/\[[\s\S]*\]/)?.[0] || aiResult.content;
             jsonStr = jsonStr
               .replace(/\\\\/g, '<<<DB>>>')
               .replace(/\\/g, '\\\\')
@@ -198,7 +282,7 @@ Return ONLY a valid JSON array with objects having: text, option_a, option_b, op
         if (insertError) {
           results.push({ chapter: chapter.name, status: 'error', error: insertError.message });
         } else {
-          results.push({ chapter: chapter.name, status: 'success', generated: toInsert.length });
+          results.push({ chapter: chapter.name, status: 'success', generated: toInsert.length, provider: aiResult.provider });
         }
 
         // Small delay to avoid rate limits
