@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, CheckCircle, XCircle, Edit, Flag, Loader2, Plus } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Edit, Flag, Loader2, Plus, Eye, Database, Sparkles } from "lucide-react";
 import mcqxLogo from "@/assets/mcqx-logo.png";
 
 type ReportWithQuestion = {
@@ -75,6 +75,7 @@ export default function AdminReview() {
   // Add question dialog state
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newQuestionForm, setNewQuestionForm] = useState(initialNewQuestionForm);
+  const [showPreview, setShowPreview] = useState(false);
 
   // Fetch all pending reports with their questions
   const { data: reports = [], isLoading: reportsLoading } = useQuery({
@@ -144,6 +145,42 @@ export default function AdminReview() {
     enabled: isAdmin,
   });
 
+  // Fetch question stats
+  const { data: questionStats } = useQuery({
+    queryKey: ["admin-question-stats"],
+    queryFn: async () => {
+      const { count: totalCount, error: totalError } = await supabase
+        .from("questions")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "active");
+
+      if (totalError) throw totalError;
+
+      const { count: verifiedCount, error: verifiedError } = await supabase
+        .from("questions")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "active")
+        .eq("source", "verified");
+
+      if (verifiedError) throw verifiedError;
+
+      const { count: aiCount, error: aiError } = await supabase
+        .from("questions")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "active")
+        .eq("source", "ai");
+
+      if (aiError) throw aiError;
+
+      return {
+        total: totalCount || 0,
+        verified: verifiedCount || 0,
+        ai: aiCount || 0,
+      };
+    },
+    enabled: isAdmin,
+  });
+
   // Update question mutation
   const updateQuestionMutation = useMutation({
     mutationFn: async ({ questionId, updates }: { questionId: string; updates: Record<string, unknown> }) => {
@@ -185,9 +222,12 @@ export default function AdminReview() {
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-question-stats"] });
       toast({ title: "Question added successfully", description: "The verified question is now live." });
       setShowAddDialog(false);
       setNewQuestionForm(initialNewQuestionForm);
+      setShowPreview(false);
     },
     onError: (error) => {
       toast({ title: "Failed to add question", description: error.message, variant: "destructive" });
@@ -301,7 +341,22 @@ export default function AdminReview() {
                 <p className="text-sm text-muted-foreground">Manage reported questions</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Question Stats */}
+              <div className="hidden md:flex items-center gap-2">
+                <Badge variant="outline" className="gap-1">
+                  <Database className="h-3 w-3" />
+                  {questionStats?.total ?? "..."} Total
+                </Badge>
+                <Badge variant="outline" className="text-green-600 border-green-600 gap-1">
+                  <CheckCircle className="h-3 w-3" />
+                  {questionStats?.verified ?? "..."} Verified
+                </Badge>
+                <Badge variant="outline" className="text-blue-600 border-blue-600 gap-1">
+                  <Sparkles className="h-3 w-3" />
+                  {questionStats?.ai ?? "..."} AI
+                </Badge>
+              </div>
               <Button onClick={() => setShowAddDialog(true)} className="gap-2">
                 <Plus className="h-4 w-4" />
                 Add Question
@@ -504,86 +559,162 @@ export default function AdminReview() {
       </Dialog>
 
       {/* Add Question Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <Dialog open={showAddDialog} onOpenChange={(open) => {
+        setShowAddDialog(open);
+        if (!open) setShowPreview(false);
+      }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Add Verified Question</DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle>Add Verified Question</DialogTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowPreview(!showPreview)}
+                className="gap-2"
+              >
+                <Eye className="h-4 w-4" />
+                {showPreview ? "Hide Preview" : "Show Preview"}
+              </Button>
+            </div>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label htmlFor="chapter">Chapter</Label>
-              <Select
-                value={newQuestionForm.chapter_id}
-                onValueChange={(v) => setNewQuestionForm({ ...newQuestionForm, chapter_id: v })}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select a chapter" />
-                </SelectTrigger>
-                <SelectContent>
-                  {chapters.map((chapter) => (
-                    <SelectItem key={chapter.id} value={chapter.id}>
-                      {chapter.subject?.name ? `${chapter.subject.name} - ` : ""}{chapter.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          
+          <div className={`grid gap-6 py-4 ${showPreview ? "md:grid-cols-2" : "grid-cols-1"}`}>
+            {/* Form Section */}
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="chapter">Chapter</Label>
+                <Select
+                  value={newQuestionForm.chapter_id}
+                  onValueChange={(v) => setNewQuestionForm({ ...newQuestionForm, chapter_id: v })}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select a chapter" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {chapters.map((chapter) => (
+                      <SelectItem key={chapter.id} value={chapter.id}>
+                        {chapter.subject?.name ? `${chapter.subject.name} - ` : ""}{chapter.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="text">Question Text</Label>
+                <Textarea
+                  id="text"
+                  value={newQuestionForm.text}
+                  onChange={(e) => setNewQuestionForm({ ...newQuestionForm, text: e.target.value })}
+                  className="mt-1"
+                  placeholder="Enter the question text (supports LaTeX with $ delimiters)"
+                  rows={3}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {["A", "B", "C", "D"].map((letter) => {
+                  const key = `option_${letter.toLowerCase()}` as keyof typeof newQuestionForm;
+                  return (
+                    <div key={letter}>
+                      <Label>Option {letter}</Label>
+                      <Input
+                        value={newQuestionForm[key] as string}
+                        onChange={(e) => setNewQuestionForm({ ...newQuestionForm, [key]: e.target.value })}
+                        className="mt-1"
+                        placeholder={`Option ${letter}`}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+              <div>
+                <Label>Correct Answer</Label>
+                <Select
+                  value={String(newQuestionForm.correct_answer)}
+                  onValueChange={(v) => setNewQuestionForm({ ...newQuestionForm, correct_answer: Number(v) })}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">A</SelectItem>
+                    <SelectItem value="1">B</SelectItem>
+                    <SelectItem value="2">C</SelectItem>
+                    <SelectItem value="3">D</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="explanation">Explanation</Label>
+                <Textarea
+                  id="explanation"
+                  value={newQuestionForm.explanation}
+                  onChange={(e) => setNewQuestionForm({ ...newQuestionForm, explanation: e.target.value })}
+                  className="mt-1"
+                  placeholder="Explain why the correct answer is correct (supports LaTeX)"
+                  rows={4}
+                />
+              </div>
             </div>
-            <div>
-              <Label htmlFor="text">Question Text</Label>
-              <Textarea
-                id="text"
-                value={newQuestionForm.text}
-                onChange={(e) => setNewQuestionForm({ ...newQuestionForm, text: e.target.value })}
-                className="mt-1"
-                placeholder="Enter the question text (supports LaTeX with $ delimiters)"
-                rows={3}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              {["A", "B", "C", "D"].map((letter) => {
-                const key = `option_${letter.toLowerCase()}` as keyof typeof newQuestionForm;
-                return (
-                  <div key={letter}>
-                    <Label>Option {letter}</Label>
-                    <Input
-                      value={newQuestionForm[key] as string}
-                      onChange={(e) => setNewQuestionForm({ ...newQuestionForm, [key]: e.target.value })}
-                      className="mt-1"
-                      placeholder={`Option ${letter}`}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-            <div>
-              <Label>Correct Answer</Label>
-              <Select
-                value={String(newQuestionForm.correct_answer)}
-                onValueChange={(v) => setNewQuestionForm({ ...newQuestionForm, correct_answer: Number(v) })}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">A</SelectItem>
-                  <SelectItem value="1">B</SelectItem>
-                  <SelectItem value="2">C</SelectItem>
-                  <SelectItem value="3">D</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="explanation">Explanation</Label>
-              <Textarea
-                id="explanation"
-                value={newQuestionForm.explanation}
-                onChange={(e) => setNewQuestionForm({ ...newQuestionForm, explanation: e.target.value })}
-                className="mt-1"
-                placeholder="Explain why the correct answer is correct (supports LaTeX)"
-                rows={4}
-              />
-            </div>
+
+            {/* Preview Section */}
+            {showPreview && (
+              <div className="space-y-4 border-l pl-6">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Live Preview</h3>
+                <Card className="bg-muted/30">
+                  <CardContent className="pt-6 space-y-4">
+                    {/* Question Text Preview */}
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Question:</p>
+                      {newQuestionForm.text ? (
+                        <RichText as="p" className="font-medium" text={newQuestionForm.text} />
+                      ) : (
+                        <p className="text-muted-foreground italic">Enter question text...</p>
+                      )}
+                    </div>
+
+                    {/* Options Preview */}
+                    <div className="grid grid-cols-1 gap-2">
+                      {["A", "B", "C", "D"].map((letter, idx) => {
+                        const key = `option_${letter.toLowerCase()}` as keyof typeof newQuestionForm;
+                        const optionValue = newQuestionForm[key] as string;
+                        const isCorrect = newQuestionForm.correct_answer === idx;
+                        return (
+                          <div
+                            key={letter}
+                            className={`p-3 rounded-lg border ${
+                              isCorrect
+                                ? "bg-green-500/10 border-green-500/30"
+                                : "bg-background border-border"
+                            }`}
+                          >
+                            <span className="font-medium mr-2">{letter}.</span>
+                            {optionValue ? (
+                              <RichText as="span" text={optionValue} />
+                            ) : (
+                              <span className="text-muted-foreground italic">Option {letter}...</span>
+                            )}
+                            {isCorrect && (
+                              <Badge className="ml-2 bg-green-500">Correct</Badge>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Explanation Preview */}
+                    {newQuestionForm.explanation && (
+                      <div className="bg-background rounded-lg p-4 border">
+                        <p className="text-xs text-muted-foreground mb-1">Explanation:</p>
+                        <RichText as="p" className="text-sm" text={newQuestionForm.explanation} />
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>
               Cancel
