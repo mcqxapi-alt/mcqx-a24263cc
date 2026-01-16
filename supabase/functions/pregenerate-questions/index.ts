@@ -20,6 +20,7 @@ async function callGeminiBackup(
   const candidates: Array<{ version: 'v1' | 'v1beta'; model: string }> = [
     { version: 'v1', model: 'gemini-1.5-flash' },
     { version: 'v1', model: 'gemini-1.5-flash-latest' },
+    { version: 'v1beta', model: 'gemini-2.5-flash' },
     { version: 'v1beta', model: 'gemini-2.0-flash' },
   ];
 
@@ -36,6 +37,8 @@ async function callGeminiBackup(
 
   console.log('Attempting backup AI provider (Google Gemini)...');
 
+  let lastError: { status: number; msg: string; candidate: string } | null = null;
+
   for (const c of candidates) {
     try {
       const response = await fetch(
@@ -44,18 +47,24 @@ async function callGeminiBackup(
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: userPrompt }] }],
-            systemInstruction: { parts: [{ text: systemPrompt }] },
+            contents: [
+              {
+                role: 'user',
+                parts: [{ text: `SYSTEM:\n${systemPrompt}\n\nUSER:\n${userPrompt}` }],
+              },
+            ],
           }),
         }
       );
 
       if (!response.ok) {
         const msg = await extractErrMessage(response);
-        console.error(`Gemini backup error (${c.version}/${c.model}):`, response.status, msg);
+        const candidateId = `${c.version}/${c.model}`;
+        lastError = { status: response.status, msg, candidate: candidateId };
+        console.error(`Gemini backup error (${candidateId}):`, response.status, msg);
         if (response.status === 404) continue;
         if (response.status === 429) continue;
-        return { content: null, error: `Gemini API ${response.status}: ${msg}`, status: response.status };
+        return { content: null, error: `Gemini ${response.status} (${candidateId}): ${msg}`, status: response.status };
       }
 
       const data = await response.json();
@@ -70,6 +79,14 @@ async function callGeminiBackup(
       console.error(`Gemini backup exception (${c.version}/${c.model}):`, err);
       continue;
     }
+  }
+
+  if (lastError) {
+    return {
+      content: null,
+      error: `Backup Gemini failed: ${lastError.status} (${lastError.candidate}): ${lastError.msg}. Check API key type + billing/quota.`,
+      status: lastError.status,
+    };
   }
 
   return { content: null, error: 'Backup AI provider failed (no usable Gemini model/quota)' };
