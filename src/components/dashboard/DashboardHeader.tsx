@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
-import { LogOut, Settings, Trophy, User, ChevronDown, Loader2 } from "lucide-react";
+import { LogOut, Settings, Trophy, User, ChevronDown, Loader2, Shield } from "lucide-react";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +20,7 @@ type Props = {
 };
 
 export function DashboardHeader({ displayName, avatarUrl, email, onSignOut, signingOut }: Props) {
+  const { isAdmin } = useAdminCheck();
   const name = displayName || email?.split("@")[0] || "User";
   const initials = name.slice(0, 2).toUpperCase();
 
@@ -66,6 +67,14 @@ export function DashboardHeader({ displayName, avatarUrl, email, onSignOut, sign
                 Settings
               </Link>
             </DropdownMenuItem>
+            {isAdmin && (
+              <DropdownMenuItem asChild>
+                <Link to="/admin" className="flex items-center gap-2 cursor-pointer text-primary">
+                  <Shield className="w-4 h-4" />
+                  Admin Panel
+                </Link>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               onClick={onSignOut} 
