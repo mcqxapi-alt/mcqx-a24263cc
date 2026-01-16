@@ -51,7 +51,7 @@ const initialNewQuestionForm = {
   option_b: "",
   option_c: "",
   option_d: "",
-  correct_answer: 1,
+  correct_answer: 0,
   explanation: "",
 };
 
@@ -68,7 +68,7 @@ export default function AdminReview() {
     option_b: "",
     option_c: "",
     option_d: "",
-    correct_answer: 1,
+    correct_answer: 0,
     explanation: "",
   });
 
@@ -361,7 +361,7 @@ export default function AdminReview() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           {["A", "B", "C", "D"].map((letter, idx) => {
                             const optionKey = `option_${letter.toLowerCase()}` as keyof typeof report.question;
-                            const isCorrect = report.question!.correct_answer === idx + 1;
+                            const isCorrect = report.question!.correct_answer === idx;
                             return (
                               <div
                                 key={letter}
@@ -474,10 +474,10 @@ export default function AdminReview() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">A</SelectItem>
-                  <SelectItem value="2">B</SelectItem>
-                  <SelectItem value="3">C</SelectItem>
-                  <SelectItem value="4">D</SelectItem>
+                  <SelectItem value="0">A</SelectItem>
+                  <SelectItem value="1">B</SelectItem>
+                  <SelectItem value="2">C</SelectItem>
+                  <SelectItem value="3">D</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -565,10 +565,10 @@ export default function AdminReview() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">A</SelectItem>
-                  <SelectItem value="2">B</SelectItem>
-                  <SelectItem value="3">C</SelectItem>
-                  <SelectItem value="4">D</SelectItem>
+                  <SelectItem value="0">A</SelectItem>
+                  <SelectItem value="1">B</SelectItem>
+                  <SelectItem value="2">C</SelectItem>
+                  <SelectItem value="3">D</SelectItem>
                 </SelectContent>
               </Select>
             </div>
