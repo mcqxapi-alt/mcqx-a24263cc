@@ -21,10 +21,11 @@ async function callGeminiBackup(
   }
 
   const candidates: Array<{ version: 'v1' | 'v1beta'; model: string }> = [
-    // Prefer stable API + model
+    // Prefer stable API + model (if key supports it)
     { version: 'v1', model: 'gemini-1.5-flash' },
     { version: 'v1', model: 'gemini-1.5-flash-latest' },
-    // Keep as last resort (some keys only have access here)
+    // Newer models (often v1beta)
+    { version: 'v1beta', model: 'gemini-2.5-flash' },
     { version: 'v1beta', model: 'gemini-2.0-flash' },
   ];
 
@@ -41,6 +42,8 @@ async function callGeminiBackup(
 
   console.log('Attempting backup AI provider (Google Gemini)...');
 
+  let lastError: { status: number; msg: string; candidate: string } | null = null;
+
   for (const c of candidates) {
     try {
       const response = await fetch(
@@ -49,26 +52,29 @@ async function callGeminiBackup(
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: userPrompt }] }],
-            systemInstruction: { parts: [{ text: systemPrompt }] },
+            contents: [
+              {
+                role: 'user',
+                parts: [{ text: `SYSTEM:\n${systemPrompt}\n\nUSER:\n${userPrompt}` }],
+              },
+            ],
           }),
         }
       );
 
       if (!response.ok) {
         const msg = await extractErrMessage(response);
-        console.error(`Gemini backup error (${c.version}/${c.model}):`, response.status, msg);
+        const candidateId = `${c.version}/${c.model}`;
+        lastError = { status: response.status, msg, candidate: candidateId };
+        console.error(`Gemini backup error (${candidateId}):`, response.status, msg);
 
         // If model isn't found, try the next candidate.
         if (response.status === 404) continue;
 
-        // For quota/rate errors, try next model (quota can be per-model), but keep the best error.
-        if (response.status === 429) {
-          // continue to next candidate
-          continue;
-        }
+        // For quota/rate errors, try next model (quota can be per-model).
+        if (response.status === 429) continue;
 
-        return { content: null, error: `Gemini API ${response.status}: ${msg}`, status: response.status };
+        return { content: null, error: `Gemini ${response.status} (${candidateId}): ${msg}`, status: response.status };
       }
 
       const data = await response.json();
@@ -85,6 +91,14 @@ async function callGeminiBackup(
       // Try next candidate on network exceptions
       continue;
     }
+  }
+
+  if (lastError) {
+    return {
+      content: null,
+      error: `Backup Gemini failed: ${lastError.status} (${lastError.candidate}): ${lastError.msg}. Check API key type + billing/quota.`,
+      status: lastError.status,
+    };
   }
 
   return { content: null, error: 'Backup AI provider failed (no usable Gemini model/quota)' };
