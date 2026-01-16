@@ -7,48 +7,72 @@ const corsHeaders = {
 };
 
 // Helper to call backup Google Gemini API
-async function callGeminiBackup(systemPrompt: string, userPrompt: string): Promise<{ content: string | null; error: string | null }> {
+async function callGeminiBackup(
+  systemPrompt: string,
+  userPrompt: string
+): Promise<{ content: string | null; error: string | null; status?: number }> {
   const GOOGLE_GEMINI_API_KEY = Deno.env.get('GOOGLE_GEMINI_API_KEY');
-  
+
   if (!GOOGLE_GEMINI_API_KEY) {
     return { content: null, error: 'No backup AI configured (GOOGLE_GEMINI_API_KEY not set)' };
   }
 
+  const candidates: Array<{ version: 'v1' | 'v1beta'; model: string }> = [
+    { version: 'v1', model: 'gemini-1.5-flash' },
+    { version: 'v1', model: 'gemini-1.5-flash-latest' },
+    { version: 'v1beta', model: 'gemini-2.0-flash' },
+  ];
+
+  const extractErrMessage = async (resp: Response) => {
+    const text = await resp.text().catch(() => '');
+    try {
+      const parsed = JSON.parse(text);
+      const msg = parsed?.error?.message || parsed?.message;
+      return (msg || text || 'Unknown error').toString().slice(0, 300);
+    } catch {
+      return (text || 'Unknown error').toString().slice(0, 300);
+    }
+  };
+
   console.log('Attempting backup AI provider (Google Gemini)...');
 
-  try {
-    // Use gemini-1.5-flash as fallback (separate quota from 2.0-flash)
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GOOGLE_GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: userPrompt }] }],
-          systemInstruction: { parts: [{ text: systemPrompt }] },
-        }),
+  for (const c of candidates) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/${c.version}/models/${c.model}:generateContent?key=${GOOGLE_GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: userPrompt }] }],
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const msg = await extractErrMessage(response);
+        console.error(`Gemini backup error (${c.version}/${c.model}):`, response.status, msg);
+        if (response.status === 404) continue;
+        if (response.status === 429) continue;
+        return { content: null, error: `Gemini API ${response.status}: ${msg}`, status: response.status };
       }
-    );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Gemini backup error:', response.status, errorText);
-      return { content: null, error: `Gemini API returned ${response.status}` };
+      const data = await response.json();
+      const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!content) {
+        return { content: null, error: `No content in Gemini response (${c.model})` };
+      }
+
+      console.log(`Backup AI (Gemini) responded successfully via ${c.version}/${c.model}`);
+      return { content, error: null };
+    } catch (err) {
+      console.error(`Gemini backup exception (${c.version}/${c.model}):`, err);
+      continue;
     }
-
-    const data = await response.json();
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    
-    if (!content) {
-      return { content: null, error: 'No content in Gemini response' };
-    }
-
-    console.log('Backup AI (Gemini) responded successfully');
-    return { content, error: null };
-  } catch (err) {
-    console.error('Gemini backup exception:', err);
-    return { content: null, error: err instanceof Error ? err.message : 'Unknown Gemini error' };
   }
+
+  return { content: null, error: 'Backup AI provider failed (no usable Gemini model/quota)' };
 }
 
 // Helper to call AI with automatic fallback

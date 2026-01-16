@@ -10,48 +10,84 @@ const isUuid = (value: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
 // Helper to call backup Google Gemini API
-async function callGeminiBackup(systemPrompt: string, userPrompt: string): Promise<{ content: string | null; error: string | null }> {
+async function callGeminiBackup(
+  systemPrompt: string,
+  userPrompt: string
+): Promise<{ content: string | null; error: string | null; status?: number }> {
   const GOOGLE_GEMINI_API_KEY = Deno.env.get('GOOGLE_GEMINI_API_KEY');
-  
+
   if (!GOOGLE_GEMINI_API_KEY) {
     return { content: null, error: 'No backup AI configured (GOOGLE_GEMINI_API_KEY not set)' };
   }
 
+  const candidates: Array<{ version: 'v1' | 'v1beta'; model: string }> = [
+    // Prefer stable API + model
+    { version: 'v1', model: 'gemini-1.5-flash' },
+    { version: 'v1', model: 'gemini-1.5-flash-latest' },
+    // Keep as last resort (some keys only have access here)
+    { version: 'v1beta', model: 'gemini-2.0-flash' },
+  ];
+
+  const extractErrMessage = async (resp: Response) => {
+    const text = await resp.text().catch(() => '');
+    try {
+      const parsed = JSON.parse(text);
+      const msg = parsed?.error?.message || parsed?.message;
+      return (msg || text || 'Unknown error').toString().slice(0, 300);
+    } catch {
+      return (text || 'Unknown error').toString().slice(0, 300);
+    }
+  };
+
   console.log('Attempting backup AI provider (Google Gemini)...');
 
-  try {
-    // Use gemini-1.5-flash as fallback (separate quota from 2.0-flash)
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GOOGLE_GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: userPrompt }] }],
-          systemInstruction: { parts: [{ text: systemPrompt }] },
-        }),
+  for (const c of candidates) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/${c.version}/models/${c.model}:generateContent?key=${GOOGLE_GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: userPrompt }] }],
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const msg = await extractErrMessage(response);
+        console.error(`Gemini backup error (${c.version}/${c.model}):`, response.status, msg);
+
+        // If model isn't found, try the next candidate.
+        if (response.status === 404) continue;
+
+        // For quota/rate errors, try next model (quota can be per-model), but keep the best error.
+        if (response.status === 429) {
+          // continue to next candidate
+          continue;
+        }
+
+        return { content: null, error: `Gemini API ${response.status}: ${msg}`, status: response.status };
       }
-    );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Gemini backup error:', response.status, errorText);
-      return { content: null, error: `Gemini API returned ${response.status}` };
+      const data = await response.json();
+      const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (!content) {
+        return { content: null, error: `No content in Gemini response (${c.model})` };
+      }
+
+      console.log(`Backup AI (Gemini) responded successfully via ${c.version}/${c.model}`);
+      return { content, error: null };
+    } catch (err) {
+      console.error(`Gemini backup exception (${c.version}/${c.model}):`, err);
+      // Try next candidate on network exceptions
+      continue;
     }
-
-    const data = await response.json();
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    
-    if (!content) {
-      return { content: null, error: 'No content in Gemini response' };
-    }
-
-    console.log('Backup AI (Gemini) responded successfully');
-    return { content, error: null };
-  } catch (err) {
-    console.error('Gemini backup exception:', err);
-    return { content: null, error: err instanceof Error ? err.message : 'Unknown Gemini error' };
   }
+
+  return { content: null, error: 'Backup AI provider failed (no usable Gemini model/quota)' };
 }
 
 serve(async (req) => {
@@ -159,12 +195,11 @@ Return ONLY a valid JSON array:
           content = backup.content;
           usedProvider = 'gemini-backup';
         } else {
-          // Return appropriate error based on original status
-          const errorMsg = response.status === 402 
-            ? 'AI credits exhausted and no backup available.'
-            : 'Rate limit exceeded and no backup available.';
+          const baseMsg = response.status === 402
+            ? 'AI credits exhausted.'
+            : 'AI rate limit exceeded.';
           return new Response(
-            JSON.stringify({ error: errorMsg }),
+            JSON.stringify({ error: `${baseMsg} Backup provider failed: ${backup.error || 'unknown error'}` }),
             { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
@@ -181,10 +216,10 @@ Return ONLY a valid JSON array:
         content = backup.content;
         usedProvider = 'gemini-backup';
       } else {
-        throw new Error('No AI provider configured');
+        throw new Error(`No AI provider configured: ${backup.error || 'unknown error'}`);
       }
     }
-    
+
     if (!content) {
       throw new Error('No content in AI response');
     }
