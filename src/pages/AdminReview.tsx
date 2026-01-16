@@ -342,21 +342,6 @@ export default function AdminReview() {
               </div>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
-              {/* Question Stats */}
-              <div className="hidden md:flex items-center gap-2">
-                <Badge variant="outline" className="gap-1">
-                  <Database className="h-3 w-3" />
-                  {questionStats?.total ?? "..."} Total
-                </Badge>
-                <Badge variant="outline" className="text-green-600 border-green-600 gap-1">
-                  <CheckCircle className="h-3 w-3" />
-                  {questionStats?.verified ?? "..."} Verified
-                </Badge>
-                <Badge variant="outline" className="text-blue-600 border-blue-600 gap-1">
-                  <Sparkles className="h-3 w-3" />
-                  {questionStats?.ai ?? "..."} AI
-                </Badge>
-              </div>
               <Button onClick={() => setShowAddDialog(true)} className="gap-2">
                 <Plus className="h-4 w-4" />
                 Add Question
@@ -366,6 +351,23 @@ export default function AdminReview() {
                 {reports.length} Pending
               </Badge>
             </div>
+          </div>
+          
+          {/* Question Stats Row */}
+          <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border/40">
+            <span className="text-sm text-muted-foreground">Question Bank:</span>
+            <Badge variant="outline" className="gap-1">
+              <Database className="h-3 w-3" />
+              {questionStats?.total ?? "..."} Total
+            </Badge>
+            <Badge variant="outline" className="text-green-600 border-green-600 gap-1">
+              <CheckCircle className="h-3 w-3" />
+              {questionStats?.verified ?? "..."} Verified
+            </Badge>
+            <Badge variant="outline" className="text-blue-600 border-blue-600 gap-1">
+              <Sparkles className="h-3 w-3" />
+              {questionStats?.ai ?? "..."} AI
+            </Badge>
           </div>
         </div>
       </header>
