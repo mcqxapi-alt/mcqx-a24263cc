@@ -10,10 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, CheckCircle, XCircle, Edit, Flag, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Edit, Flag, Loader2, Plus } from "lucide-react";
 import mcqxLogo from "@/assets/mcqx-logo.png";
 
 type ReportWithQuestion = {
@@ -37,6 +38,23 @@ type ReportWithQuestion = {
   } | null;
 };
 
+type Chapter = {
+  id: string;
+  name: string;
+  subject: { name: string } | null;
+};
+
+const initialNewQuestionForm = {
+  chapter_id: "",
+  text: "",
+  option_a: "",
+  option_b: "",
+  option_c: "",
+  option_d: "",
+  correct_answer: 1,
+  explanation: "",
+};
+
 export default function AdminReview() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -53,6 +71,10 @@ export default function AdminReview() {
     correct_answer: 1,
     explanation: "",
   });
+
+  // Add question dialog state
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [newQuestionForm, setNewQuestionForm] = useState(initialNewQuestionForm);
 
   // Fetch all pending reports with their questions
   const { data: reports = [], isLoading: reportsLoading } = useQuery({
@@ -92,6 +114,36 @@ export default function AdminReview() {
     enabled: isAdmin,
   });
 
+  // Fetch chapters with subjects for dropdown
+  const { data: chapters = [] } = useQuery({
+    queryKey: ["admin-chapters"],
+    queryFn: async () => {
+      const { data: chaptersData, error: chaptersError } = await supabase
+        .from("chapters")
+        .select("id, name, subject_id")
+        .order("display_order");
+
+      if (chaptersError) throw chaptersError;
+
+      const subjectIds = [...new Set(chaptersData.map(c => c.subject_id))];
+      const { data: subjectsData, error: subjectsError } = await supabase
+        .from("subjects")
+        .select("id, name")
+        .in("id", subjectIds);
+
+      if (subjectsError) throw subjectsError;
+
+      const subjectsMap = new Map(subjectsData?.map(s => [s.id, s]) || []);
+
+      return chaptersData.map(chapter => ({
+        id: chapter.id,
+        name: chapter.name,
+        subject: subjectsMap.get(chapter.subject_id) || null,
+      })) as Chapter[];
+    },
+    enabled: isAdmin,
+  });
+
   // Update question mutation
   const updateQuestionMutation = useMutation({
     mutationFn: async ({ questionId, updates }: { questionId: string; updates: Record<string, unknown> }) => {
@@ -109,6 +161,36 @@ export default function AdminReview() {
     },
     onError: (error) => {
       toast({ title: "Failed to update question", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Add new question mutation
+  const addQuestionMutation = useMutation({
+    mutationFn: async (questionData: typeof newQuestionForm) => {
+      const { error } = await supabase
+        .from("questions")
+        .insert({
+          chapter_id: questionData.chapter_id,
+          text: questionData.text.trim(),
+          option_a: questionData.option_a.trim(),
+          option_b: questionData.option_b.trim(),
+          option_c: questionData.option_c.trim(),
+          option_d: questionData.option_d.trim(),
+          correct_answer: questionData.correct_answer,
+          explanation: questionData.explanation.trim() || null,
+          source: "verified",
+          status: "active",
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Question added successfully", description: "The verified question is now live." });
+      setShowAddDialog(false);
+      setNewQuestionForm(initialNewQuestionForm);
+    },
+    onError: (error) => {
+      toast({ title: "Failed to add question", description: error.message, variant: "destructive" });
     },
   });
 
@@ -219,10 +301,16 @@ export default function AdminReview() {
                 <p className="text-sm text-muted-foreground">Manage reported questions</p>
               </div>
             </div>
-            <Badge variant="outline" className="text-primary border-primary">
-              <Flag className="h-3 w-3 mr-1" />
-              {reports.length} Pending
-            </Badge>
+            <div className="flex items-center gap-3">
+              <Button onClick={() => setShowAddDialog(true)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Question
+              </Button>
+              <Badge variant="outline" className="text-primary border-primary">
+                <Flag className="h-3 w-3 mr-1" />
+                {reports.length} Pending
+              </Badge>
+            </div>
           </div>
         </div>
       </header>
@@ -410,6 +498,110 @@ export default function AdminReview() {
             <Button onClick={handleSaveEdit} disabled={updateQuestionMutation.isPending}>
               {updateQuestionMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Question Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add Verified Question</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="chapter">Chapter</Label>
+              <Select
+                value={newQuestionForm.chapter_id}
+                onValueChange={(v) => setNewQuestionForm({ ...newQuestionForm, chapter_id: v })}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select a chapter" />
+                </SelectTrigger>
+                <SelectContent>
+                  {chapters.map((chapter) => (
+                    <SelectItem key={chapter.id} value={chapter.id}>
+                      {chapter.subject?.name ? `${chapter.subject.name} - ` : ""}{chapter.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="text">Question Text</Label>
+              <Textarea
+                id="text"
+                value={newQuestionForm.text}
+                onChange={(e) => setNewQuestionForm({ ...newQuestionForm, text: e.target.value })}
+                className="mt-1"
+                placeholder="Enter the question text (supports LaTeX with $ delimiters)"
+                rows={3}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {["A", "B", "C", "D"].map((letter) => {
+                const key = `option_${letter.toLowerCase()}` as keyof typeof newQuestionForm;
+                return (
+                  <div key={letter}>
+                    <Label>Option {letter}</Label>
+                    <Input
+                      value={newQuestionForm[key] as string}
+                      onChange={(e) => setNewQuestionForm({ ...newQuestionForm, [key]: e.target.value })}
+                      className="mt-1"
+                      placeholder={`Option ${letter}`}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            <div>
+              <Label>Correct Answer</Label>
+              <Select
+                value={String(newQuestionForm.correct_answer)}
+                onValueChange={(v) => setNewQuestionForm({ ...newQuestionForm, correct_answer: Number(v) })}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">A</SelectItem>
+                  <SelectItem value="2">B</SelectItem>
+                  <SelectItem value="3">C</SelectItem>
+                  <SelectItem value="4">D</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="explanation">Explanation</Label>
+              <Textarea
+                id="explanation"
+                value={newQuestionForm.explanation}
+                onChange={(e) => setNewQuestionForm({ ...newQuestionForm, explanation: e.target.value })}
+                className="mt-1"
+                placeholder="Explain why the correct answer is correct (supports LaTeX)"
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => addQuestionMutation.mutate(newQuestionForm)} 
+              disabled={
+                addQuestionMutation.isPending || 
+                !newQuestionForm.chapter_id || 
+                !newQuestionForm.text.trim() ||
+                !newQuestionForm.option_a.trim() ||
+                !newQuestionForm.option_b.trim() ||
+                !newQuestionForm.option_c.trim() ||
+                !newQuestionForm.option_d.trim()
+              }
+            >
+              {addQuestionMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Add Question
             </Button>
           </DialogFooter>
         </DialogContent>
