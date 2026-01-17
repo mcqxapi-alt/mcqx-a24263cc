@@ -56,13 +56,13 @@ export function ActionCards() {
             </p>
             <div className="flex flex-col gap-2">
               <Button variant="neon" size="sm" asChild className="w-full group">
-                <Link to="/practice" className="flex items-center justify-center gap-2">
+                <Link to="/challenge/new" className="flex items-center justify-center gap-2">
                   <Swords className="w-4 h-4" />
                   Challenge a Friend
                 </Link>
               </Button>
               <Button variant="outline" size="sm" asChild className="w-full group">
-                <Link to="/practice" className="flex items-center justify-center gap-2">
+                <Link to="/challenge/join" className="flex items-center justify-center gap-2">
                   <Link2 className="w-4 h-4" />
                   Join via Link
                 </Link>
