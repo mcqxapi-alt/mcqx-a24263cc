@@ -8,12 +8,8 @@ import {
   Sparkles,
   Flag,
   Loader2,
-  Share2,
-  Trophy,
   Target,
-  Flame,
   RotateCcw,
-  Users,
   BookOpen,
   AlertTriangle,
 } from "lucide-react";
@@ -36,7 +32,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { RichText } from "@/components/RichText";
 import mcqxLogo from "@/assets/mcqx-logo.png";
-import { ShareScoreButton } from "@/components/ShareScoreButton";
+import { PracticeResult } from "@/components/practice/PracticeResult";
 
 type Subject = {
   id: string;
@@ -885,196 +881,19 @@ export default function Practice() {
 
             {/* Results */}
             {step === "result" && (
-              <motion.div
-                key="result"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                className="space-y-6"
-              >
-                {/* Main Score Card */}
-                <div
-                  className="relative glass rounded-3xl p-8 sm:p-10 text-center overflow-hidden"
-                  style={{ boxShadow: "0 0 60px hsl(var(--neon-cyan) / 0.15)" }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-40 bg-primary/20 rounded-full blur-3xl" />
-
-                  {/* Emoji & Badge */}
-                  <motion.div
-                    initial={{ scale: 0, rotate: -20 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ delay: 0.2, type: "spring" }}
-                    className="relative text-7xl sm:text-8xl mb-4"
-                  >
-                    {score >= totalQuestions * 0.8
-                      ? "🔥"
-                      : score >= totalQuestions * 0.5
-                      ? "⚡"
-                      : "💪"}
-                  </motion.div>
-
-                  {accuracy >= 80 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 }}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 text-accent text-sm font-semibold mb-4"
-                    >
-                      <Trophy className="w-4 h-4" />
-                      MCQ Boss!
-                    </motion.div>
-                  )}
-
-                  {/* Score */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                  >
-                    <div className="relative inline-block">
-                      <h1 className="font-display text-6xl sm:text-7xl font-bold neon-text">
-                        {score}/{totalQuestions}
-                      </h1>
-                    </div>
-                    <p className="text-2xl font-semibold mt-2">
-                      <span className={accuracy >= 70 ? "text-accent" : "text-primary"}>
-                        {accuracy}%
-                      </span>{" "}
-                      <span className="text-muted-foreground">Accuracy</span>
-                    </p>
-                  </motion.div>
-
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.4 }}
-                    className="text-muted-foreground mt-4 text-lg"
-                  >
-                    {score >= totalQuestions * 0.8
-                      ? "You're on fire! Absolutely crushed it! 🎯"
-                      : score >= totalQuestions * 0.5
-                      ? "Good job! Keep pushing, you're getting there!"
-                      : "Keep going! Every attempt makes you stronger! 💪"}
-                  </motion.p>
-
-                  {/* Stats Grid */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                    className="grid grid-cols-3 gap-4 mt-8 relative"
-                  >
-                    <div className="glass rounded-xl p-4">
-                      <div className="flex items-center justify-center gap-2 mb-1">
-                        <Check className="w-4 h-4 text-accent" />
-                        <span className="text-2xl font-bold text-accent">{score}</span>
-                      </div>
-                      <div className="text-xs text-muted-foreground">Correct</div>
-                    </div>
-                    <div className="glass rounded-xl p-4">
-                      <div className="flex items-center justify-center gap-2 mb-1">
-                        <X className="w-4 h-4 text-destructive" />
-                        <span className="text-2xl font-bold text-destructive">
-                          {totalQuestions - score}
-                        </span>
-                      </div>
-                      <div className="text-xs text-muted-foreground">Incorrect</div>
-                    </div>
-                    <div className="glass rounded-xl p-4">
-                      <div className="flex items-center justify-center gap-2 mb-1">
-                        <Sparkles className="w-4 h-4 text-primary" />
-                        <span className="text-2xl font-bold text-primary">
-                          {questions.filter((q) => q.source === "ai").length}
-                        </span>
-                      </div>
-                      <div className="text-xs text-muted-foreground">AI-gen</div>
-                    </div>
-                  </motion.div>
-                </div>
-
-                {/* Action Buttons */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 }}
-                  className="grid sm:grid-cols-2 gap-3"
-                >
-                  <Button
-                    variant="neon"
-                    size="lg"
-                    onClick={handleRetryChapter}
-                    disabled={isGenerating}
-                    className="h-14"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Loading...
-                      </>
-                    ) : (
-                      <>
-                        <RotateCcw className="w-5 h-5 mr-2" />
-                        Try Again
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    variant="neon-outline"
-                    size="lg"
-                    onClick={handleRestart}
-                    className="h-14"
-                  >
-                    <BookOpen className="w-5 h-5 mr-2" />
-                    New Chapter
-                  </Button>
-                </motion.div>
-
-                {/* Secondary Actions */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.7 }}
-                  className="flex flex-wrap justify-center gap-3"
-                >
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <Users className="w-4 h-4" />
-                    Challenge Friend
-                  </Button>
-                  <ShareScoreButton
-                    score={score}
-                    totalQuestions={totalQuestions}
-                    accuracy={accuracy}
-                    subjectName={selectedSubject?.name || ""}
-                    chapterName={selectedChapter?.name || ""}
-                  />
-                </motion.div>
-
-                {/* Sign In CTA */}
-                {!user && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.8 }}
-                    className="glass rounded-xl p-5 flex items-center justify-between gap-4"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                        <Flame className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Save your progress!</p>
-                        <p className="text-sm text-muted-foreground">
-                          Sign in to track streaks & compete
-                        </p>
-                      </div>
-                    </div>
-                    <Button variant="neon" size="sm" asChild>
-                      <Link to="/login">Sign In</Link>
-                    </Button>
-                  </motion.div>
-                )}
-              </motion.div>
+              <PracticeResult
+                score={score}
+                totalQuestions={totalQuestions}
+                accuracy={accuracy}
+                questions={questions}
+                answers={answers}
+                selectedSubject={selectedSubject}
+                selectedChapter={selectedChapter}
+                user={user}
+                isGenerating={isGenerating}
+                onRetryChapter={handleRetryChapter}
+                onNewChapter={handleRestart}
+              />
             )}
           </AnimatePresence>
         </div>
