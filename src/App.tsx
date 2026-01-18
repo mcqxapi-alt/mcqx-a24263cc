@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import AdminReview from "./pages/AdminReview";
 import Challenge from "./pages/Challenge";
+import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ function AnimatedRoutes() {
           <Route path="/admin" element={<AdminReview />} />
           <Route path="/challenge" element={<Challenge />} />
           <Route path="/challenge/:id" element={<Challenge />} />
+          <Route path="/terms" element={<Terms />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </motion.div>
