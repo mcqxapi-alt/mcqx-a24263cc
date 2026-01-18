@@ -216,10 +216,10 @@ We never sell your data. Period. No cap. 🔒`,
             If you have any questions about these terms, hit us up!
           </p>
           <a 
-            href="mailto:legal@mcqx.app" 
+            href="mailto:mcqxapi@gmail.com" 
             className="text-neon-cyan hover:underline font-medium"
           >
-            legal@mcqx.app
+            mcqxapi@gmail.com
           </a>
         </motion.section>
 
