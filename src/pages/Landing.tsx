@@ -277,7 +277,7 @@ export default function Landing() {
             <span className="font-display font-semibold text-sm sm:text-base">MCQX</span>
           </div>
           <div className="flex items-center gap-4 sm:gap-6 text-xs sm:text-sm text-muted-foreground">
-            <a href="#" className="hover:text-foreground transition-colors duration-300">Terms</a>
+            <Link to="/terms" className="hover:text-foreground transition-colors duration-300">Terms</Link>
             <a href="#" className="hover:text-foreground transition-colors duration-300">Privacy</a>
             <a href="#" className="hover:text-foreground transition-colors duration-300">About</a>
           </div>
