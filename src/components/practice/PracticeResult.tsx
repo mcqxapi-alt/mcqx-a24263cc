@@ -467,9 +467,11 @@ export function PracticeResult({
         transition={{ delay: 0.6 }}
         className="flex justify-center gap-3"
       >
-        <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
-          <Users className="w-4 h-4" />
-          Challenge Friend
+        <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground" asChild>
+          <Link to="/challenge/new">
+            <Users className="w-4 h-4" />
+            Challenge Friend
+          </Link>
         </Button>
         <ShareScoreButton
           score={score}
