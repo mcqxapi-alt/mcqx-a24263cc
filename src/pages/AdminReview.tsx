@@ -41,7 +41,13 @@ type ReportWithQuestion = {
 type Chapter = {
   id: string;
   name: string;
-  subject: { name: string } | null;
+  subject_id: string;
+  subject: { id: string; name: string } | null;
+};
+
+type Subject = {
+  id: string;
+  name: string;
 };
 
 const initialNewQuestionForm = {
@@ -76,6 +82,7 @@ export default function AdminReview() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newQuestionForm, setNewQuestionForm] = useState(initialNewQuestionForm);
   const [showPreview, setShowPreview] = useState(false);
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>("");
 
   // Fetch all pending reports with their questions
   const { data: reports = [], isLoading: reportsLoading } = useQuery({
@@ -115,6 +122,21 @@ export default function AdminReview() {
     enabled: isAdmin,
   });
 
+  // Fetch subjects for dropdown
+  const { data: subjects = [] } = useQuery({
+    queryKey: ["admin-subjects"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("subjects")
+        .select("id, name")
+        .order("display_order");
+
+      if (error) throw error;
+      return data as Subject[];
+    },
+    enabled: isAdmin,
+  });
+
   // Fetch chapters with subjects for dropdown
   const { data: chapters = [] } = useQuery({
     queryKey: ["admin-chapters"],
@@ -139,6 +161,7 @@ export default function AdminReview() {
       return chaptersData.map(chapter => ({
         id: chapter.id,
         name: chapter.name,
+        subject_id: chapter.subject_id,
         subject: subjectsMap.get(chapter.subject_id) || null,
       })) as Chapter[];
     },
@@ -563,7 +586,10 @@ export default function AdminReview() {
       {/* Add Question Dialog */}
       <Dialog open={showAddDialog} onOpenChange={(open) => {
         setShowAddDialog(open);
-        if (!open) setShowPreview(false);
+        if (!open) {
+          setShowPreview(false);
+          setSelectedSubjectId("");
+        }
       }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -584,23 +610,49 @@ export default function AdminReview() {
           <div className={`grid gap-6 py-4 ${showPreview ? "md:grid-cols-2" : "grid-cols-1"}`}>
             {/* Form Section */}
             <div className="space-y-4">
-              <div>
-                <Label htmlFor="chapter">Chapter</Label>
-                <Select
-                  value={newQuestionForm.chapter_id}
-                  onValueChange={(v) => setNewQuestionForm({ ...newQuestionForm, chapter_id: v })}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select a chapter" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {chapters.map((chapter) => (
-                      <SelectItem key={chapter.id} value={chapter.id}>
-                        {chapter.subject?.name ? `${chapter.subject.name} - ` : ""}{chapter.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="subject">Subject</Label>
+                  <Select
+                    value={selectedSubjectId}
+                    onValueChange={(v) => {
+                      setSelectedSubjectId(v);
+                      setNewQuestionForm({ ...newQuestionForm, chapter_id: "" });
+                    }}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select a subject" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subjects.map((subject) => (
+                        <SelectItem key={subject.id} value={subject.id}>
+                          {subject.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="chapter">Chapter</Label>
+                  <Select
+                    value={newQuestionForm.chapter_id}
+                    onValueChange={(v) => setNewQuestionForm({ ...newQuestionForm, chapter_id: v })}
+                    disabled={!selectedSubjectId}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder={selectedSubjectId ? "Select a chapter" : "Select subject first"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {chapters
+                        .filter((chapter) => chapter.subject_id === selectedSubjectId)
+                        .map((chapter) => (
+                          <SelectItem key={chapter.id} value={chapter.id}>
+                            {chapter.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div>
                 <Label htmlFor="text">Question Text</Label>
