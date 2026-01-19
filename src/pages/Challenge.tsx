@@ -49,6 +49,7 @@ export default function Challenge() {
   
   const [step, setStep] = useState<Step>("menu");
   const [isStartingGame, setIsStartingGame] = useState(false);
+  const [isLoadingChallenge, setIsLoadingChallenge] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [challenge, setChallenge] = useState<RealtimeChallenge | null>(null);
@@ -165,14 +166,16 @@ export default function Challenge() {
     enabled: !!selectedSubject,
   });
 
-  // Load challenge if ID in URL
+  // Load challenge if ID in URL - works for guests too
   useEffect(() => {
-    if (challengeId && user) {
+    if (challengeId && !authLoading) {
       loadChallenge(challengeId);
     }
-  }, [challengeId, user]);
+  }, [challengeId, authLoading]);
 
   const loadChallenge = async (id: string) => {
+    setIsLoadingChallenge(true);
+    
     const { data, error } = await supabase
       .from("challenges")
       .select("*")
@@ -181,6 +184,7 @@ export default function Challenge() {
 
     if (error || !data) {
       toast({ title: "Challenge not found", variant: "destructive" });
+      setIsLoadingChallenge(false);
       navigate("/challenge");
       return;
     }
@@ -222,6 +226,7 @@ export default function Challenge() {
     // Determine the correct step based on challenge state
     if (challengeData.status === "finished" || (challengeData.challenger_score !== null && challengeData.opponent_score !== null)) {
       setStep("result");
+      setIsLoadingChallenge(false);
       return;
     }
 
@@ -237,17 +242,26 @@ export default function Challenge() {
         // Game is playing, load questions and play
         await loadQuestionsAndPlay(challengeData);
       }
+      setIsLoadingChallenge(false);
       return;
     }
 
     if (challengeData.status === "lobby") {
       await loadQuestionsForLobby(challengeData);
       setStep("lobby");
+      setIsLoadingChallenge(false);
       return;
     }
 
     // Challenge is open
-    if (challengeData.challenger_id === user?.id) {
+    if (!user) {
+      // Guest viewing a challenge - show join prompt
+      setStep("lobby");
+      setIsLoadingChallenge(false);
+      return;
+    }
+    
+    if (challengeData.challenger_id === user.id) {
       // We created this challenge
       if (!challengeData.opponent_id) {
         // Waiting for opponent to join
@@ -262,6 +276,7 @@ export default function Challenge() {
       // We're joining as opponent
       await joinChallenge(challengeData);
     }
+    setIsLoadingChallenge(false);
   };
 
   const loadQuestionsForLobby = async (challengeData: RealtimeChallenge) => {
@@ -508,14 +523,89 @@ export default function Challenge() {
     }
   };
 
-  // Auth gate
-  if (authLoading) {
+  // Auth or challenge loading gate
+  if (authLoading || isLoadingChallenge) {
     return (
       <div className="min-h-screen flex items-center justify-center gradient-mesh-animated">
         <div className="relative">
           <div className="absolute inset-0 blur-2xl bg-primary/30 animate-pulse-ring" />
           <Loader2 className="w-10 h-10 animate-spin text-primary relative" />
         </div>
+      </div>
+    );
+  }
+
+  // Guest viewing a challenge - show sign in prompt
+  const isGuestViewingChallenge = !user && challengeId && challenge;
+  
+  if (isGuestViewingChallenge) {
+    return (
+      <div className="min-h-screen bg-background overflow-hidden">
+        {/* Animated background */}
+        <div className="fixed inset-0 gradient-mesh-animated" />
+        <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/60 to-background" />
+        
+        {/* Floating orbs */}
+        <div className="orb orb-cyan w-[500px] h-[500px] -top-64 -left-64 opacity-60" />
+        <div className="orb orb-green w-[400px] h-[400px] -bottom-48 -right-48 opacity-50" style={{ animationDelay: '7s' }} />
+        <div className="orb orb-purple w-[300px] h-[300px] top-1/3 right-1/4 opacity-40" style={{ animationDelay: '14s' }} />
+
+        {/* Header */}
+        <header className="fixed top-0 left-0 right-0 z-40 glass-strong border-b border-border/30">
+          <div className="container flex items-center justify-between h-24 sm:h-32 px-3 sm:px-4">
+            <Link to="/" className="flex items-center gap-2 transition-transform duration-300 hover:scale-105">
+              <img src={mcqxLogo} alt="MCQX" className="h-20 sm:h-28 w-auto" />
+            </Link>
+            <Button variant="ghost" size="sm" asChild className="text-xs sm:text-sm px-2 sm:px-3">
+              <Link to="/">Home</Link>
+            </Button>
+          </div>
+        </header>
+
+        <main className="relative pt-32 sm:pt-40 pb-12 px-4 min-h-screen flex items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-md w-full glass-card p-8 rounded-2xl text-center space-y-6"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
+              className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mx-auto"
+            >
+              <Swords className="w-8 h-8 text-primary" />
+            </motion.div>
+            
+            <div className="space-y-2">
+              <h1 className="font-display text-2xl font-bold">You've Been Challenged! 🎯</h1>
+              <p className="text-muted-foreground">
+                {challengerProfile?.display_name || "Someone"} wants to battle you in a live MCQ duel
+              </p>
+              {chapterInfo && (
+                <p className="text-sm text-muted-foreground">
+                  Topic: <span className="text-foreground font-medium">{chapterInfo.name}</span>
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <Button 
+                size="lg" 
+                className="w-full neon-glow" 
+                asChild
+              >
+                <Link to={`/login?redirect=/challenge/${challengeId}`}>
+                  <Zap className="w-4 h-4 mr-2" />
+                  Sign In to Accept
+                </Link>
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                Create a free account in seconds to join the battle!
+              </p>
+            </div>
+          </motion.div>
+        </main>
       </div>
     );
   }
