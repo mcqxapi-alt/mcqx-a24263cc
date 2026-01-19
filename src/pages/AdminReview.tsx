@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, CheckCircle, XCircle, Edit, Flag, Loader2, Plus, Eye, Database, Sparkles } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Edit, Flag, Loader2, Plus, Eye, Database, Sparkles, Wand2 } from "lucide-react";
 import mcqxLogo from "@/assets/mcqx-logo.png";
 
 type ReportWithQuestion = {
@@ -35,6 +35,7 @@ type ReportWithQuestion = {
     explanation: string | null;
     source: string;
     status: string;
+    chapter_id: string;
   } | null;
 };
 
@@ -76,7 +77,10 @@ export default function AdminReview() {
     option_d: "",
     correct_answer: 0,
     explanation: "",
+    chapter_id: "",
   });
+  const [editSelectedSubjectId, setEditSelectedSubjectId] = useState<string>("");
+  const [isShorteningExplanation, setIsShorteningExplanation] = useState(false);
 
   // Add question dialog state
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -298,6 +302,11 @@ export default function AdminReview() {
   const openEditDialog = (report: ReportWithQuestion) => {
     if (!report.question) return;
     setEditingQuestion(report);
+    
+    // Find the subject for this chapter
+    const chapter = chapters.find(c => c.id === report.question!.chapter_id);
+    setEditSelectedSubjectId(chapter?.subject_id || "");
+    
     setEditForm({
       text: report.question.text,
       option_a: report.question.option_a,
@@ -306,7 +315,38 @@ export default function AdminReview() {
       option_d: report.question.option_d,
       correct_answer: report.question.correct_answer,
       explanation: report.question.explanation || "",
+      chapter_id: report.question.chapter_id,
     });
+  };
+
+  const handleShortenExplanation = async () => {
+    if (!editForm.explanation.trim()) {
+      toast({ title: "No explanation to shorten", variant: "destructive" });
+      return;
+    }
+
+    setIsShorteningExplanation(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('shorten-explanation', {
+        body: { explanation: editForm.explanation }
+      });
+
+      if (error) throw error;
+
+      if (data?.shortened) {
+        setEditForm({ ...editForm, explanation: data.shortened });
+        toast({ title: "Explanation shortened" });
+      }
+    } catch (error) {
+      console.error('Failed to shorten explanation:', error);
+      toast({ 
+        title: "Failed to shorten", 
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive" 
+      });
+    } finally {
+      setIsShorteningExplanation(false);
+    }
   };
 
   const handleSaveEdit = () => {
@@ -521,6 +561,52 @@ export default function AdminReview() {
             <DialogTitle>Edit Question</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            {/* Chapter Selection */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-medium">Subject</Label>
+                <Select
+                  value={editSelectedSubjectId}
+                  onValueChange={(v) => {
+                    setEditSelectedSubjectId(v);
+                    setEditForm({ ...editForm, chapter_id: "" });
+                  }}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select subject" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subjects.map((subject) => (
+                      <SelectItem key={subject.id} value={subject.id}>
+                        {subject.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Chapter</Label>
+                <Select
+                  value={editForm.chapter_id}
+                  onValueChange={(v) => setEditForm({ ...editForm, chapter_id: v })}
+                  disabled={!editSelectedSubjectId}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select chapter" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {chapters
+                      .filter((ch) => ch.subject_id === editSelectedSubjectId)
+                      .map((chapter) => (
+                        <SelectItem key={chapter.id} value={chapter.id}>
+                          {chapter.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div>
               <label className="text-sm font-medium">Question Text</label>
               <Textarea
@@ -562,11 +648,27 @@ export default function AdminReview() {
               </Select>
             </div>
             <div>
-              <label className="text-sm font-medium">Explanation</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-sm font-medium">Explanation</label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleShortenExplanation}
+                  disabled={isShorteningExplanation || !editForm.explanation.trim()}
+                  className="gap-1.5"
+                >
+                  {isShorteningExplanation ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Wand2 className="h-3.5 w-3.5" />
+                  )}
+                  Shorten
+                </Button>
+              </div>
               <Textarea
                 value={editForm.explanation}
                 onChange={(e) => setEditForm({ ...editForm, explanation: e.target.value })}
-                className="mt-1"
                 rows={3}
               />
             </div>

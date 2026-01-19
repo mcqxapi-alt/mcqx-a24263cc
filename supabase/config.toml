@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.pregenerate-questions]
 verify_jwt = false
+
+[functions.shorten-explanation]
+verify_jwt = false
