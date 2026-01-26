@@ -130,7 +130,62 @@ serve(async (req) => {
 
     console.log(`Generating ${count} MCQs for ${subjectName} - ${chapterName}`);
 
-    const systemPrompt = `You are an expert CBSE Class 12 teacher with 20+ years of experience. You MUST generate 100% factually accurate MCQs based on NCERT textbooks.
+    // Subject-specific prompts for German grammar (board exam style)
+    const isGerman = subjectName.toLowerCase() === 'german';
+    
+    const germanSystemPrompt = `You are an expert CBSE Class 12 German language teacher with 20+ years of experience in preparing students for board exams.
+
+CRITICAL RULES:
+- Generate questions STRICTLY based on CBSE Class 12 German board exam pattern
+- Questions must match the Section C - Applied Grammar format (8 marks each topic)
+- Use authentic German grammar structures and vocabulary appropriate for Class 12 level
+- Double-check every answer before responding
+- The correct_answer field MUST match the actually correct option
+- Explanations should be clear and help students understand the grammar rule
+
+TOPIC-SPECIFIC GUIDELINES:
+- Passive Voice: Focus on Passiv Präsens (wird + Partizip II) and Passiv Präteritum (wurde + Partizip II)
+- Subordinate Clauses: Include als ob, da, falls, sodass, statt dass, statt...zu with proper verb positioning
+- Adjektiv/Participle as Nouns: der/die + Adjective/Partizip (der Alte, die Reisende, das Gute)
+- Future Tense: Futur I formation with werden + Infinitiv
+- Personal Pronouns: Akkusativ (mich, dich, ihn, sie, es, uns, euch, sie) and Dativ (mir, dir, ihm, ihr, ihm, uns, euch, ihnen)
+
+QUESTION FORMATS (match board exam style):
+- Fill in the blanks with correct form
+- Choose the correct sentence transformation
+- Identify the correct grammatical structure
+- Complete sentences with appropriate conjugations`;
+
+    const germanUserPrompt = `Generate exactly ${count} MCQ questions for CBSE Class 12 German Board Exam, topic: "${chapterName}".
+
+IMPORTANT: 
+- Questions must be in the EXACT style of CBSE Class 12 German board exams
+- Focus on practical application of grammar rules
+- Include German text with clear, unambiguous options
+- Each question should test a specific grammar concept
+
+For each question:
+1. Question text (can include German sentences to transform/complete)
+2. Four distinct options (A, B, C, D) - only ONE should be correct
+3. The correct answer number (1=A, 2=B, 3=C, 4=D)
+4. Explanation in English explaining the grammar rule applied
+
+VERIFY: Before outputting, check each answer matches the correct German grammar rule.
+
+Return ONLY a valid JSON array:
+[
+  {
+    "text": "Convert to Passiv Präsens: 'Der Lehrer erklärt die Grammatik.'",
+    "option_a": "Die Grammatik wird vom Lehrer erklärt.",
+    "option_b": "Die Grammatik wurde vom Lehrer erklärt.",
+    "option_c": "Die Grammatik ist vom Lehrer erklärt.",
+    "option_d": "Die Grammatik werden vom Lehrer erklärt.",
+    "correct_answer": 1,
+    "explanation": "Passiv Präsens is formed with 'wird' + Partizip II. 'Die Grammatik' is singular, so we use 'wird'. The Partizip II of 'erklären' is 'erklärt'."
+  }
+]`;
+
+    const defaultSystemPrompt = `You are an expert CBSE Class 12 teacher with 20+ years of experience. You MUST generate 100% factually accurate MCQs based on NCERT textbooks.
 
 CRITICAL RULES:
 - Double-check every answer before responding
@@ -152,7 +207,7 @@ MATH FORMATTING RULES (IMPORTANT):
 - For summation/product use: $\\sum_{i=1}^{n}$, $\\prod_{i=1}^{n}$
 - Keep text outside math expressions plain (no Markdown)`;
 
-    const userPrompt = `Generate exactly ${count} MCQ questions for CBSE Class 12 ${subjectName}, chapter: "${chapterName}".
+    const defaultUserPrompt = `Generate exactly ${count} MCQ questions for CBSE Class 12 ${subjectName}, chapter: "${chapterName}".
 
 IMPORTANT: Verify each answer is 100% correct before including it. Use only NCERT-verified facts.
 
@@ -176,6 +231,9 @@ Return ONLY a valid JSON array:
     "explanation": "Using the power rule, $\\\\frac{d}{dx}(x^n) = nx^{n-1}$, so $\\\\frac{d}{dx}(x^2) = 2x$"
   }
 ]`;
+
+    const systemPrompt = isGerman ? germanSystemPrompt : defaultSystemPrompt;
+    const userPrompt = isGerman ? germanUserPrompt : defaultUserPrompt;
 
     let content: string | null = null;
     let usedProvider = 'lovable';
