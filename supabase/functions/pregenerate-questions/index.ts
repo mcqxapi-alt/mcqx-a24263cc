@@ -237,7 +237,7 @@ serve(async (req) => {
 
     const results: any[] = [];
 
-    const systemPrompt = `You are an expert CBSE Class 12 teacher. Generate 100% factually accurate MCQs based on NCERT textbooks.
+    const defaultSystemPrompt = `You are an expert CBSE Class 12 teacher. Generate 100% factually accurate MCQs based on NCERT textbooks.
 
 RULES:
 - Double-check every answer
@@ -249,6 +249,13 @@ MATH FORMATTING:
 - For fractions: $\\frac{num}{den}$
 - Greek letters: $\\alpha$, $\\beta$, $\\pi$`;
 
+    const germanSystemPrompt = `You are an expert CBSE Class 12 German language teacher. Generate MCQs for Section C - Applied Grammar.
+
+RULES:
+- Questions must be in German, matching CBSE board exam style
+- correct_answer uses 1=A, 2=B, 3=C, 4=D
+- CRITICAL: ALL explanations MUST be in ENGLISH to help students understand the grammar rules clearly!`;
+
     // Process chapters sequentially to avoid rate limits
     for (const chapter of chaptersToProcess) {
       const subjectName = (chapter.subjects as any)?.name || 'General';
@@ -257,11 +264,22 @@ MATH FORMATTING:
 
       if (neededCount === 0) continue;
 
+      const isGerman = subjectName.toLowerCase() === 'german';
+      const systemPrompt = isGerman ? germanSystemPrompt : defaultSystemPrompt;
+
       console.log(`Generating ${neededCount} questions for ${subjectName} - ${chapter.name}`);
 
-      const userPrompt = `Generate exactly ${neededCount} MCQ questions for CBSE Class 12 ${subjectName}, chapter: "${chapter.name}".
+      const germanUserPrompt = `Generate exactly ${neededCount} MCQ questions for CBSE Class 12 German Board Exam, chapter: "${chapter.name}".
+
+IMPORTANT: Write ALL explanations in ENGLISH to help students understand the grammar rules!
+
+Return ONLY a valid JSON array with objects having: text, option_a, option_b, option_c, option_d, correct_answer (1-4), explanation (in English).`;
+
+      const defaultUserPrompt = `Generate exactly ${neededCount} MCQ questions for CBSE Class 12 ${subjectName}, chapter: "${chapter.name}".
 
 Return ONLY a valid JSON array with objects having: text, option_a, option_b, option_c, option_d, correct_answer (1-4), explanation.`;
+
+      const userPrompt = isGerman ? germanUserPrompt : defaultUserPrompt;
 
       try {
         const aiResult = await callAIWithFallback(systemPrompt, userPrompt);

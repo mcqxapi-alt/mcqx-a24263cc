@@ -141,7 +141,7 @@ CRITICAL RULES:
 - Use authentic German grammar structures and vocabulary appropriate for Class 12 level
 - Double-check every answer before responding
 - The correct_answer field MUST match the actually correct option
-- Explanations should be clear and help students understand the grammar rule
+- CRITICAL: ALL EXPLANATIONS MUST BE WRITTEN IN ENGLISH - not in German! This helps students understand the grammar concepts clearly.
 
 TOPIC-SPECIFIC GUIDELINES:
 - Passive Voice: Focus on Passiv Präsens (wird + Partizip II) and Passiv Präteritum (wurde + Partizip II)
@@ -163,12 +163,13 @@ IMPORTANT:
 - Focus on practical application of grammar rules
 - Include German text with clear, unambiguous options
 - Each question should test a specific grammar concept
+- CRITICAL: Write ALL explanations in ENGLISH to help students understand the grammar rules clearly!
 
 For each question:
 1. Question text (can include German sentences to transform/complete)
 2. Four distinct options (A, B, C, D) - only ONE should be correct
 3. The correct answer number (1=A, 2=B, 3=C, 4=D)
-4. Explanation in English explaining the grammar rule applied
+4. Explanation in ENGLISH explaining the grammar rule applied - DO NOT write explanations in German!
 
 VERIFY: Before outputting, check each answer matches the correct German grammar rule.
 
@@ -181,7 +182,7 @@ Return ONLY a valid JSON array:
     "option_c": "Die Grammatik ist vom Lehrer erklärt.",
     "option_d": "Die Grammatik werden vom Lehrer erklärt.",
     "correct_answer": 1,
-    "explanation": "Passiv Präsens is formed with 'wird' + Partizip II. 'Die Grammatik' is singular, so we use 'wird'. The Partizip II of 'erklären' is 'erklärt'."
+    "explanation": "Passiv Präsens is formed with 'wird' + Partizip II. 'Die Grammatik' is singular, so we use 'wird'. The Partizip II of 'erklären' is 'erklärt'. The agent (der Lehrer) becomes 'vom Lehrer' in the passive."
   }
 ]`;
 
