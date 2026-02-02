@@ -508,6 +508,21 @@
   .gpu-accelerated {
     will-change: transform, opacity;
     transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  /* CSS containment for performance - limits layout recalculations */
+  .contain-layout {
+    contain: layout style;
+  }
+
+  .contain-paint {
+    contain: paint;
+  }
+
+  .contain-content {
+    contain: content;
   }
 
   /* Smooth skeleton loader */

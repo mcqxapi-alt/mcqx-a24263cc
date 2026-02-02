@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef, useState } from "react";
+import { useEffect, useCallback, useRef, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
@@ -57,7 +57,25 @@ export function useChallengeRealtime({
   const progressChannelRef = useRef<RealtimeChannel | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("connecting");
 
-  // Subscribe to challenge updates
+  // Stabilize callbacks in refs to prevent re-subscriptions
+  const onChallengeUpdateRef = useRef(onChallengeUpdate);
+  const onOpponentProgressRef = useRef(onOpponentProgress);
+  const onOpponentJoinedRef = useRef(onOpponentJoined);
+  const onBothReadyRef = useRef(onBothReady);
+  const onOpponentFinishedRef = useRef(onOpponentFinished);
+  const userIdRef = useRef(userId);
+
+  // Update refs on every render (but don't trigger re-subscription)
+  useEffect(() => {
+    onChallengeUpdateRef.current = onChallengeUpdate;
+    onOpponentProgressRef.current = onOpponentProgress;
+    onOpponentJoinedRef.current = onOpponentJoined;
+    onBothReadyRef.current = onBothReady;
+    onOpponentFinishedRef.current = onOpponentFinished;
+    userIdRef.current = userId;
+  });
+
+  // Subscribe to challenge updates - only depends on challengeId
   useEffect(() => {
     if (!challengeId) return;
 
@@ -76,33 +94,32 @@ export function useChallengeRealtime({
         (payload) => {
           console.log("[Realtime] Challenge update received:", payload.new);
           const newData = payload.new as RealtimeChallenge;
-          onChallengeUpdate?.(newData);
+          onChallengeUpdateRef.current?.(newData);
 
           // Check if opponent just joined - pass the new opponent_id
           if (payload.old && !(payload.old as any).opponent_id && newData.opponent_id) {
             console.log("[Realtime] Opponent joined!", newData.opponent_id);
-            onOpponentJoined?.(newData.opponent_id);
+            onOpponentJoinedRef.current?.(newData.opponent_id);
           }
 
           // Check if the match is scheduled to start (server sets started_at when both are ready)
-          // IMPORTANT: don't rely on ready flags changing in the same UPDATE as started_at.
-          // In our flow, ready is updated first, then started_at/status are updated in a second UPDATE.
           const startedAtJustSet = !!newData.started_at && !(payload.old as any)?.started_at;
           if (newData.challenger_ready && newData.opponent_ready && newData.started_at && startedAtJustSet) {
             console.log("[Realtime] Both ready, starting at:", newData.started_at);
-            onBothReady?.(newData.started_at);
+            onBothReadyRef.current?.(newData.started_at);
           }
 
           // Check if opponent just finished
-          if (userId) {
-            const isChallenger = newData.challenger_id === userId;
+          const currentUserId = userIdRef.current;
+          if (currentUserId) {
+            const isChallenger = newData.challenger_id === currentUserId;
             const opponentFinishedField = isChallenger ? "opponent_finished_at" : "challenger_finished_at";
             if (
               newData[opponentFinishedField] &&
               !(payload.old as any)?.[opponentFinishedField]
             ) {
               console.log("[Realtime] Opponent finished!");
-              onOpponentFinished?.();
+              onOpponentFinishedRef.current?.();
             }
           }
         }
@@ -122,11 +139,11 @@ export function useChallengeRealtime({
       console.log("[Realtime] Unsubscribing from challenge:", challengeId);
       channel.unsubscribe();
     };
-  }, [challengeId, userId, onChallengeUpdate, onOpponentJoined, onBothReady, onOpponentFinished]);
+  }, [challengeId]); // Only depend on challengeId - callbacks are in refs
 
-  // Subscribe to progress updates
+  // Subscribe to progress updates - only depends on challengeId
   useEffect(() => {
-    if (!challengeId || !userId) return;
+    if (!challengeId) return;
 
     const progressChannel = supabase
       .channel(`challenge-progress:${challengeId}`)
@@ -140,9 +157,10 @@ export function useChallengeRealtime({
         },
         (payload) => {
           const progressData = (payload.new || payload.old) as ChallengeProgress;
+          const currentUserId = userIdRef.current;
           // Only notify about opponent's progress
-          if (progressData && progressData.user_id !== userId) {
-            onOpponentProgress?.(progressData);
+          if (progressData && currentUserId && progressData.user_id !== currentUserId) {
+            onOpponentProgressRef.current?.(progressData);
           }
         }
       )
@@ -153,24 +171,39 @@ export function useChallengeRealtime({
     return () => {
       progressChannel.unsubscribe();
     };
-  }, [challengeId, userId, onOpponentProgress]);
+  }, [challengeId]); // Only depend on challengeId
 
-  // Update own progress
+  // Debounced progress update to reduce network overhead
+  const progressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastProgressRef = useRef<number>(-1);
+
   const updateProgress = useCallback(
-    async (currentQuestion: number) => {
+    (currentQuestion: number) => {
       if (!challengeId || !userId) return;
 
-      await supabase
-        .from("challenge_progress")
-        .upsert(
-          {
-            challenge_id: challengeId,
-            user_id: userId,
-            current_question: currentQuestion,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "challenge_id,user_id" }
-        );
+      // Skip if same progress
+      if (lastProgressRef.current === currentQuestion) return;
+      lastProgressRef.current = currentQuestion;
+
+      // Clear pending update
+      if (progressTimeoutRef.current) {
+        clearTimeout(progressTimeoutRef.current);
+      }
+
+      // Debounce - send after 150ms of no changes (fast enough to feel responsive)
+      progressTimeoutRef.current = setTimeout(async () => {
+        await supabase
+          .from("challenge_progress")
+          .upsert(
+            {
+              challenge_id: challengeId,
+              user_id: userId,
+              current_question: currentQuestion,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "challenge_id,user_id" }
+          );
+      }, 150);
     },
     [challengeId, userId]
   );
