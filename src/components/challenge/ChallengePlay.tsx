@@ -112,7 +112,8 @@ export function ChallengePlay({
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="space-y-4 gpu-accelerated"
+      transition={{ duration: 0.2 }}
+      className="space-y-4 gpu-accelerated contain-layout"
     >
       {/* Progress bar with opponent indicator - Compact */}
       <div className="space-y-1.5">
@@ -152,25 +153,21 @@ export function ChallengePlay({
         </div>
       </div>
 
-      {/* Question - Mobile optimized with smooth transitions */}
-      <AnimatePresence mode="wait">
+      {/* Question - Mobile optimized with smooth overlapping transitions */}
+      <AnimatePresence mode="popLayout">
         <motion.div
           key={currentQ}
-          initial={{ opacity: 0, x: 20 }}
+          layout
+          initial={{ opacity: 0, x: 15 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
-          className="glass-card rounded-2xl p-4 sm:p-6 gpu-accelerated"
+          exit={{ opacity: 0, x: -15, position: "absolute" }}
+          transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
+          className="glass-card rounded-2xl p-4 sm:p-6 gpu-accelerated contain-layout"
         >
           <div className="flex items-start gap-3 mb-5">
-            <motion.span 
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.1, duration: 0.3 }}
-              className="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center text-sm font-bold text-primary"
-            >
+            <span className="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center text-sm font-bold text-primary">
               {currentQ + 1}
-            </motion.span>
+            </span>
             <RichText as="p" className="text-base sm:text-lg leading-relaxed pt-1" text={question.text} />
           </div>
 
@@ -187,17 +184,17 @@ export function ChallengePlay({
               return (
                 <motion.button
                   key={index}
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ 
-                    delay: index * 0.04, 
-                    duration: 0.25,
+                    delay: index * 0.03, 
+                    duration: 0.2,
                     ease: [0.32, 0.72, 0, 1]
                   }}
-                  whileTap={!showResult ? { scale: 0.97, transition: { duration: 0.1 } } : {}}
+                  whileTap={!showResult ? { scale: 0.98 } : {}}
                   onClick={() => handleAnswerSelect(index)}
                   disabled={showResult}
-                  className={`w-full p-3.5 sm:p-4 rounded-xl text-left flex items-center gap-3 gpu-accelerated touch-manipulation ${
+                  className={`w-full p-3.5 sm:p-4 rounded-xl text-left flex items-center gap-3 gpu-accelerated touch-manipulation contain-layout ${
                     variant === "correct"
                       ? "bg-green-500/20 border-2 border-green-500 shadow-[0_0_20px_hsl(var(--neon-green)/0.3)]"
                       : variant === "wrong"
@@ -207,13 +204,11 @@ export function ChallengePlay({
                       : "glass-card border border-transparent hover:border-primary/20"
                   }`}
                   style={{ 
-                    transition: 'background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease'
+                    transition: 'background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease'
                   }}
                 >
-                  <motion.span 
-                    animate={isSelected && !showResult ? { scale: [1, 1.1, 1] } : {}}
-                    transition={{ duration: 0.2 }}
-                    className={`shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-sm font-bold ${
+                  <span 
+                    className={`shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center text-sm font-bold gpu-accelerated ${
                       variant === "correct"
                         ? "bg-green-500 text-white"
                         : variant === "wrong"
@@ -222,12 +217,12 @@ export function ChallengePlay({
                         ? "bg-primary text-primary-foreground"
                         : "bg-secondary"
                     }`}
-                    style={{ transition: 'background-color 0.2s ease, color 0.2s ease' }}
+                    style={{ transition: 'background-color 0.15s ease, color 0.15s ease, transform 0.15s ease' }}
                   >
                     {variant === "correct" ? <Check className="w-4 h-4" /> : 
                      variant === "wrong" ? <X className="w-4 h-4" /> : 
                      String.fromCharCode(65 + index)}
-                  </motion.span>
+                  </span>
                   <RichText as="span" className="text-sm sm:text-base" text={option} />
                 </motion.button>
               );
