@@ -738,46 +738,80 @@ export default function Challenge() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 40 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                className="space-y-8"
+                className="space-y-6"
               >
-                <div className="text-center mb-10">
+                <div className="text-center mb-8">
+                  <motion.div
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", stiffness: 200 }}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4"
+                  >
+                    <Zap className="w-4 h-4 text-primary" />
+                    <span className="text-xs font-medium text-primary">Step 1 of 2</span>
+                  </motion.div>
                   <motion.h1 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="font-display text-5xl font-bold mb-3"
+                    className="font-display text-3xl sm:text-4xl font-bold mb-2"
                   >
-                    Pick a Subject
+                    Choose Your <span className="text-gradient">Arena</span>
                   </motion.h1>
                   <motion.p 
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.1 }}
-                    className="text-muted-foreground text-lg"
+                    className="text-muted-foreground text-sm sm:text-base"
                   >
-                    Choose the battlefield
+                    Pick a subject to battle in
                   </motion.p>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div className="space-y-2">
                   {subjects.map((subject, index) => (
                     <motion.button
                       key={subject.id}
-                      initial={{ opacity: 0, y: 30, scale: 0.9 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ delay: index * 0.05, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                      whileHover={{ scale: 1.05, y: -6 }}
-                      whileTap={{ scale: 0.95 }}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.025, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
                       onClick={() => {
                         setSelectedSubject(subject);
                         setStep("chapter");
                       }}
-                      className="glass-card rounded-2xl p-6 text-left group relative overflow-hidden"
+                      className="w-full group relative overflow-hidden"
                     >
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                      <span className="text-5xl mb-4 block relative group-hover:scale-110 transition-transform duration-300">{subject.icon}</span>
-                      <h3 className="font-display text-base font-semibold group-hover:text-primary transition-colors duration-300 relative">
-                        {subject.name}
-                      </h3>
+                      {/* Animated gradient background on hover */}
+                      <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/0 via-primary/5 to-accent/0 group-hover:from-primary/15 group-hover:via-primary/10 group-hover:to-accent/10 transition-all duration-500" />
+                      
+                      <div className="relative flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border border-border/50 group-hover:border-primary/40 bg-card/40 backdrop-blur-sm transition-all duration-300 group-hover:shadow-[0_0_25px_hsl(var(--primary)/0.15)]">
+                        {/* Icon with glow effect */}
+                        <div className="relative flex-shrink-0">
+                          <div className="absolute inset-0 rounded-xl bg-primary/40 blur-xl opacity-0 group-hover:opacity-60 transition-opacity duration-500" />
+                          <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-secondary via-secondary/80 to-secondary/50 border border-border/50 group-hover:border-primary/30 flex items-center justify-center transition-all duration-300 group-hover:shadow-[0_0_15px_hsl(var(--primary)/0.2)]">
+                            <span className="text-2xl sm:text-3xl group-hover:scale-110 transition-transform duration-300">{subject.icon}</span>
+                          </div>
+                        </div>
+                        
+                        {/* Subject name */}
+                        <div className="flex-1 text-left">
+                          <span className="block text-sm sm:text-base font-semibold text-foreground group-hover:text-primary transition-colors duration-300">
+                            {subject.name}
+                          </span>
+                          <span className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            Tap to select
+                          </span>
+                        </div>
+                        
+                        {/* Arrow with pulse animation on hover */}
+                        <div className="flex-shrink-0 relative">
+                          <div className="absolute inset-0 rounded-lg bg-primary/30 blur-md opacity-0 group-hover:opacity-100 animate-pulse transition-opacity duration-300" />
+                          <div className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-secondary/50 group-hover:bg-primary/20 flex items-center justify-center transition-all duration-300">
+                            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300" />
+                          </div>
+                        </div>
+                      </div>
                     </motion.button>
                   ))}
                 </div>
