@@ -823,27 +823,40 @@ export default function Challenge() {
                     </div>
                   </motion.div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {chapters.map((chapter, index) => (
                       <motion.button
                         key={chapter.id}
-                        initial={{ opacity: 0, x: -30 }}
+                        initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.04, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                        whileHover={{ scale: 1.02, x: 8 }}
-                        whileTap={{ scale: 0.98 }}
+                        transition={{ delay: index * 0.03, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.99 }}
                         onClick={() => handleCreateChallenge(chapter)}
-                        className="w-full glass-card rounded-xl p-5 text-left flex items-center justify-between group"
+                        className="w-full group relative overflow-hidden"
                       >
-                        <div className="flex items-center gap-4">
-                          <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-sm font-bold text-primary group-hover:from-primary/30 group-hover:to-primary/10 transition-all duration-300">
-                            {index + 1}
-                          </span>
-                          <span className="font-medium text-lg group-hover:text-primary transition-colors duration-300">
+                        {/* Background with gradient border effect */}
+                        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/0 via-primary/0 to-primary/0 group-hover:from-primary/20 group-hover:via-primary/10 group-hover:to-primary/5 transition-all duration-500" />
+                        
+                        <div className="relative flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border border-border/50 group-hover:border-primary/40 bg-card/30 backdrop-blur-sm transition-all duration-300 group-hover:shadow-[0_0_20px_hsl(var(--primary)/0.15)]">
+                          {/* Number badge with glow */}
+                          <div className="relative flex-shrink-0">
+                            <div className="absolute inset-0 rounded-lg bg-primary/30 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            <span className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-secondary to-secondary/50 border border-border/50 group-hover:border-primary/50 flex items-center justify-center text-xs sm:text-sm font-bold text-muted-foreground group-hover:text-primary transition-all duration-300">
+                              {index + 1}
+                            </span>
+                          </div>
+                          
+                          {/* Chapter name */}
+                          <span className="flex-1 text-left text-sm sm:text-base font-medium text-foreground/90 group-hover:text-foreground transition-colors duration-300 line-clamp-2">
                             {chapter.name}
                           </span>
+                          
+                          {/* Arrow with animation */}
+                          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-secondary/50 group-hover:bg-primary/20 flex items-center justify-center transition-all duration-300">
+                            <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300" />
+                          </div>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-2 transition-all duration-300" />
                       </motion.button>
                     ))}
                   </div>
