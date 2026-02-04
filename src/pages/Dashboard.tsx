@@ -14,6 +14,7 @@ import { ChallengeArena } from "@/components/dashboard/ChallengeArena";
 import { SmartSuggestions } from "@/components/dashboard/SmartSuggestions";
 import { AchievementsBadges } from "@/components/dashboard/AchievementsBadges";
 import { RecentSessions } from "@/components/dashboard/RecentSessions";
+import { WeakAreasCard } from "@/components/dashboard/WeakAreasCard";
 
 type Profile = {
   id: string;
@@ -192,11 +193,14 @@ export default function Dashboard() {
             totalCorrect={profile?.total_correct || 0}
           />
 
-          {/* Challenge Arena */}
-          <ChallengeArena
-            recentChallenges={recentChallenges}
-            currentStreak={profile?.streak_days || 0}
-          />
+          {/* Challenge Arena & Weak Areas */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <ChallengeArena
+              recentChallenges={recentChallenges}
+              currentStreak={profile?.streak_days || 0}
+            />
+            <WeakAreasCard />
+          </div>
 
           {/* AI Smart Suggestions */}
           <SmartSuggestions
