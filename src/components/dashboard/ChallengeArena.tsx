@@ -28,120 +28,96 @@ export function ChallengeArena({
   };
 
   return (
-    <section className="mb-8">
-      <motion.h2
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.55, duration: 0.4 }}
-        className="font-display text-xl font-bold mb-4 flex items-center gap-2"
-      >
-        <Swords className="w-5 h-5 text-accent" />
-        Challenge Arena
-      </motion.h2>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Recent Challenges */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.5 }}
-          className="glass rounded-2xl p-5"
-        >
-          <h3 className="text-sm font-semibold text-muted-foreground mb-4 flex items-center gap-2">
-            <Trophy className="w-4 h-4" />
-            Recent Challenges
-          </h3>
-
-          {recentChallenges.length > 0 ? (
-            <div className="space-y-3">
-              {recentChallenges.slice(0, 4).map((challenge, i) => (
-                <motion.div
-                  key={challenge.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.65 + i * 0.05 }}
-                  className="flex items-center justify-between p-3 rounded-xl bg-secondary/50 hover:bg-secondary/70 transition-all cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      challenge.won ? 'bg-accent/20' : 'bg-destructive/20'
-                    }`}>
-                      {challenge.won ? (
-                        <Crown className="w-4 h-4 text-accent" />
-                      ) : (
-                        <Swords className="w-4 h-4 text-destructive" />
-                      )}
-                    </div>
-                    <div>
-                      <div className="font-medium text-sm flex items-center gap-2">
-                        vs {challenge.opponentName}
-                        <Badge variant={challenge.won ? "default" : "destructive"} className="text-xs">
-                          {challenge.won ? "Won" : "Lost"}
-                        </Badge>
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {formatDate(challenge.completedAt)}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className={`font-semibold ${challenge.won ? 'text-accent' : 'text-destructive'}`}>
-                      {challenge.userScore}–{challenge.opponentScore}
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6 text-muted-foreground">
-              <Swords className="w-10 h-10 mx-auto mb-3 opacity-50" />
-              <p className="text-sm">No challenges yet</p>
-              <p className="text-xs mt-1">Challenge a friend to get started!</p>
-            </div>
-          )}
-        </motion.div>
-
-        {/* Streak Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.65, duration: 0.5 }}
-          className="glass rounded-2xl p-5 relative overflow-hidden"
-        >
-          {/* Fire glow effect */}
-          {currentStreak >= 3 && (
-            <div className="absolute -top-8 -right-8 w-24 h-24 bg-orange-500/20 rounded-full blur-3xl animate-pulse-slow" />
-          )}
-          
-          <h3 className="text-sm font-semibold text-muted-foreground mb-4 flex items-center gap-2 relative z-10">
-            <Flame className="w-4 h-4 text-orange-500" />
-            Win Streak
-          </h3>
-
-          <div className="flex flex-col items-center justify-center py-4 relative z-10">
-            <div className="flex items-center gap-2">
-              <Flame className={`w-10 h-10 ${currentStreak >= 3 ? 'text-orange-500 animate-pulse' : 'text-muted-foreground'}`} />
-              <span className={`text-5xl font-bold ${currentStreak >= 3 ? 'neon-text-green' : ''}`}>
-                {currentStreak}
-              </span>
-            </div>
-            <p className="text-muted-foreground mt-2">
-              {currentStreak >= 3 ? (
-                <span className="text-accent font-medium">🔥 You're on fire!</span>
-              ) : currentStreak > 0 ? (
-                "Keep winning to build your streak!"
-              ) : (
-                "Win a challenge to start your streak!"
-              )}
-            </p>
-            {longestStreak > 0 && (
-              <p className="text-xs text-muted-foreground mt-3">
-                Longest streak: {longestStreak} wins
-              </p>
-            )}
-          </div>
-        </motion.div>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="glass rounded-2xl p-6 flex flex-col h-full"
+    >
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="p-2 rounded-xl bg-accent/10">
+          <Swords className="w-5 h-5 text-accent" />
+        </div>
+        <div>
+          <h3 className="font-display font-bold text-lg">Challenge Arena</h3>
+          <p className="text-xs text-muted-foreground">Battle history & streaks</p>
+        </div>
       </div>
-    </section>
+
+      {/* Recent Challenges */}
+      <div className="flex-1">
+        <h4 className="text-xs font-semibold text-muted-foreground mb-3 flex items-center gap-2">
+          <Trophy className="w-3.5 h-3.5" />
+          Recent Battles
+        </h4>
+
+        {recentChallenges.length > 0 ? (
+          <div className="space-y-2">
+            {recentChallenges.slice(0, 3).map((challenge, i) => (
+              <motion.div
+                key={challenge.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 + i * 0.05 }}
+                className="flex items-center justify-between p-2.5 rounded-xl bg-muted/20 hover:bg-muted/30 transition-all"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                    challenge.won ? 'bg-accent/20' : 'bg-destructive/20'
+                  }`}>
+                    {challenge.won ? (
+                      <Crown className="w-3.5 h-3.5 text-accent" />
+                    ) : (
+                      <Swords className="w-3.5 h-3.5 text-destructive" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="font-medium text-sm flex items-center gap-1.5">
+                      vs {challenge.opponentName}
+                      <Badge variant={challenge.won ? "default" : "destructive"} className="text-[10px] px-1.5 py-0">
+                        {challenge.won ? "W" : "L"}
+                      </Badge>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {formatDate(challenge.completedAt)}
+                    </div>
+                  </div>
+                </div>
+                <div className={`font-mono font-semibold text-sm ${challenge.won ? 'text-accent' : 'text-destructive'}`}>
+                  {challenge.userScore}–{challenge.opponentScore}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-4 text-muted-foreground">
+            <Swords className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">No challenges yet</p>
+            <p className="text-[10px] mt-0.5">Challenge a friend!</p>
+          </div>
+        )}
+      </div>
+
+      {/* Streak Mini-Display */}
+      <div className="mt-4 pt-4 border-t border-border/30">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Flame className={`w-5 h-5 ${currentStreak >= 3 ? 'text-accent animate-pulse' : 'text-muted-foreground'}`} />
+            <div>
+              <p className="text-xs text-muted-foreground">Win Streak</p>
+              <p className={`font-bold text-lg leading-none ${currentStreak >= 3 ? 'text-accent' : ''}`}>
+                {currentStreak}
+              </p>
+            </div>
+          </div>
+          {currentStreak >= 3 && (
+            <span className="text-xs text-accent font-medium">🔥 On fire!</span>
+          )}
+          {longestStreak > 0 && currentStreak < 3 && (
+            <span className="text-[10px] text-muted-foreground">Best: {longestStreak}</span>
+          )}
+        </div>
+      </div>
+    </motion.div>
   );
 }
