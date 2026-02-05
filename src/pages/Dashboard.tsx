@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -194,13 +195,23 @@ export default function Dashboard() {
           />
 
           {/* Challenge Arena & Weak Areas */}
-          <div className="grid md:grid-cols-2 gap-6">
+          <section className="mb-8">
+            <motion.h2
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.55, duration: 0.4 }}
+              className="font-display text-xl font-bold mb-4 flex items-center gap-2"
+            >
+              ⚔️ Battle & Focus
+            </motion.h2>
+            <div className="grid md:grid-cols-2 gap-4">
             <ChallengeArena
               recentChallenges={recentChallenges}
               currentStreak={profile?.streak_days || 0}
             />
             <WeakAreasCard />
-          </div>
+            </div>
+          </section>
 
           {/* AI Smart Suggestions */}
           <SmartSuggestions
