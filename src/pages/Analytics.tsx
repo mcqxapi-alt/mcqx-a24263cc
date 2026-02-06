@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import mcqxLogo from "@/assets/mcqx-logo.png";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Analytics components
 import { OverviewCards } from "@/components/analytics/OverviewCards";
@@ -18,6 +19,7 @@ import { SubjectBreakdown } from "@/components/analytics/SubjectBreakdown";
 import { ChapterTable } from "@/components/analytics/ChapterTable";
 import { AIInsightsCard } from "@/components/analytics/AIInsightsCard";
 import { TrendChart } from "@/components/analytics/TrendChart";
+import { MobileChartsCarousel } from "@/components/analytics/MobileChartsCarousel";
 
 interface ChapterStats {
   chapter_id: string;
@@ -46,6 +48,7 @@ interface PerformanceResponse {
 export default function Analytics() {
   const { user, loading } = useAuth();
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ["performance-analysis-full"],
@@ -206,15 +209,39 @@ export default function Analytics() {
             {/* AI Insights - Prominent placement */}
             {data.insights && <AIInsightsCard insights={data.insights} />}
 
-            {/* Charts Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <AccuracyRadialChart
-                accuracy={data.performance.overall_accuracy}
-                correct={totalCorrect}
-                incorrect={totalAttempts - totalCorrect}
-              />
-              <TrendChart chapters={data.performance.chapters} />
-            </div>
+            {/* Charts - Mobile Carousel or Desktop Grid */}
+            {isMobile ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+              >
+                <MobileChartsCarousel
+                  accuracy={data.performance.overall_accuracy}
+                  correct={totalCorrect}
+                  incorrect={totalAttempts - totalCorrect}
+                  chapters={data.performance.chapters}
+                  selectedSubject={selectedSubject}
+                />
+              </motion.div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <AccuracyRadialChart
+                    accuracy={data.performance.overall_accuracy}
+                    correct={totalCorrect}
+                    incorrect={totalAttempts - totalCorrect}
+                  />
+                  <TrendChart chapters={data.performance.chapters} />
+                </div>
+
+                {/* Subject Breakdown - only on desktop since it's in carousel on mobile */}
+                <SubjectBreakdown
+                  chapters={data.performance.chapters}
+                  selectedSubject={selectedSubject}
+                />
+              </>
+            )}
 
             {/* Subject Filter */}
             {subjects.length > 1 && (
@@ -252,11 +279,13 @@ export default function Analytics() {
               </motion.div>
             )}
 
-            {/* Subject Breakdown */}
-            <SubjectBreakdown
-              chapters={data.performance.chapters}
-              selectedSubject={selectedSubject}
-            />
+            {/* Subject Breakdown - only show on desktop (mobile has it in carousel) */}
+            {!isMobile && (
+              <SubjectBreakdown
+                chapters={data.performance.chapters}
+                selectedSubject={selectedSubject}
+              />
+            )}
 
             {/* Detailed Chapter Table */}
             <ChapterTable chapters={filteredChapters || []} />
