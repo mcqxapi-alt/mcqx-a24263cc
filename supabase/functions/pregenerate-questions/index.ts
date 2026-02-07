@@ -237,24 +237,31 @@ serve(async (req) => {
 
     const results: any[] = [];
 
-    const defaultSystemPrompt = `You are an expert CBSE Class 12 teacher. Generate 100% factually accurate MCQs based on NCERT textbooks.
+    const defaultSystemPrompt = `You are India's PREMIER CBSE Class 12 question paper setter with 25+ years experience.
 
-RULES:
-- Double-check every answer
-- Use only verified NCERT facts
-- correct_answer uses 1=A, 2=B, 3=C, 4=D
+QUALITY STANDARDS (NON-NEGOTIABLE):
+✓ 100% FACTUAL ACCURACY - verify every fact against NCERT textbooks
+✓ EXAM-ALIGNED - match exact difficulty and style of CBSE board questions
+✓ CONCEPTUAL DEPTH - test understanding, not rote memorization
+✓ DISTRACTOR EXCELLENCE - wrong options must represent real student misconceptions
 
-MATH FORMATTING:
-- Use LaTeX: $\\frac{1}{2}$, $x^2$, $\\sqrt{x}$
-- For fractions: $\\frac{num}{den}$
-- Greek letters: $\\alpha$, $\\beta$, $\\pi$`;
+DISTRACTOR DESIGN:
+1. COMMON ERRORS: Options from typical calculation mistakes
+2. PARTIAL KNOWLEDGE: Options that seem correct with incomplete understanding
+3. CONCEPT CONFUSION: Options mixing up related but different concepts
 
-    const germanSystemPrompt = `You are an expert CBSE Class 12 German language teacher. Generate MCQs for Section C - Applied Grammar.
+MATH FORMATTING: Use LaTeX - $\\frac{1}{2}$, $x^2$, $\\sqrt{x}$, $\\int$, $\\sum$
+correct_answer uses 1=A, 2=B, 3=C, 4=D`;
 
-RULES:
-- Questions must be in German, matching CBSE board exam style
-- correct_answer uses 1=A, 2=B, 3=C, 4=D
-- CRITICAL: ALL explanations MUST be in ENGLISH to help students understand the grammar rules clearly!`;
+    const germanSystemPrompt = `You are India's TOP CBSE Class 12 German language examiner with 25+ years experience.
+
+QUALITY STANDARDS:
+✓ Every question MUST test a specific grammar rule with practical application
+✓ Distractors must represent REAL student errors
+✓ Match EXACT difficulty level of CBSE board exams
+✓ TRIPLE-CHECK: correct_answer MUST be verified against grammar rules
+✓ correct_answer uses 1=A, 2=B, 3=C, 4=D
+✓ CRITICAL: ALL explanations MUST be in ENGLISH!`;
 
     // Process chapters sequentially to avoid rate limits
     for (const chapter of chaptersToProcess) {
@@ -267,17 +274,28 @@ RULES:
       const isGerman = subjectName.toLowerCase() === 'german';
       const systemPrompt = isGerman ? germanSystemPrompt : defaultSystemPrompt;
 
-      console.log(`Generating ${neededCount} questions for ${subjectName} - ${chapter.name}`);
+      console.log(`Generating ${neededCount} HIGH-QUALITY questions for ${subjectName} - ${chapter.name}`);
 
-      const germanUserPrompt = `Generate exactly ${neededCount} MCQ questions for CBSE Class 12 German Board Exam, chapter: "${chapter.name}".
+      const germanUserPrompt = `Generate exactly ${neededCount} BOARD-EXAM-QUALITY MCQs for CBSE Class 12 German, chapter: "${chapter.name}".
 
-IMPORTANT: Write ALL explanations in ENGLISH to help students understand the grammar rules!
+QUALITY CHECKLIST:
+□ Tests a SPECIFIC grammar rule (name it in explanation)
+□ Only ONE answer is grammatically correct
+□ Distractors represent REAL student mistakes
+□ Explanation in ENGLISH cites the exact grammar rule
 
-Return ONLY a valid JSON array with objects having: text, option_a, option_b, option_c, option_d, correct_answer (1-4), explanation (in English).`;
+Return ONLY valid JSON array: [{text, option_a, option_b, option_c, option_d, correct_answer (1-4), explanation}]`;
 
-      const defaultUserPrompt = `Generate exactly ${neededCount} MCQ questions for CBSE Class 12 ${subjectName}, chapter: "${chapter.name}".
+      const defaultUserPrompt = `Generate exactly ${neededCount} BOARD-EXAM-QUALITY MCQs for CBSE Class 12 ${subjectName}, chapter: "${chapter.name}".
 
-Return ONLY a valid JSON array with objects having: text, option_a, option_b, option_c, option_d, correct_answer (1-4), explanation.`;
+QUALITY CHECKLIST:
+□ Fact-checked against NCERT Class 12 curriculum
+□ Tests conceptual understanding (not just memorization)
+□ Exactly ONE correct answer among four distinct options
+□ All distractors are plausible (represent real student errors)
+□ Explanation teaches the concept thoroughly
+
+Return ONLY valid JSON array: [{text, option_a, option_b, option_c, option_d, correct_answer (1-4), explanation}]`;
 
       const userPrompt = isGerman ? germanUserPrompt : defaultUserPrompt;
 

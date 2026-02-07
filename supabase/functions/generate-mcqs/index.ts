@@ -9,6 +9,55 @@ const corsHeaders = {
 const isUuid = (value: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
+// Quality validation for generated questions
+function validateQuestionQuality(q: any): { valid: boolean; issues: string[] } {
+  const issues: string[] = [];
+  
+  // Check for minimum text length
+  if (!q.text || q.text.length < 15) {
+    issues.push('Question text too short');
+  }
+  
+  // Check all options are unique
+  const options = [q.option_a, q.option_b, q.option_c, q.option_d].filter(Boolean);
+  const uniqueOptions = new Set(options.map((o: string) => o.toLowerCase().trim()));
+  if (uniqueOptions.size < 4) {
+    issues.push('Duplicate or missing options');
+  }
+  
+  // Check options aren't too similar in length (sign of lazy generation)
+  const optionLengths = options.map((o: string) => o.length);
+  const avgLength = optionLengths.reduce((a, b) => a + b, 0) / 4;
+  const allSameLength = optionLengths.every(l => Math.abs(l - avgLength) < 3);
+  if (allSameLength && avgLength < 20) {
+    issues.push('Options suspiciously similar in length');
+  }
+  
+  // Check correct answer is valid
+  const correctAnswer = Number(q.correct_answer);
+  if (isNaN(correctAnswer) || correctAnswer < 1 || correctAnswer > 4) {
+    issues.push('Invalid correct_answer value');
+  }
+  
+  // Check explanation exists and is meaningful
+  if (!q.explanation || q.explanation.length < 20) {
+    issues.push('Explanation too short or missing');
+  }
+  
+  // Check for "Option A/B/C/D" placeholder text
+  if (options.some((o: string) => /^Option [A-D]$/i.test(o.trim()))) {
+    issues.push('Contains placeholder option text');
+  }
+  
+  // Check question doesn't contain the answer directly
+  const correctOption = options[correctAnswer - 1];
+  if (correctOption && q.text.toLowerCase().includes(correctOption.toLowerCase()) && correctOption.length > 10) {
+    issues.push('Question contains answer text');
+  }
+  
+  return { valid: issues.length === 0, issues };
+}
+
 // Helper to call backup Google Gemini API
 async function callGeminiBackup(
   systemPrompt: string,
@@ -21,10 +70,8 @@ async function callGeminiBackup(
   }
 
   const candidates: Array<{ version: 'v1' | 'v1beta'; model: string }> = [
-    // Prefer stable API + model (if key supports it)
     { version: 'v1', model: 'gemini-1.5-flash' },
     { version: 'v1', model: 'gemini-1.5-flash-latest' },
-    // Newer models (often v1beta)
     { version: 'v1beta', model: 'gemini-2.5-flash' },
     { version: 'v1beta', model: 'gemini-2.0-flash' },
   ];
@@ -67,13 +114,8 @@ async function callGeminiBackup(
         const candidateId = `${c.version}/${c.model}`;
         lastError = { status: response.status, msg, candidate: candidateId };
         console.error(`Gemini backup error (${candidateId}):`, response.status, msg);
-
-        // If model isn't found, try the next candidate.
         if (response.status === 404) continue;
-
-        // For quota/rate errors, try next model (quota can be per-model).
         if (response.status === 429) continue;
-
         return { content: null, error: `Gemini ${response.status} (${candidateId}): ${msg}`, status: response.status };
       }
 
@@ -88,7 +130,6 @@ async function callGeminiBackup(
       return { content, error: null };
     } catch (err) {
       console.error(`Gemini backup exception (${c.version}/${c.model}):`, err);
-      // Try next candidate on network exceptions
       continue;
     }
   }
@@ -102,6 +143,106 @@ async function callGeminiBackup(
   }
 
   return { content: null, error: 'Backup AI provider failed (no usable Gemini model/quota)' };
+}
+
+// Subject-specific quality guidelines
+function getSubjectGuidelines(subjectName: string): string {
+  const subject = subjectName.toLowerCase();
+  
+  if (subject.includes('math') || subject.includes('mathematics')) {
+    return `
+MATHEMATICS-SPECIFIC RULES:
+- Include multi-step problems that test conceptual understanding, not just formula recall
+- Use varied numerical values to prevent pattern-matching
+- Include "None of these" only when genuinely applicable
+- Test common misconceptions as distractors (e.g., forgetting negative solutions)
+- Problems should require 2-4 steps to solve
+- Include application-based problems from real-world contexts`;
+  }
+  
+  if (subject.includes('physics')) {
+    return `
+PHYSICS-SPECIFIC RULES:
+- Include numerical problems with proper SI units
+- Test conceptual understanding alongside calculations
+- Use diagrams conceptually described in text when helpful
+- Distractors should represent common calculation errors or misconceptions
+- Include problems requiring dimensional analysis
+- Mix theoretical concepts with practical applications`;
+  }
+  
+  if (subject.includes('chemistry')) {
+    return `
+CHEMISTRY-SPECIFIC RULES:
+- Include reaction mechanisms and equation balancing
+- Test IUPAC nomenclature rigorously
+- Include numerical problems (molarity, stoichiometry, etc.)
+- Periodic trends should be tested with specific examples
+- Include organic reaction conditions and reagents
+- Test both structural and molecular formulas`;
+  }
+  
+  if (subject.includes('biology')) {
+    return `
+BIOLOGY-SPECIFIC RULES:
+- Test process sequences (e.g., stages of mitosis, Krebs cycle)
+- Include scientific nomenclature with italics indicated
+- Diagram-based conceptual questions
+- Connect structure to function in explanations
+- Include recent developments in genetics/biotechnology
+- Test classification and taxonomy accurately`;
+  }
+  
+  if (subject.includes('account') || subject.includes('commerce') || subject.includes('business')) {
+    return `
+COMMERCE/ACCOUNTS-SPECIFIC RULES:
+- Include numerical problems with journal entries
+- Test accounting standards and principles
+- Use realistic business scenarios
+- Include ratio analysis and interpretation
+- Test legal provisions related to business
+- Balance conceptual and computational questions`;
+  }
+  
+  if (subject.includes('economics')) {
+    return `
+ECONOMICS-SPECIFIC RULES:
+- Include graph-based conceptual questions
+- Test both micro and macroeconomic principles
+- Use current economic scenarios where applicable
+- Include numerical problems (national income, elasticity)
+- Test cause-effect relationships in economic phenomena
+- Include policy-based application questions`;
+  }
+  
+  if (subject.includes('history') || subject.includes('political')) {
+    return `
+HISTORY/POLITY-SPECIFIC RULES:
+- Include cause-effect and timeline-based questions
+- Test constitutional provisions with article numbers
+- Include source-based inference questions
+- Distractors should be plausible historical alternatives
+- Test both factual recall and analytical understanding
+- Include maps and chronology conceptually`;
+  }
+  
+  if (subject.includes('english') || subject.includes('literature')) {
+    return `
+ENGLISH/LITERATURE-SPECIFIC RULES:
+- Include passage-based inference questions
+- Test literary devices with textual examples
+- Grammar questions should test common errors
+- Include vocabulary in context
+- Test comprehension, interpretation, and analysis
+- Include questions on tone, style, and author's purpose`;
+  }
+  
+  return `
+GENERAL QUALITY RULES:
+- Questions must test understanding, not just memorization
+- Include application-based scenarios
+- Distractors must be plausible but clearly incorrect
+- Vary difficulty across cognitive levels`;
 }
 
 serve(async (req) => {
@@ -128,108 +269,133 @@ serve(async (req) => {
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
-    console.log(`Generating ${count} MCQs for ${subjectName} - ${chapterName}`);
+    console.log(`Generating ${count} HIGH-QUALITY MCQs for ${subjectName} - ${chapterName}`);
 
-    // Subject-specific prompts for German grammar (board exam style)
     const isGerman = subjectName.toLowerCase() === 'german';
+    const subjectGuidelines = getSubjectGuidelines(subjectName);
     
-    const germanSystemPrompt = `You are an expert CBSE Class 12 German language teacher with 20+ years of experience in preparing students for board exams.
+    const germanSystemPrompt = `You are India's TOP CBSE Class 12 German language examiner with 25+ years experience setting board exam papers.
 
-CRITICAL RULES:
-- Generate questions STRICTLY based on CBSE Class 12 German board exam pattern
-- Questions must match the Section C - Applied Grammar format (8 marks each topic)
-- Use authentic German grammar structures and vocabulary appropriate for Class 12 level
-- Double-check every answer before responding
-- The correct_answer field MUST match the actually correct option
-- CRITICAL: ALL EXPLANATIONS MUST BE WRITTEN IN ENGLISH - not in German! This helps students understand the grammar concepts clearly.
+YOUR MISSION: Create EXAM-READY questions that would genuinely appear in CBSE Class 12 German board exams.
+
+QUALITY STANDARDS (NON-NEGOTIABLE):
+✓ Every question MUST test a specific grammar rule with practical application
+✓ Distractors must represent REAL student errors (not random wrong answers)
+✓ Questions must be at the EXACT difficulty level of CBSE board exams
+✓ TRIPLE-CHECK: The correct_answer MUST be verified against grammar rules
+
+DISTRACTOR DESIGN PRINCIPLES:
+- Option A: Correct answer OR most common student error
+- Option B: Error in verb conjugation or tense
+- Option C: Error in case (Akkusativ vs Dativ) or word order
+- Option D: Error in article or adjective ending
 
 TOPIC-SPECIFIC GUIDELINES:
 - Passive Voice: Focus on Passiv Präsens (wird + Partizip II) and Passiv Präteritum (wurde + Partizip II)
-- Subordinate Clauses: Include als ob, da, falls, sodass, statt dass, statt...zu with proper verb positioning
-- Adjektiv/Participle as Nouns: der/die + Adjective/Partizip (der Alte, die Reisende, das Gute)
-- Future Tense: Futur I formation with werden + Infinitiv
-- Personal Pronouns: Akkusativ (mich, dich, ihn, sie, es, uns, euch, sie) and Dativ (mir, dir, ihm, ihr, ihm, uns, euch, ihnen)
+- Subordinate Clauses: als ob, da, falls, sodass, statt dass with verb-final position
+- Adjective as Nouns: der/die + Adjective with correct declension
+- Future Tense: werden + Infinitiv with correct werden conjugation
+- Pronouns: Akkusativ vs Dativ pronouns in context
 
-QUESTION FORMATS (match board exam style):
-- Fill in the blanks with correct form
-- Choose the correct sentence transformation
-- Identify the correct grammatical structure
-- Complete sentences with appropriate conjugations`;
+CRITICAL: ALL EXPLANATIONS MUST BE IN ENGLISH with the grammar rule clearly stated.`;
 
-    const germanUserPrompt = `Generate exactly ${count} MCQ questions for CBSE Class 12 German Board Exam, topic: "${chapterName}".
+    const germanUserPrompt = `Generate exactly ${count} BOARD-EXAM-QUALITY MCQs for CBSE Class 12 German, topic: "${chapterName}".
 
-IMPORTANT: 
-- Questions must be in the EXACT style of CBSE Class 12 German board exams
-- Focus on practical application of grammar rules
-- Include German text with clear, unambiguous options
-- Each question should test a specific grammar concept
-- CRITICAL: Write ALL explanations in ENGLISH to help students understand the grammar rules clearly!
+QUALITY CHECKLIST (verify each question):
+□ Tests a SPECIFIC grammar rule (name it in explanation)
+□ Only ONE answer is grammatically correct
+□ Distractors represent REAL student mistakes
+□ Difficulty matches actual CBSE board exams
+□ Explanation in ENGLISH cites the exact grammar rule
 
-For each question:
-1. Question text (can include German sentences to transform/complete)
-2. Four distinct options (A, B, C, D) - only ONE should be correct
-3. The correct answer number (1=A, 2=B, 3=C, 4=D)
-4. Explanation in ENGLISH explaining the grammar rule applied - DO NOT write explanations in German!
+BLOOM'S TAXONOMY DISTRIBUTION:
+- 20% Knowledge (identify correct form)
+- 40% Application (use rule in new sentence)
+- 40% Analysis (transform/correct sentences)
 
-VERIFY: Before outputting, check each answer matches the correct German grammar rule.
-
-Return ONLY a valid JSON array:
+Return ONLY valid JSON array:
 [
   {
-    "text": "Convert to Passiv Präsens: 'Der Lehrer erklärt die Grammatik.'",
-    "option_a": "Die Grammatik wird vom Lehrer erklärt.",
-    "option_b": "Die Grammatik wurde vom Lehrer erklärt.",
-    "option_c": "Die Grammatik ist vom Lehrer erklärt.",
-    "option_d": "Die Grammatik werden vom Lehrer erklärt.",
+    "text": "Complete the sentence: 'Wenn ich reich _____, würde ich ein Haus kaufen.'",
+    "option_a": "wäre",
+    "option_b": "bin",
+    "option_c": "war",
+    "option_d": "sei",
     "correct_answer": 1,
-    "explanation": "Passiv Präsens is formed with 'wird' + Partizip II. 'Die Grammatik' is singular, so we use 'wird'. The Partizip II of 'erklären' is 'erklärt'. The agent (der Lehrer) becomes 'vom Lehrer' in the passive."
+    "explanation": "Konjunktiv II is required for unreal conditions. 'Wäre' is the Konjunktiv II form of 'sein'. 'Bin' (Präsens) and 'war' (Präteritum) are indicative, and 'sei' is Konjunktiv I used for indirect speech."
   }
 ]`;
 
-    const defaultSystemPrompt = `You are an expert CBSE Class 12 teacher with 20+ years of experience. You MUST generate 100% factually accurate MCQs based on NCERT textbooks.
+    const defaultSystemPrompt = `You are India's PREMIER CBSE Class 12 question paper setter with 25+ years experience. You have set questions for CBSE board exams that 1.5 million students attempt annually.
 
-CRITICAL RULES:
-- Double-check every answer before responding
-- The correct_answer field MUST match the actually correct option
-- Use only verified facts from NCERT Class 12 curriculum
-- If unsure about any fact, use simpler well-known concepts
-- Explanations must clearly justify why the answer is correct
+YOUR MISSION: Create GENUINELY USEFUL MCQs that will help students MASTER the concepts and ACE their exams.
 
-MATH FORMATTING RULES (IMPORTANT):
-- Use LaTeX notation wrapped in single dollar signs for inline math: $\\frac{1}{2}$, $x^2$, $\\sqrt{x}$
-- Use double dollar signs for display/block math: $$\\int_0^1 x^2 dx$$
-- For fractions use: $\\frac{numerator}{denominator}$
-- For integrals use: $\\int$, $\\int_a^b$, $\\iint$, $\\oint$
-- For limits use: $\\lim_{x \\to a}$
-- For matrices use: $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$
-- For square roots use: $\\sqrt{x}$, $\\sqrt[n]{x}$
-- For Greek letters use: $\\alpha$, $\\beta$, $\\theta$, $\\pi$, etc.
-- For trigonometry use: $\\sin$, $\\cos$, $\\tan$, etc.
-- For summation/product use: $\\sum_{i=1}^{n}$, $\\prod_{i=1}^{n}$
-- Keep text outside math expressions plain (no Markdown)`;
+QUALITY STANDARDS (NON-NEGOTIABLE):
+✓ 100% FACTUAL ACCURACY - verify every fact against NCERT textbooks
+✓ EXAM-ALIGNED - match exact difficulty and style of CBSE board questions
+✓ CONCEPTUAL DEPTH - test understanding, not rote memorization
+✓ DISTRACTOR EXCELLENCE - wrong options must represent real student misconceptions
 
-    const defaultUserPrompt = `Generate exactly ${count} MCQ questions for CBSE Class 12 ${subjectName}, chapter: "${chapterName}".
+BLOOM'S TAXONOMY DISTRIBUTION:
+- 20% Remember: Direct recall of key facts, formulas, definitions
+- 30% Understand: Explain concepts, interpret data, compare ideas  
+- 30% Apply: Use knowledge in new situations, solve problems
+- 20% Analyze: Break down complex ideas, identify relationships
 
-IMPORTANT: Verify each answer is 100% correct before including it. Use only NCERT-verified facts.
+DISTRACTOR DESIGN PRINCIPLES:
+Your wrong options must be PLAUSIBLE. Use these techniques:
+1. COMMON ERRORS: Options that result from typical calculation mistakes
+2. PARTIAL KNOWLEDGE: Options that would seem correct with incomplete understanding
+3. CONCEPT CONFUSION: Options mixing up related but different concepts
+4. SIGN/UNIT ERRORS: In numerical problems, include sign or unit mistakes
 
-For each question:
-1. Question text (clear, unambiguous, use LaTeX for math: $...$)
-2. Four distinct options (A, B, C, D) - only ONE should be correct
-3. The correct answer number (1=A, 2=B, 3=C, 4=D)
-4. Explanation proving why the answer is correct (use LaTeX for math)
+${subjectGuidelines}
 
-VERIFY: Before outputting, mentally solve each question to confirm the correct_answer matches the right option.
+MATH FORMATTING (CRITICAL):
+- Inline math: $\\frac{1}{2}$, $x^2$, $\\sqrt{x}$, $\\int_0^1 f(x)dx$
+- Display math for complex expressions: $$\\sum_{i=1}^{n} i^2$$
+- Use proper LaTeX: \\sin, \\cos, \\log, \\ln, \\lim, \\infty
+- Greek: $\\alpha$, $\\beta$, $\\theta$, $\\pi$, $\\omega$
+- Matrices: $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$
 
-Return ONLY a valid JSON array:
+EXPLANATION REQUIREMENTS:
+- Start with the correct answer and WHY it's correct
+- Explain the concept/formula/rule being tested
+- Address why each distractor is wrong (briefly)
+- Include the solution steps for numerical problems`;
+
+    const defaultUserPrompt = `Generate exactly ${count} BOARD-EXAM-QUALITY MCQs for CBSE Class 12 ${subjectName}, chapter: "${chapterName}".
+
+QUALITY CHECKLIST (verify EACH question before including):
+□ Fact-checked against NCERT Class 12 curriculum
+□ Tests conceptual understanding (not just memorization)
+□ Exactly ONE correct answer among four distinct options
+□ All distractors are plausible (represent real student errors)
+□ Difficulty appropriate for Class 12 board exams
+□ Explanation teaches the concept thoroughly
+
+COGNITIVE LEVEL MIX for this batch:
+- ${Math.ceil(count * 0.2)} questions: Remember/Recall level
+- ${Math.ceil(count * 0.3)} questions: Understand/Interpret level
+- ${Math.ceil(count * 0.3)} questions: Apply/Solve level
+- ${Math.floor(count * 0.2)} questions: Analyze/Evaluate level
+
+CRITICAL VERIFICATION STEPS:
+1. Solve each problem yourself before outputting
+2. Verify the correct_answer matches your solution
+3. Ensure no two options are mathematically equivalent
+4. Check that explanations would satisfy a curious student
+
+Return ONLY valid JSON array:
 [
   {
-    "text": "Find the value of $\\\\frac{d}{dx}(x^2)$",
-    "option_a": "$2x$",
-    "option_b": "$x^2$",
-    "option_c": "$2$",
-    "option_d": "$x$",
+    "text": "If $f(x) = x^3 - 6x^2 + 11x - 6$, find the sum of all roots.",
+    "option_a": "6",
+    "option_b": "11",
+    "option_c": "-6",
+    "option_d": "1",
     "correct_answer": 1,
-    "explanation": "Using the power rule, $\\\\frac{d}{dx}(x^n) = nx^{n-1}$, so $\\\\frac{d}{dx}(x^2) = 2x$"
+    "explanation": "By Vieta's formulas, for a cubic $ax^3 + bx^2 + cx + d$, the sum of roots = $-b/a$. Here $a=1$, $b=-6$, so sum = $-(-6)/1 = 6$. Option B (11) confuses sum of roots with sum of products of pairs. Option C (-6) is the constant term. Option D (1) might result from factoring errors."
   }
 ]`;
 
@@ -239,7 +405,7 @@ Return ONLY a valid JSON array:
     let content: string | null = null;
     let usedProvider = 'lovable';
 
-    // Try Lovable AI first
+    // Use Gemini 2.5 Pro for highest quality reasoning
     if (LOVABLE_API_KEY) {
       const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
@@ -248,7 +414,7 @@ Return ONLY a valid JSON array:
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
+          model: 'google/gemini-2.5-pro', // Upgraded to Pro for better quality
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
@@ -259,9 +425,8 @@ Return ONLY a valid JSON array:
       if (response.ok) {
         const data = await response.json();
         content = data.choices?.[0]?.message?.content;
-        console.log('Using Lovable AI Gateway');
+        console.log('Using Lovable AI Gateway (Gemini 2.5 Pro)');
       } else if (response.status === 402 || response.status === 429) {
-        // Credits exhausted or rate limited - try backup
         console.log(`Lovable AI unavailable (${response.status}), trying backup...`);
         const backup = await callGeminiBackup(systemPrompt, userPrompt);
         if (backup.content) {
@@ -282,7 +447,6 @@ Return ONLY a valid JSON array:
         throw new Error(`AI gateway returned ${response.status}`);
       }
     } else {
-      // No Lovable API key, try backup directly
       console.log('No LOVABLE_API_KEY, trying backup...');
       const backup = await callGeminiBackup(systemPrompt, userPrompt);
       if (backup.content) {
@@ -297,23 +461,17 @@ Return ONLY a valid JSON array:
       throw new Error('No content in AI response');
     }
 
-    console.log(`Raw AI response (${usedProvider}):`, content.substring(0, 200) + '...');
+    console.log(`Raw AI response (${usedProvider}):`, content.substring(0, 300) + '...');
 
     // Parse the JSON from the response
     let questions;
     try {
-      // Try to extract JSON from the response (in case there's extra text)
       const jsonMatch = content.match(/\[[\s\S]*\]/);
       let jsonStr = jsonMatch ? jsonMatch[0] : content;
-      
-      // Fix common JSON issues with LaTeX backslashes
       jsonStr = jsonStr.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
-      
       questions = JSON.parse(jsonStr);
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError);
-      
-      // Fallback: try a more aggressive cleanup
       try {
         let jsonStr = content.match(/\[[\s\S]*\]/)?.[0] || content;
         jsonStr = jsonStr
@@ -327,34 +485,45 @@ Return ONLY a valid JSON array:
       }
     }
 
-    // Validate the structure
     if (!Array.isArray(questions) || questions.length === 0) {
       throw new Error('Invalid questions format from AI');
     }
 
-    // Ensure each question has required fields
-    // AI returns 1-indexed correct_answer (1=A, 2=B, 3=C, 4=D)
-    // Database expects 0-indexed (0=A, 1=B, 2=C, 3=D)
-    const validatedQuestions = questions.map((q: any, index: number) => {
-      const aiAnswer = Number(q.correct_answer) || 1;
-      // Convert from 1-indexed to 0-indexed, clamping to valid range
-      const correctAnswer = Math.max(0, Math.min(3, aiAnswer - 1));
+    // Validate and filter questions for quality
+    const validatedQuestions: any[] = [];
+    const rejectedQuestions: any[] = [];
+
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
+      const validation = validateQuestionQuality(q);
       
-      return {
-        text: q.text || `Question ${index + 1}`,
-        option_a: q.option_a || 'Option A',
-        option_b: q.option_b || 'Option B',
-        option_c: q.option_c || 'Option C',
-        option_d: q.option_d || 'Option D',
-        correct_answer: correctAnswer,
-        explanation: q.explanation || 'No explanation provided',
-        source: 'ai' as const
-      };
-    });
+      if (validation.valid) {
+        const aiAnswer = Number(q.correct_answer) || 1;
+        const correctAnswer = Math.max(0, Math.min(3, aiAnswer - 1));
+        
+        validatedQuestions.push({
+          text: q.text,
+          option_a: q.option_a,
+          option_b: q.option_b,
+          option_c: q.option_c,
+          option_d: q.option_d,
+          correct_answer: correctAnswer,
+          explanation: q.explanation,
+          source: 'ai' as const
+        });
+      } else {
+        console.warn(`Question ${i + 1} rejected:`, validation.issues);
+        rejectedQuestions.push({ question: q, issues: validation.issues });
+      }
+    }
 
-    console.log(`Successfully generated ${validatedQuestions.length} questions via ${usedProvider}`);
+    console.log(`Quality filter: ${validatedQuestions.length} passed, ${rejectedQuestions.length} rejected`);
 
-    // Persist questions to DB so the client can fetch them without ever receiving correct_answer.
+    if (validatedQuestions.length === 0) {
+      throw new Error('All generated questions failed quality validation');
+    }
+
+    // Persist questions to DB
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -389,8 +558,18 @@ Return ONLY a valid JSON array:
       throw new Error('Failed to save generated questions');
     }
 
+    console.log(`Successfully generated ${inserted?.length || 0} HIGH-QUALITY questions via ${usedProvider}`);
+
     return new Response(
-      JSON.stringify({ questions: inserted ?? [], provider: usedProvider }),
+      JSON.stringify({ 
+        questions: inserted ?? [], 
+        provider: usedProvider,
+        quality: {
+          generated: questions.length,
+          passed: validatedQuestions.length,
+          rejected: rejectedQuestions.length
+        }
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
