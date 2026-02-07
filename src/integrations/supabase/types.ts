@@ -243,6 +243,7 @@ export type Database = {
           chapter_id: string
           correct_answer: number
           created_at: string
+          difficulty: Database["public"]["Enums"]["question_difficulty"]
           explanation: string | null
           id: string
           option_a: string
@@ -258,6 +259,7 @@ export type Database = {
           chapter_id: string
           correct_answer: number
           created_at?: string
+          difficulty?: Database["public"]["Enums"]["question_difficulty"]
           explanation?: string | null
           id?: string
           option_a: string
@@ -273,6 +275,7 @@ export type Database = {
           chapter_id?: string
           correct_answer?: number
           created_at?: string
+          difficulty?: Database["public"]["Enums"]["question_difficulty"]
           explanation?: string | null
           id?: string
           option_a?: string
@@ -414,6 +417,62 @@ export type Database = {
         }
         Relationships: []
       }
+      user_difficulty_state: {
+        Row: {
+          chapter_id: string
+          consecutive_correct: number
+          consecutive_incorrect: number
+          current_difficulty: Database["public"]["Enums"]["question_difficulty"]
+          id: string
+          total_easy_attempts: number
+          total_easy_correct: number
+          total_hard_attempts: number
+          total_hard_correct: number
+          total_medium_attempts: number
+          total_medium_correct: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chapter_id: string
+          consecutive_correct?: number
+          consecutive_incorrect?: number
+          current_difficulty?: Database["public"]["Enums"]["question_difficulty"]
+          id?: string
+          total_easy_attempts?: number
+          total_easy_correct?: number
+          total_hard_attempts?: number
+          total_hard_correct?: number
+          total_medium_attempts?: number
+          total_medium_correct?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chapter_id?: string
+          consecutive_correct?: number
+          consecutive_incorrect?: number
+          current_difficulty?: Database["public"]["Enums"]["question_difficulty"]
+          id?: string
+          total_easy_attempts?: number
+          total_easy_correct?: number
+          total_hard_attempts?: number
+          total_hard_correct?: number
+          total_medium_attempts?: number
+          total_medium_correct?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_difficulty_state_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_question_progress: {
         Row: {
           answered_at: string
@@ -477,6 +536,23 @@ export type Database = {
       count_user_chapter_attempts: {
         Args: { p_chapter_id: string; p_user_id: string }
         Returns: number
+      }
+      get_adaptive_questions: {
+        Args: { p_chapter_id: string; p_limit?: number; p_user_id: string }
+        Returns: {
+          chapter_id: string
+          created_at: string
+          difficulty: Database["public"]["Enums"]["question_difficulty"]
+          id: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          source: Database["public"]["Enums"]["question_source"]
+          status: Database["public"]["Enums"]["question_status"]
+          text: string
+          updated_at: string
+        }[]
       }
       get_mixed_questions_for_power_user: {
         Args: {
@@ -574,6 +650,16 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_user_difficulty_stats: {
+        Args: { p_chapter_id: string; p_user_id: string }
+        Returns: {
+          current_difficulty: Database["public"]["Enums"]["question_difficulty"]
+          easy_accuracy: number
+          hard_accuracy: number
+          medium_accuracy: number
+          total_attempts: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -594,6 +680,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_difficulty_state: {
+        Args: {
+          p_chapter_id: string
+          p_question_difficulty: Database["public"]["Enums"]["question_difficulty"]
+          p_user_id: string
+          p_was_correct: boolean
+        }
+        Returns: Database["public"]["Enums"]["question_difficulty"]
+      }
       validate_answer: {
         Args: { p_question_id: string; p_selected_answer: number }
         Returns: Json
@@ -602,6 +697,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "moderator" | "user"
       challenge_status: "open" | "closed" | "lobby" | "playing" | "finished"
+      question_difficulty: "easy" | "medium" | "hard"
       question_source: "verified" | "ai"
       question_status: "active" | "flagged" | "retired"
     }
@@ -733,6 +829,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "moderator", "user"],
       challenge_status: ["open", "closed", "lobby", "playing", "finished"],
+      question_difficulty: ["easy", "medium", "hard"],
       question_source: ["verified", "ai"],
       question_status: ["active", "flagged", "retired"],
     },

@@ -12,6 +12,7 @@ import {
   RotateCcw,
   BookOpen,
   AlertTriangle,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -20,7 +21,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useSecureQuestions, QuestionPublic } from "@/hooks/useSecureQuestions";
 import { useSmartQuestions, QuestionWithRecycled } from "@/hooks/useSmartQuestions";
+import { useAdaptiveDifficulty, DifficultyLevel } from "@/hooks/useAdaptiveDifficulty";
 import { Badge } from "@/components/ui/badge";
+import { DifficultyBadge } from "@/components/practice/DifficultyBadge";
 import {
   Dialog,
   DialogContent,
@@ -46,10 +49,11 @@ type Chapter = {
   subject_id: string;
 };
 
-// Extended question type that includes validated answer data and recycled flag
+// Extended question type that includes validated answer data, recycled flag, and difficulty
 type Question = QuestionWithRecycled & {
   correct_answer?: number;
   explanation?: string | null;
+  difficulty?: DifficultyLevel;
 };
 
 type Step = "subject" | "chapter" | "practice" | "result";
@@ -58,11 +62,14 @@ export default function Practice() {
   const { user } = useAuth();
   const { validateAnswer, clearCache } = useSecureQuestions();
   const [shownPowerUserToast, setShownPowerUserToast] = useState(false);
+  const [shownDifficultyUpToast, setShownDifficultyUpToast] = useState(false);
   const { fetchSmartQuestions, recordQuestionProgress, incrementRecycleCount } = useSmartQuestions();
+  const { updateDifficultyState, getDifficultyStats, currentDifficulty } = useAdaptiveDifficulty();
   const [step, setStep] = useState<Step>("subject");
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [previousDifficulty, setPreviousDifficulty] = useState<DifficultyLevel>("medium");
   // Track questions seen in current session (for guests only)
   const guestSeenIds = useRef<Set<string>>(new Set());
   const [currentQ, setCurrentQ] = useState(0);
@@ -224,6 +231,34 @@ export default function Practice() {
           selectedChapter.id,
           result.is_correct
         );
+
+        // Update adaptive difficulty state
+        if (question.difficulty) {
+          const prevDiff = currentDifficulty;
+          const newDifficulty = await updateDifficultyState(
+            user.id,
+            selectedChapter.id,
+            question.difficulty,
+            result.is_correct
+          );
+          
+          // Show toast when difficulty increases
+          if (newDifficulty !== prevDiff) {
+            setPreviousDifficulty(prevDiff);
+            if (newDifficulty === "hard" && prevDiff === "medium" && !shownDifficultyUpToast) {
+              setShownDifficultyUpToast(true);
+              toast({
+                title: "🔥 Difficulty Increased!",
+                description: "You're crushing it! Moving to harder questions.",
+              });
+            } else if (newDifficulty === "medium" && prevDiff === "easy") {
+              toast({
+                title: "📈 Level Up!",
+                description: "Nice progress! Medium difficulty unlocked.",
+              });
+            }
+          }
+        }
 
         // Increment recycle count if this was a recycled question
         if (question.is_recycled) {
@@ -633,7 +668,11 @@ export default function Practice() {
                       <BookOpen className="w-4 h-4" />
                       Question {currentQ + 1}
                     </span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {/* Difficulty Badge */}
+                      {question.difficulty && (
+                        <DifficultyBadge difficulty={question.difficulty} />
+                      )}
                       {question.is_recycled && (
                         <motion.div
                           initial={{ scale: 0 }}
@@ -654,7 +693,7 @@ export default function Practice() {
                           className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20"
                         >
                           <Sparkles className="w-3 h-3 animate-pulse" />
-                          AI-Generated
+                          AI
                         </motion.span>
                       )}
                     </div>
