@@ -301,17 +301,17 @@ CRITICAL: ALL EXPLANATIONS MUST BE IN ENGLISH with the grammar rule clearly stat
 
     const germanUserPrompt = `Generate exactly ${count} BOARD-EXAM-QUALITY MCQs for CBSE Class 12 German, topic: "${chapterName}".
 
+DIFFICULTY DISTRIBUTION (MANDATORY):
+- ${Math.ceil(count * 0.3)} questions: "easy" - Basic grammar identification, simple fill-in-the-blank
+- ${Math.ceil(count * 0.4)} questions: "medium" - Apply grammar rules in new contexts
+- ${Math.floor(count * 0.3)} questions: "hard" - Complex transformations, multiple grammar rules combined
+
 QUALITY CHECKLIST (verify each question):
 □ Tests a SPECIFIC grammar rule (name it in explanation)
 □ Only ONE answer is grammatically correct
 □ Distractors represent REAL student mistakes
-□ Difficulty matches actual CBSE board exams
 □ Explanation in ENGLISH cites the exact grammar rule
-
-BLOOM'S TAXONOMY DISTRIBUTION:
-- 20% Knowledge (identify correct form)
-- 40% Application (use rule in new sentence)
-- 40% Analysis (transform/correct sentences)
+□ Difficulty field MUST be one of: "easy", "medium", "hard"
 
 Return ONLY valid JSON array:
 [
@@ -322,7 +322,8 @@ Return ONLY valid JSON array:
     "option_c": "war",
     "option_d": "sei",
     "correct_answer": 1,
-    "explanation": "Konjunktiv II is required for unreal conditions. 'Wäre' is the Konjunktiv II form of 'sein'. 'Bin' (Präsens) and 'war' (Präteritum) are indicative, and 'sei' is Konjunktiv I used for indirect speech."
+    "difficulty": "medium",
+    "explanation": "Konjunktiv II is required for unreal conditions. 'Wäre' is the Konjunktiv II form of 'sein'."
   }
 ]`;
 
@@ -366,25 +367,23 @@ EXPLANATION REQUIREMENTS:
 
     const defaultUserPrompt = `Generate exactly ${count} BOARD-EXAM-QUALITY MCQs for CBSE Class 12 ${subjectName}, chapter: "${chapterName}".
 
+DIFFICULTY DISTRIBUTION (MANDATORY - include "difficulty" field in EVERY question):
+- ${Math.ceil(count * 0.3)} questions: "easy" - Direct recall, simple application, single-step problems
+- ${Math.ceil(count * 0.4)} questions: "medium" - Multi-step problems, conceptual understanding required
+- ${Math.floor(count * 0.3)} questions: "hard" - Complex analysis, multiple concepts combined, challenging calculations
+
 QUALITY CHECKLIST (verify EACH question before including):
 □ Fact-checked against NCERT Class 12 curriculum
 □ Tests conceptual understanding (not just memorization)
 □ Exactly ONE correct answer among four distinct options
 □ All distractors are plausible (represent real student errors)
-□ Difficulty appropriate for Class 12 board exams
+□ Difficulty field MUST be one of: "easy", "medium", "hard"
 □ Explanation teaches the concept thoroughly
-
-COGNITIVE LEVEL MIX for this batch:
-- ${Math.ceil(count * 0.2)} questions: Remember/Recall level
-- ${Math.ceil(count * 0.3)} questions: Understand/Interpret level
-- ${Math.ceil(count * 0.3)} questions: Apply/Solve level
-- ${Math.floor(count * 0.2)} questions: Analyze/Evaluate level
 
 CRITICAL VERIFICATION STEPS:
 1. Solve each problem yourself before outputting
 2. Verify the correct_answer matches your solution
-3. Ensure no two options are mathematically equivalent
-4. Check that explanations would satisfy a curious student
+3. Ensure difficulty matches the actual complexity
 
 Return ONLY valid JSON array:
 [
@@ -395,7 +394,8 @@ Return ONLY valid JSON array:
     "option_c": "-6",
     "option_d": "1",
     "correct_answer": 1,
-    "explanation": "By Vieta's formulas, for a cubic $ax^3 + bx^2 + cx + d$, the sum of roots = $-b/a$. Here $a=1$, $b=-6$, so sum = $-(-6)/1 = 6$. Option B (11) confuses sum of roots with sum of products of pairs. Option C (-6) is the constant term. Option D (1) might result from factoring errors."
+    "difficulty": "medium",
+    "explanation": "By Vieta's formulas, sum of roots = $-b/a = 6$."
   }
 ]`;
 
@@ -501,6 +501,12 @@ Return ONLY valid JSON array:
         const aiAnswer = Number(q.correct_answer) || 1;
         const correctAnswer = Math.max(0, Math.min(3, aiAnswer - 1));
         
+        // Validate and normalize difficulty
+        const validDifficulties = ['easy', 'medium', 'hard'];
+        const difficulty = validDifficulties.includes(q.difficulty?.toLowerCase()) 
+          ? q.difficulty.toLowerCase() 
+          : 'medium'; // Default to medium if not specified
+        
         validatedQuestions.push({
           text: q.text,
           option_a: q.option_a,
@@ -508,6 +514,7 @@ Return ONLY valid JSON array:
           option_c: q.option_c,
           option_d: q.option_d,
           correct_answer: correctAnswer,
+          difficulty: difficulty,
           explanation: q.explanation,
           source: 'ai' as const
         });
@@ -543,6 +550,7 @@ Return ONLY valid JSON array:
       option_c: q.option_c,
       option_d: q.option_d,
       correct_answer: q.correct_answer,
+      difficulty: q.difficulty,
       explanation: q.explanation,
       source: 'ai',
       status: 'active',
@@ -551,7 +559,7 @@ Return ONLY valid JSON array:
     const { data: inserted, error: insertError } = await supabaseAdmin
       .from('questions')
       .insert(toInsert)
-      .select('id, chapter_id, text, option_a, option_b, option_c, option_d, source, status, created_at, updated_at');
+      .select('id, chapter_id, text, option_a, option_b, option_c, option_d, source, status, difficulty, created_at, updated_at');
 
     if (insertError) {
       console.error('Failed to insert questions:', insertError);
