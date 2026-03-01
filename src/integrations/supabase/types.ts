@@ -566,6 +566,7 @@ export type Database = {
         Returns: {
           chapter_id: string
           created_at: string
+          difficulty: Database["public"]["Enums"]["question_difficulty"]
           id: string
           is_recycled: boolean
           option_a: string
@@ -583,6 +584,7 @@ export type Database = {
         Returns: {
           chapter_id: string
           created_at: string
+          difficulty: Database["public"]["Enums"]["question_difficulty"]
           id: string
           option_a: string
           option_b: string
@@ -607,6 +609,7 @@ export type Database = {
         Returns: {
           chapter_id: string
           created_at: string
+          difficulty: Database["public"]["Enums"]["question_difficulty"]
           id: string
           option_a: string
           option_b: string
@@ -623,6 +626,7 @@ export type Database = {
         Returns: {
           chapter_id: string
           created_at: string
+          difficulty: Database["public"]["Enums"]["question_difficulty"]
           id: string
           option_a: string
           option_b: string
@@ -639,6 +643,7 @@ export type Database = {
         Returns: {
           chapter_id: string
           created_at: string
+          difficulty: Database["public"]["Enums"]["question_difficulty"]
           id: string
           option_a: string
           option_b: string

@@ -11,6 +11,7 @@ export type QuestionPublic = {
   option_d: string;
   source: "verified" | "ai";
   status: string;
+  difficulty?: "easy" | "medium" | "hard";
   created_at: string;
   updated_at: string;
 };
