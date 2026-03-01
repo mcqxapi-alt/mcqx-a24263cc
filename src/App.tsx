@@ -63,24 +63,18 @@ function AnimatedRoutes() {
   );
 }
 
-import { forwardRef } from "react";
-
-const App = forwardRef<HTMLDivElement>((_props, ref) => (
+const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
-        <div ref={ref}>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AnimatedRoutes />
-          </BrowserRouter>
-        </div>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AnimatedRoutes />
+        </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
-));
-
-App.displayName = "App";
+);
 
 export default App;
