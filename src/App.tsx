@@ -20,15 +20,15 @@ const queryClient = new QueryClient();
 
 // Page transition variants for smooth navigation
 const pageVariants = {
-  initial: { opacity: 0, y: 12 },
-  in: { opacity: 1, y: 0 },
-  out: { opacity: 0, y: -8 },
+  initial: { opacity: 0 },
+  in: { opacity: 1 },
+  out: { opacity: 0 },
 };
 
 const pageTransition = {
   type: "tween" as const,
-  ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number],
-  duration: 0.25,
+  ease: "easeOut" as const,
+  duration: 0.12,
 };
 
 function AnimatedRoutes() {
