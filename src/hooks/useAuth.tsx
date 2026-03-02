@@ -25,6 +25,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        if (event === 'TOKEN_REFRESHED' && !session) {
+          // Refresh failed — clear stale session
+          supabase.auth.signOut().catch(() => {});
+        }
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -32,9 +36,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error || !session) {
+        // Clear any stale tokens that cause infinite refresh loops
+        if (error) {
+          console.warn("Session recovery failed, clearing stale auth:", error.message);
+          supabase.auth.signOut().catch(() => {});
+        }
+        setSession(null);
+        setUser(null);
+      } else {
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
       setLoading(false);
     });
 
