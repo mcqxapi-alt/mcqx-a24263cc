@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -20,37 +20,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const didClearStaleSession = useRef(false);
+
+  const clearStaleSessionLocally = async () => {
+    if (didClearStaleSession.current) return;
+    didClearStaleSession.current = true;
+
+    // Local-only clear to avoid waiting on failing network calls
+    await supabase.auth.signOut({ scope: "local" });
+    setSession(null);
+    setUser(null);
+  };
 
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === 'TOKEN_REFRESHED' && !session) {
-          // Refresh failed — clear stale session
-          supabase.auth.signOut().catch(() => {});
+      async (event, nextSession) => {
+        if (event === "TOKEN_REFRESHED" && !nextSession) {
+          await clearStaleSessionLocally();
+          setLoading(false);
+          return;
         }
-        setSession(session);
-        setUser(session?.user ?? null);
+
+        setSession(nextSession);
+        setUser(nextSession?.user ?? null);
         setLoading(false);
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error || !session) {
-        // Clear any stale tokens that cause infinite refresh loops
-        if (error) {
-          console.warn("Session recovery failed, clearing stale auth:", error.message);
-          supabase.auth.signOut().catch(() => {});
-        }
-        setSession(null);
-        setUser(null);
-      } else {
-        setSession(session);
-        setUser(session?.user ?? null);
-      }
-      setLoading(false);
+    // THEN check for existing session (guarded by timeout so UI never hangs)
+    const sessionTimeoutMs = 1200;
+    const timeoutPromise = new Promise<{ data: { session: null }; error: Error }>((resolve) => {
+      setTimeout(() => {
+        resolve({ data: { session: null }, error: new Error("Session check timeout") });
+      }, sessionTimeoutMs);
     });
+
+    Promise.race([supabase.auth.getSession(), timeoutPromise])
+      .then(async (result) => {
+        if (result.error) {
+          await clearStaleSessionLocally();
+          return;
+        }
+
+        setSession(result.data.session);
+        setUser(result.data.session?.user ?? null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
 
     return () => subscription.unsubscribe();
   }, []);
