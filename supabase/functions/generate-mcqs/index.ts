@@ -10,52 +10,68 @@ const isUuid = (value: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
 // Quality validation for generated questions
-function validateQuestionQuality(q: any): { valid: boolean; issues: string[] } {
+function validateQuestionQuality(
+  q: any,
+  subjectName: string
+): { valid: boolean; issues: string[]; warnings: string[] } {
   const issues: string[] = [];
-  
+  const warnings: string[] = [];
+
   // Check for minimum text length
   if (!q.text || q.text.length < 15) {
     issues.push('Question text too short');
   }
-  
-  // Check all options are unique
+
+  // Check all options are unique and present
   const options = [q.option_a, q.option_b, q.option_c, q.option_d].filter(Boolean);
   const uniqueOptions = new Set(options.map((o: string) => o.toLowerCase().trim()));
-  if (uniqueOptions.size < 4) {
+  if (options.length < 4 || uniqueOptions.size < 4) {
     issues.push('Duplicate or missing options');
   }
-  
-  // Check options aren't too similar in length (sign of lazy generation)
-  const optionLengths = options.map((o: string) => o.length);
-  const avgLength = optionLengths.reduce((a, b) => a + b, 0) / 4;
-  const allSameLength = optionLengths.every(l => Math.abs(l - avgLength) < 3);
-  if (allSameLength && avgLength < 20) {
-    issues.push('Options suspiciously similar in length');
-  }
-  
+
   // Check correct answer is valid
   const correctAnswer = Number(q.correct_answer);
   if (isNaN(correctAnswer) || correctAnswer < 1 || correctAnswer > 4) {
     issues.push('Invalid correct_answer value');
   }
-  
+
   // Check explanation exists and is meaningful
   if (!q.explanation || q.explanation.length < 20) {
     issues.push('Explanation too short or missing');
   }
-  
+
   // Check for "Option A/B/C/D" placeholder text
   if (options.some((o: string) => /^Option [A-D]$/i.test(o.trim()))) {
     issues.push('Contains placeholder option text');
   }
-  
+
+  // For language/grammar subjects, short similarly sized options are expected (e.g., pronouns)
+  // Keep this as a warning only so valid grammar MCQs are not incorrectly rejected.
+  const isLanguageSubject = /(german|english|literature|language|grammar)/i.test(subjectName);
+  const optionLengths = options.map((o: string) => o.length);
+  if (optionLengths.length === 4) {
+    const avgLength = optionLengths.reduce((a, b) => a + b, 0) / 4;
+    const allSameLength = optionLengths.every((l) => Math.abs(l - avgLength) < 3);
+    if (allSameLength && avgLength < 20) {
+      if (isLanguageSubject) {
+        warnings.push('Options are similarly sized (expected for grammar-style questions)');
+      } else {
+        warnings.push('Options suspiciously similar in length');
+      }
+    }
+  }
+
   // Check question doesn't contain the answer directly
   const correctOption = options[correctAnswer - 1];
-  if (correctOption && q.text.toLowerCase().includes(correctOption.toLowerCase()) && correctOption.length > 10) {
+  if (
+    correctOption &&
+    q.text.toLowerCase().includes(correctOption.toLowerCase()) &&
+    correctOption.length > 10
+  ) {
     issues.push('Question contains answer text');
   }
-  
-  return { valid: issues.length === 0, issues };
+
+  return { valid: issues.length === 0, issues, warnings };
 }
 
 // Helper to call backup Google Gemini API
@@ -495,9 +511,13 @@ Return ONLY valid JSON array:
 
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
-      const validation = validateQuestionQuality(q);
+      const validation = validateQuestionQuality(q, subjectName);
       
       if (validation.valid) {
+        if (validation.warnings.length > 0) {
+          console.warn(`Question ${i + 1} warnings:`, validation.warnings);
+        }
+
         const aiAnswer = Number(q.correct_answer) || 1;
         const correctAnswer = Math.max(0, Math.min(3, aiAnswer - 1));
         
