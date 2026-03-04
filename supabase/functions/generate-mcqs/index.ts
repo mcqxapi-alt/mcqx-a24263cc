@@ -292,56 +292,88 @@ serve(async (req) => {
     
     const germanSystemPrompt = `You are India's TOP CBSE Class 12 German language examiner with 25+ years experience setting board exam papers.
 
-YOUR MISSION: Create EXAM-READY questions that would genuinely appear in CBSE Class 12 German board exams.
+YOUR MISSION: Create questions that EXACTLY replicate the style and format of CBSE Class 12 German board exam Section C grammar questions.
 
-QUALITY STANDARDS (NON-NEGOTIABLE):
-✓ Every question MUST test a specific grammar rule with practical application
-✓ Distractors must represent REAL student errors (not random wrong answers)
-✓ Questions must be at the EXACT difficulty level of CBSE board exams
-✓ TRIPLE-CHECK: The correct_answer MUST be verified against grammar rules
+CBSE BOARD EXAM FORMAT (MANDATORY):
+The CBSE German paper uses this EXACT format for grammar questions:
+- A German sentence with blanks (______) where students must fill in the correct pronoun, verb form, conjunction, or article
+- The instruction line is: "Wähle die richtige Antwort"
+- Questions test SUBSTITUTION and TRANSFORMATION of grammatical elements
+- Options are short (1-3 German words) representing grammatical choices
 
-DISTRACTOR DESIGN PRINCIPLES:
-- Option A: Correct answer OR most common student error
-- Option B: Error in verb conjugation or tense
-- Option C: Error in case (Akkusativ vs Dativ) or word order
-- Option D: Error in article or adjective ending
+TOPIC-SPECIFIC QUESTION STYLES:
 
-TOPIC-SPECIFIC GUIDELINES:
-- Passive Voice: Focus on Passiv Präsens (wird + Partizip II) and Passiv Präteritum (wurde + Partizip II)
-- Subordinate Clauses: als ob, da, falls, sodass, statt dass with verb-final position
-- Adjective as Nouns: der/die + Adjective with correct declension
-- Future Tense: werden + Infinitiv with correct werden conjugation
-- Pronouns: Akkusativ vs Dativ pronouns in context
+Personal Pronouns (Akkusativ/Dativ):
+- Give a question sentence, then ask for pronoun replacement with blanks
+- Example: "Gibst du Stefanie meine Adresse? – Ja, ich gebe ______ ______."
+- Options are pronoun pairs like: "sie, ihr" / "es, ihr" / "ihn, ihr"
 
-CRITICAL: ALL EXPLANATIONS MUST BE IN ENGLISH with the grammar rule clearly stated.`;
+Passive Voice (Passiv Präsens/Präteritum):
+- Give an active sentence and ask for passive transformation with blanks
+- Example: "Der Lehrer erklärt die Grammatik. – Die Grammatik ______ vom Lehrer ______."
+- Options are verb pairs like: "wird, erklärt" / "wurde, erklärt"
 
-    const germanUserPrompt = `Generate exactly ${count} BOARD-EXAM-QUALITY MCQs for CBSE Class 12 German, topic: "${chapterName}".
+Subordinate Clauses (Nebensätze):
+- Provide a sentence pair and ask which conjunction fits
+- Example: "Er bleibt zu Hause, ______ er krank ist."
+- Options: "weil" / "dass" / "ob" / "wenn"
 
-DIFFICULTY DISTRIBUTION (MANDATORY):
-- ${Math.ceil(count * 0.3)} questions: "easy" - Basic grammar identification, simple fill-in-the-blank
-- ${Math.ceil(count * 0.4)} questions: "medium" - Apply grammar rules in new contexts
-- ${Math.floor(count * 0.3)} questions: "hard" - Complex transformations, multiple grammar rules combined
+Adjectives as Nouns:
+- Give a sentence with a blank for the nominalized adjective with correct declension
+- Example: "Der ______ (krank) liegt im Bett."
+- Options: "Kranke" / "Kranker" / "Kranken" / "Krank"
 
-QUALITY CHECKLIST (verify each question):
-□ Tests a SPECIFIC grammar rule (name it in explanation)
-□ Only ONE answer is grammatically correct
-□ Distractors represent REAL student mistakes
-□ Explanation in ENGLISH cites the exact grammar rule
-□ Difficulty field MUST be one of: "easy", "medium", "hard"
+Future Tense (Futur I):
+- Give a present tense sentence and ask for Futur I transformation
+- Example: "Ich lese das Buch. → Ich ______ das Buch ______."
+- Options: "werde, lesen" / "wird, lesen" / "werden, lesen"
 
-Return ONLY valid JSON array:
-[
-  {
-    "text": "Complete the sentence: 'Wenn ich reich _____, würde ich ein Haus kaufen.'",
-    "option_a": "wäre",
-    "option_b": "bin",
-    "option_c": "war",
-    "option_d": "sei",
-    "correct_answer": 1,
-    "difficulty": "medium",
-    "explanation": "Konjunktiv II is required for unreal conditions. 'Wäre' is the Konjunktiv II form of 'sein'."
-  }
-]`;
+QUALITY RULES:
+✓ Every question MUST follow the CBSE fill-in-the-blank substitution format shown above
+✓ Use realistic German sentences appropriate for Class 12 level
+✓ Distractors must represent REAL student errors (wrong case, wrong conjugation)
+✓ TRIPLE-CHECK: The correct_answer MUST be grammatically verified
+✓ ALL EXPLANATIONS MUST BE IN ENGLISH with the grammar rule clearly stated
+✓ Questions should feel like they come directly from a CBSE board paper`;
+
+    const germanUserPrompt = `Generate exactly ${count} CBSE-BOARD-STYLE MCQs for Class 12 German, topic: "${chapterName}".
+
+FORMAT REQUIREMENT (CRITICAL):
+Every question MUST follow the exact CBSE German board exam pattern:
+- A German sentence/dialogue with blank(s) to fill: ______
+- Short options (1-3 words each) representing grammatical choices
+- This is the ONLY acceptable format. Do NOT create definition or translation questions.
+
+EXAMPLE of the EXACT style required:
+{
+  "text": "Gibst du Stefanie meine Adresse? – Ja, ich gebe ______ ______.",
+  "option_a": "sie, sie",
+  "option_b": "sie, ihr",
+  "option_c": "ihn, ihr",
+  "option_d": "es, ihr",
+  "correct_answer": 2,
+  "difficulty": "medium",
+  "explanation": "The direct object 'Adresse' (feminine) is replaced by 'sie' (Akkusativ). The indirect object 'Stefanie' (person, feminine) is replaced by 'ihr' (Dativ). So: 'ich gebe sie ihr'."
+}
+
+Another example:
+{
+  "text": "Erzählt der Lehrer den Kindern ein Märchen? – Ja, er erzählt ______ ______.",
+  "option_a": "es, ihn",
+  "option_b": "ihn, ihnen",
+  "option_c": "es, ihnen",
+  "option_d": "sie, ihnen",
+  "correct_answer": 3,
+  "difficulty": "medium",
+  "explanation": "'Ein Märchen' (neuter, Akkusativ) is replaced by 'es'. 'Den Kindern' (Dativ plural) is replaced by 'ihnen'. So: 'er erzählt es ihnen'."
+}
+
+DIFFICULTY DISTRIBUTION:
+- ${Math.ceil(count * 0.3)} questions: "easy" - Single blank, common verbs
+- ${Math.ceil(count * 0.4)} questions: "medium" - Two blanks, pronoun substitution
+- ${Math.floor(count * 0.3)} questions: "hard" - Complex sentences, multiple grammar rules
+
+Return ONLY valid JSON array with objects having: text, option_a, option_b, option_c, option_d, correct_answer (1-4), difficulty, explanation.`;
 
     const defaultSystemPrompt = `You are India's PREMIER CBSE Class 12 question paper setter with 25+ years experience. You have set questions for CBSE board exams that 1.5 million students attempt annually.
 
