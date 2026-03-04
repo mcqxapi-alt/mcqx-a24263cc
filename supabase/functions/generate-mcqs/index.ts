@@ -318,10 +318,18 @@ Subordinate Clauses (Nebensätze):
 - Example: "Er bleibt zu Hause, ______ er krank ist."
 - Options: "weil" / "dass" / "ob" / "wenn"
 
-Adjectives as Nouns:
-- Give a sentence with a blank for the nominalized adjective with correct declension
-- Example: "Der ______ (krank) liegt im Bett."
-- Options: "Kranke" / "Kranker" / "Kranken" / "Krank"
+Adjectives/Participles as Nouns (Adjektive/Partizipien als Nomen):
+- Instruction style: "Ergänze die Adjektive oder Partizip als Nomen"
+- Give a sentence with a blank and the base adjective/participle in LOWERCASE parentheses
+- The student must choose the correctly declined nominalized form
+- Example: "Die ______ (fremd) suchten lange ein Hotel in der Stadt."
+- Options: "Fremden" / "Fremde" / "Fremder" / "Fremd"
+- Example: "Das ______ (gut) daran ist, dass ihm nichts passiert ist."
+- Options: "Gute" / "Guten" / "Guter" / "Gut"
+- Example: "Ein ______ (jugendlich) bekommt den ersten Preis."
+- Options: "Jugendlicher" / "Jugendliche" / "Jugendlichen" / "Jugendlichem"
+- The base word in parentheses MUST always be present in lowercase
+- Options test declension based on: gender, case (Nom/Akk/Dat), and article type (definite/indefinite)
 
 Future Tense (Futur I):
 - Give a present tense sentence and ask for Futur I transformation
@@ -356,7 +364,7 @@ EXAMPLE of the EXACT style required:
   "explanation": "The direct object 'Adresse' (feminine) is replaced by 'sie' (Akkusativ). The indirect object 'Stefanie' (person, feminine) is replaced by 'ihr' (Dativ). So: 'ich gebe sie ihr'."
 }
 
-Another example:
+Another example (Pronouns):
 {
   "text": "Erzählt der Lehrer den Kindern ein Märchen? – Ja, er erzählt ______ ______.",
   "option_a": "es, ihn",
@@ -368,10 +376,36 @@ Another example:
   "explanation": "'Ein Märchen' (neuter, Akkusativ) is replaced by 'es'. 'Den Kindern' (Dativ plural) is replaced by 'ihnen'. So: 'er erzählt es ihnen'."
 }
 
+Adjektive/Partizip als Nomen example:
+{
+  "text": "Die ______ (fremd) suchten lange ein Hotel in der Stadt.",
+  "option_a": "Fremden",
+  "option_b": "Fremde",
+  "option_c": "Fremder",
+  "option_d": "Fremd",
+  "correct_answer": 1,
+  "difficulty": "easy",
+  "explanation": "'Die' is a definite article (plural, Nominativ). When an adjective is used as a noun after a definite article in plural Nominativ, it takes the '-en' ending. So: 'Die Fremden'."
+}
+
+Another Adjektiv example:
+{
+  "text": "Ein ______ (jugendlich) bekommt den ersten Preis.",
+  "option_a": "Jugendlicher",
+  "option_b": "Jugendliche",
+  "option_c": "Jugendlichen",
+  "option_d": "Jugendlichem",
+  "correct_answer": 1,
+  "difficulty": "medium",
+  "explanation": "'Ein' is an indefinite article (masculine, Nominativ). After 'ein' in masculine Nominativ, the nominalized adjective takes the '-er' ending. So: 'Ein Jugendlicher'."
+}
+
+IMPORTANT: Match question style to the chapter topic. For Adjektive als Nomen, ALWAYS include the base word in lowercase parentheses after the blank.
+
 DIFFICULTY DISTRIBUTION:
-- ${Math.ceil(count * 0.3)} questions: "easy" - Single blank, common verbs
-- ${Math.ceil(count * 0.4)} questions: "medium" - Two blanks, pronoun substitution
-- ${Math.floor(count * 0.3)} questions: "hard" - Complex sentences, multiple grammar rules
+- ${Math.ceil(count * 0.3)} questions: "easy" - Common adjectives, definite articles, Nominativ
+- ${Math.ceil(count * 0.4)} questions: "medium" - Indefinite articles, Akkusativ/Dativ cases
+- ${Math.floor(count * 0.3)} questions: "hard" - Partizipien als Nomen, possessive articles, mixed cases
 
 Return ONLY valid JSON array with objects having: text, option_a, option_b, option_c, option_d, correct_answer (1-4), difficulty, explanation.`;
 
