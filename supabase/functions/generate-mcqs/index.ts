@@ -309,14 +309,32 @@ Personal Pronouns (Akkusativ/Dativ):
 - Options are pronoun pairs like: "sie, ihr" / "es, ihr" / "ihn, ihr"
 
 Passive Voice (Passiv Präsens/Präteritum):
-- Give an active sentence and ask for passive transformation with blanks
-- Example: "Der Lehrer erklärt die Grammatik. – Die Grammatik ______ vom Lehrer ______."
-- Options are verb pairs like: "wird, erklärt" / "wurde, erklärt"
+- Instruction style: "Bilde Sätze im Passiv"
+- Give an ACTIVE sentence, then show the passive transformation with blanks for the verb form
+- The student must choose the correct auxiliary (werden conjugation) + Partizip II
+- Example: "Die Kinder treiben gern Sport. → Gern ______ von den Kindern Sport ______."
+- Options: "wird, getrieben" / "werden, getrieben" / "wurde, getrieben" / "werden, treiben"
+- Example: "Meine Mutter machte mein Zimmer nicht sauber. → Mein Zimmer ______ von meiner Mutter nicht sauber ______."
+- Options: "wurde, gemacht" / "wird, gemacht" / "wurden, gemacht" / "wurde, machen"
+- Example: "Der Chef schrieb ihm gestern eine lange E-Mail. → Ihm ______ gestern vom Chef eine lange E-Mail ______."
+- Options: "wurde, geschrieben" / "wird, geschrieben" / "wurden, geschrieben" / "wurde, schreiben"
+- For Präsens active → Passiv Präsens (wird/werden + Partizip II)
+- For Präteritum active → Passiv Präteritum (wurde/wurden + Partizip II)
+- Distractors include: wrong auxiliary conjugation, infinitive instead of Partizip II, wrong tense
 
-Subordinate Clauses (Nebensätze):
-- Provide a sentence pair and ask which conjunction fits
-- Example: "Er bleibt zu Hause, ______ er krank ist."
-- Options: "weil" / "dass" / "ob" / "wenn"
+Subordinate Clauses (Nebensätze/Konjunktionen):
+- Instruction style: "Ergänze die Sätze mit Konjunktionen: statt dass, statt...zu, als ob, da, falls, sodass"
+- Give a sentence with a blank for the correct conjunction
+- The verb goes to the END in subordinate clauses (this is tested implicitly)
+- Example: "Ich gehe jetzt schlafen, ______ ich sehr müde bin."
+- Options: "da" / "falls" / "sodass" / "als ob"
+- Example: "Es scheint so, ______ er sich sehr für dich interessieren würde."
+- Options: "als ob" / "da" / "falls" / "statt dass"
+- Example: "______ es regnet, bleiben wir zu Hause."
+- Options: "Falls" / "Da" / "Sodass" / "Als ob"
+- Example: "Mein Bruder sieht die ganze Nacht fern, ______ schlafen."
+- Options: "statt zu" / "statt dass" / "da" / "als ob"
+- Conjunctions to test: da (because/since), falls (if/in case), sodass (so that), als ob (as if), statt dass / statt...zu (instead of)
 
 Adjectives/Participles as Nouns (Adjektive/Partizipien als Nomen):
 - Instruction style: "Ergänze die Adjektive oder Partizip als Nomen"
@@ -400,12 +418,52 @@ Another Adjektiv example:
   "explanation": "'Ein' is an indefinite article (masculine, Nominativ). After 'ein' in masculine Nominativ, the nominalized adjective takes the '-er' ending. So: 'Ein Jugendlicher'."
 }
 
-IMPORTANT: Match question style to the chapter topic. For Adjektive als Nomen, ALWAYS include the base word in lowercase parentheses after the blank.
+
+Passiv (Passive Voice) example:
+{
+  "text": "Meine Mutter machte mein Zimmer nicht sauber. → Mein Zimmer ______ von meiner Mutter nicht sauber ______.",
+  "option_a": "wurde, gemacht",
+  "option_b": "wird, gemacht",
+  "option_c": "wurden, gemacht",
+  "option_d": "wurde, machen",
+  "correct_answer": 1,
+  "difficulty": "medium",
+  "explanation": "The active sentence is in Präteritum ('machte'). In Passiv Präteritum, the auxiliary is 'wurde' (singular, matching 'Mein Zimmer') + Partizip II 'gemacht'. So: 'Mein Zimmer wurde von meiner Mutter nicht sauber gemacht.'"
+}
+
+Nebensätze (Konjunktionen) example:
+{
+  "text": "Ich gehe jetzt schlafen, ______ ich sehr müde bin.",
+  "option_a": "da",
+  "option_b": "falls",
+  "option_c": "sodass",
+  "option_d": "als ob",
+  "correct_answer": 1,
+  "difficulty": "easy",
+  "explanation": "'Da' means 'because/since' and introduces a reason. The speaker is going to sleep BECAUSE they are very tired. 'Falls' (if/in case), 'sodass' (so that), and 'als ob' (as if) don't fit the causal meaning."
+}
+
+Another Nebensätze example:
+{
+  "text": "Mein Bruder sieht die ganze Nacht fern, ______ schlafen.",
+  "option_a": "statt zu",
+  "option_b": "statt dass",
+  "option_c": "da",
+  "option_d": "als ob",
+  "correct_answer": 1,
+  "difficulty": "medium",
+  "explanation": "'Statt zu + Infinitiv' is used when the subject of both clauses is the same. The brother watches TV INSTEAD OF sleeping."
+}
+
+IMPORTANT: Match question style to the chapter topic.
+- For Adjektive als Nomen: ALWAYS include the base word in lowercase parentheses after the blank.
+- For Passiv: ALWAYS show the active sentence first with arrow (→), then the passive transformation with blanks for auxiliary + Partizip II.
+- For Nebensätze: Test conjunctions like da, falls, sodass, als ob, statt dass, statt...zu.
 
 DIFFICULTY DISTRIBUTION:
-- ${Math.ceil(count * 0.3)} questions: "easy" - Common adjectives, definite articles, Nominativ
-- ${Math.ceil(count * 0.4)} questions: "medium" - Indefinite articles, Akkusativ/Dativ cases
-- ${Math.floor(count * 0.3)} questions: "hard" - Partizipien als Nomen, possessive articles, mixed cases
+- ${Math.ceil(count * 0.3)} questions: "easy" - Common patterns, clear context clues
+- ${Math.ceil(count * 0.4)} questions: "medium" - Less obvious contexts, subtle distinctions
+- ${Math.floor(count * 0.3)} questions: "hard" - Complex sentences, mixed tenses, tricky constructions
 
 Return ONLY valid JSON array with objects having: text, option_a, option_b, option_c, option_d, correct_answer (1-4), difficulty, explanation.`;
 
