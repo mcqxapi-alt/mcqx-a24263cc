@@ -244,13 +244,16 @@ HISTORY/POLITY-SPECIFIC RULES:
   
   if (subject.includes('english') || subject.includes('literature')) {
     return `
-ENGLISH/LITERATURE-SPECIFIC RULES:
-- Include passage-based inference questions
-- Test literary devices with textual examples
-- Grammar questions should test common errors
-- Include vocabulary in context
-- Test comprehension, interpretation, and analysis
-- Include questions on tone, style, and author's purpose`;
+ENGLISH/LITERATURE-SPECIFIC RULES (CBSE CLASS 12):
+- EXTRACT-BASED MCQs: Present a short extract (2-4 lines) from the chapter, then ask inference/comprehension questions about it
+- LITERARY DEVICES: Test identification of metaphor, simile, alliteration, personification, irony, symbolism WITH textual evidence from the chapter
+- CHARACTER ANALYSIS: Test understanding of character traits, motivations, and relationships
+- THEME & MESSAGE: Questions on central themes, moral lessons, and author's perspective
+- VOCABULARY IN CONTEXT: Test meaning of words/phrases as used in the chapter
+- TONE & STYLE: Questions on author's tone, narrative style, and point of view
+- FACTUAL RECALL: Key plot points, settings, character names, and events
+- All questions MUST be based on the specific chapter content from NCERT Flamingo/Vistas textbooks
+- Distractors must be plausible interpretations that a student might confuse`;
   }
   
   return `
