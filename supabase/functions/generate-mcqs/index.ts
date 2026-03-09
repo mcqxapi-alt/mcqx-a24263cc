@@ -543,8 +543,97 @@ Return ONLY valid JSON array:
   }
 ]`;
 
-    const systemPrompt = isGerman ? germanSystemPrompt : defaultSystemPrompt;
-    const userPrompt = isGerman ? germanUserPrompt : defaultUserPrompt;
+    // === ENGLISH-SPECIFIC PROMPTS ===
+    const englishSystemPrompt = `You are India's TOP CBSE Class 12 English examiner with 25+ years experience setting board exam papers for the Flamingo and Vistas textbooks.
+
+YOUR MISSION: Create MCQs that EXACTLY replicate the style of CBSE Class 12 English board exam questions.
+
+CBSE ENGLISH EXAM QUESTION TYPES (use a MIX of these):
+
+1. EXTRACT-BASED QUESTIONS (Most Important - 40% of questions):
+   - Present a SHORT extract (2-4 lines, quoted verbatim or closely paraphrased) from the chapter
+   - Ask inference, comprehension, or analysis questions about the extract
+   - Format: "Read the extract and answer: '[extract text]' — What does the author mean by...?"
+   - Test: inference, tone, word meaning in context, literary devices used
+
+2. LITERARY DEVICE IDENTIFICATION (15% of questions):
+   - Quote a specific line from the chapter that uses a literary device
+   - Ask students to identify the device (metaphor, simile, irony, personification, symbolism, alliteration, etc.)
+   - Format: "Identify the literary device in: '[line from text]'"
+
+3. CHARACTER & THEME ANALYSIS (25% of questions):
+   - Test understanding of character motivations, traits, and development
+   - Ask about central themes and their significance
+   - Format: "Why did [character] do [action]?" or "What theme is explored through [event]?"
+
+4. FACTUAL COMPREHENSION (20% of questions):
+   - Direct recall of key plot points, settings, events, character details
+   - Format: "What happened when...?" or "Where did [character]...?"
+
+QUALITY RULES:
+✓ Questions MUST be specific to the chapter "${chapterName}" from the NCERT textbook
+✓ Extracts must be accurate representations of the actual text
+✓ All explanations MUST reference the specific chapter content
+✓ Distractors must be plausible misinterpretations a student might make
+✓ TRIPLE-CHECK factual accuracy against the NCERT text
+✓ Use proper English literary terminology in explanations`;
+
+    const englishUserPrompt = `Generate exactly ${count} CBSE-BOARD-STYLE MCQs for Class 12 English, chapter: "${chapterName}".
+
+FORMAT REQUIREMENTS:
+Mix the following question types as specified:
+- ~40% Extract-based (quote a passage, ask about meaning/inference/device)
+- ~25% Character/Theme analysis
+- ~20% Factual comprehension
+- ~15% Literary device identification
+
+EXAMPLE - Extract-based:
+{
+  "text": "Read the extract: 'The last lesson! My books that a little while ago I found so tiresome, so heavy to carry — my grammar, my sacred history — seemed like old friends now.' What does Franz mean by calling his books 'old friends'?",
+  "option_a": "He realized their value only when he was about to lose them",
+  "option_b": "He had always loved studying from them",
+  "option_c": "His friends had gifted him those books",
+  "option_d": "The books were very old and worn out",
+  "correct_answer": 1,
+  "difficulty": "medium",
+  "explanation": "Franz calls his books 'old friends' because he now realizes their importance. The impending loss of French language instruction makes him value what he previously took for granted. This reflects the theme that we appreciate things only when we are about to lose them."
+}
+
+EXAMPLE - Literary Device:
+{
+  "text": "Identify the literary device in: 'The iron gate of the school was shut.'",
+  "option_a": "Symbolism — the gate represents the end of French education",
+  "option_b": "Metaphor — comparing the gate to prison bars",
+  "option_c": "Personification — the gate is given human qualities",
+  "option_d": "Alliteration — repetition of the 'g' sound",
+  "correct_answer": 1,
+  "difficulty": "hard",
+  "explanation": "The 'iron gate' symbolizes the finality and closure of French-medium education under Prussian rule. It represents the rigid enforcement of the new order. This is symbolism, not metaphor, as the gate literally exists but carries deeper meaning."
+}
+
+EXAMPLE - Character Analysis:
+{
+  "text": "Why did M. Hamel wear his beautiful green coat and frilled shirt on the day of the last lesson?",
+  "option_a": "To pay respect to the French language and the occasion",
+  "option_b": "To impress the village elders who attended the class",
+  "option_c": "Because it was a festive holiday in the village",
+  "option_d": "To celebrate his retirement from teaching",
+  "correct_answer": 1,
+  "difficulty": "easy",
+  "explanation": "M. Hamel wore his finest clothes as a mark of respect for the French language and to honour the significance of the last French lesson. It was his way of paying tribute to something he held dear, similar to how people dress up for important, solemn occasions."
+}
+
+DIFFICULTY DISTRIBUTION:
+- ${Math.ceil(count * 0.3)} questions: "easy" - Direct recall, obvious inferences
+- ${Math.ceil(count * 0.4)} questions: "medium" - Requires understanding of context, moderate inference
+- ${Math.floor(count * 0.3)} questions: "hard" - Deep analysis, subtle literary devices, complex themes
+
+CRITICAL: Every question must be specific to "${chapterName}". Do NOT create generic English questions.
+
+Return ONLY valid JSON array with objects having: text, option_a, option_b, option_c, option_d, correct_answer (1-4), difficulty, explanation.`;
+
+    const systemPrompt = isGerman ? germanSystemPrompt : isEnglish ? englishSystemPrompt : defaultSystemPrompt;
+    const userPrompt = isGerman ? germanUserPrompt : isEnglish ? englishUserPrompt : defaultUserPrompt;
 
     let content: string | null = null;
     let usedProvider = 'lovable';
