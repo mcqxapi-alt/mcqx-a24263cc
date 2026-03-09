@@ -291,6 +291,7 @@ serve(async (req) => {
     console.log(`Generating ${count} HIGH-QUALITY MCQs for ${subjectName} - ${chapterName}`);
 
     const isGerman = subjectName.toLowerCase() === 'german';
+    const isEnglish = subjectName.toLowerCase() === 'english' || subjectName.toLowerCase().includes('english');
     const subjectGuidelines = getSubjectGuidelines(subjectName);
     
     const germanSystemPrompt = `You are India's TOP CBSE Class 12 German language examiner with 25+ years experience setting board exam papers.
