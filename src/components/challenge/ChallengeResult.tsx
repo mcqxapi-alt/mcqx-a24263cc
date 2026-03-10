@@ -169,15 +169,49 @@ export function ChallengeResult({
         </>
       )}
 
+      {/* Share Score */}
+      {isComplete && result && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.65 }}
+          className="flex justify-center mt-4"
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              const resultText = result === "win" ? "Won" : result === "draw" ? "Drew" : "Lost";
+              const scoreText = `${myScore} vs ${theirScore}`;
+              const topic = chapterInfo ? `${chapterInfo.subject_name} — ${chapterInfo.name}` : "MCQX Challenge";
+              const text = `⚔️ ${resultText} a live MCQ duel! ${scoreText} on ${topic}. Challenge me on MCQX!`;
+              if (navigator.share) {
+                navigator.share({ text, url: window.location.href });
+              } else {
+                navigator.clipboard.writeText(`${text}\n${window.location.href}`);
+                toast({ title: "Copied to clipboard!", description: "Share your result with friends" });
+              }
+            }}
+          >
+            <Share2 className="w-4 h-4 mr-1.5" />
+            Share Result
+          </Button>
+        </motion.div>
+      )}
+
       {/* Actions - Stack on mobile */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.7 }}
-        className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center mt-6"
+        className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center mt-4"
       >
         <Button variant="neon-outline" size="lg" className="h-11" asChild>
-          <Link to="/challenge">New Challenge</Link>
+          <Link to="/challenge">
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Rematch
+          </Link>
         </Button>
         <Button variant="neon" size="lg" className="h-11" asChild>
           <Link to="/practice">Practice More</Link>
