@@ -959,6 +959,7 @@ export default function Challenge() {
                 chapterInfo={chapterInfo}
                 isComplete={challenge.status === "finished" || (challenge.challenger_score !== null && challenge.opponent_score !== null)}
                 showGuestNudge={!user}
+                totalQuestions={questions.length}
               />
             )}
           </AnimatePresence>
