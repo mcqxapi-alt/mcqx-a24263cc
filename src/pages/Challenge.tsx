@@ -505,9 +505,15 @@ export default function Challenge() {
     
     await finishChallenge(isChallenger, score, totalTimeMs);
 
-    // Check if opponent has finished
+    // Fetch fresh challenge state to check if opponent has finished (avoid stale state)
+    const { data: freshChallenge } = await supabase
+      .from("challenges")
+      .select("challenger_finished_at, opponent_finished_at, status")
+      .eq("id", challenge.id)
+      .single();
+
     const opponentFinishedField = isChallenger ? "opponent_finished_at" : "challenger_finished_at";
-    if (challenge[opponentFinishedField]) {
+    if (freshChallenge?.[opponentFinishedField] || freshChallenge?.status === "finished") {
       setStep("result");
     } else {
       setStep("waiting");
@@ -953,6 +959,7 @@ export default function Challenge() {
                 chapterInfo={chapterInfo}
                 isComplete={challenge.status === "finished" || (challenge.challenger_score !== null && challenge.opponent_score !== null)}
                 showGuestNudge={!user}
+                totalQuestions={questions.length}
               />
             )}
           </AnimatePresence>
@@ -974,6 +981,7 @@ function ActiveChallenges({ userId }: { userId: string }) {
           chapters(name, subjects(name))
         `)
         .or(`challenger_id.eq.${userId},opponent_id.eq.${userId}`)
+        .in("status", ["open", "lobby", "playing", "finished"])
         .order("created_at", { ascending: false })
         .limit(5);
 

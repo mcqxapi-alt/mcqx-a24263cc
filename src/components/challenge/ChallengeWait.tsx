@@ -1,5 +1,6 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Loader2, Trophy } from "lucide-react";
+import { Loader2, Trophy, Clock } from "lucide-react";
 
 type ChallengeWaitProps = {
   score: number;
@@ -7,7 +8,20 @@ type ChallengeWaitProps = {
   opponentProgress: number;
 };
 
+function useElapsedTime() {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setElapsed(e => e + 1), 1000);
+    return () => clearInterval(interval);
+  }, []);
+  const mins = Math.floor(elapsed / 60);
+  const secs = elapsed % 60;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
 export function ChallengeWait({ score, totalQuestions, opponentProgress }: ChallengeWaitProps) {
+  const elapsed = useElapsedTime();
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -34,9 +48,14 @@ export function ChallengeWait({ score, totalQuestions, opponentProgress }: Chall
 
       <h2 className="font-display text-2xl sm:text-3xl font-bold mb-2">You're Done!</h2>
       
-      <div className="flex items-center justify-center gap-2 mb-4">
+      <div className="flex items-center justify-center gap-2 mb-2">
         <Trophy className="w-5 h-5 text-primary" />
         <span className="text-xl font-bold text-primary">{score}/{totalQuestions}</span>
+      </div>
+
+      <div className="flex items-center justify-center gap-1.5 mb-4 text-muted-foreground text-sm">
+        <Clock className="w-3.5 h-3.5" />
+        <span>Waiting {elapsed}</span>
       </div>
 
       <p className="text-muted-foreground text-sm sm:text-base mb-4">
