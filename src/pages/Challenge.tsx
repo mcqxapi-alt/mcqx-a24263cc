@@ -980,6 +980,7 @@ function ActiveChallenges({ userId }: { userId: string }) {
           chapters(name, subjects(name))
         `)
         .or(`challenger_id.eq.${userId},opponent_id.eq.${userId}`)
+        .in("status", ["open", "lobby", "playing", "finished"])
         .order("created_at", { ascending: false })
         .limit(5);
 

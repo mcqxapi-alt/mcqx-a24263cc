@@ -60,7 +60,7 @@ export function ChallengePlay({
   const getOptions = (q: Question) => [q.option_a, q.option_b, q.option_c, q.option_d];
 
   const handleAnswerSelect = (index: number) => {
-    if (showResult) return;
+    if (showResult || isValidating) return;
     setSelectedAnswer(index);
   };
 

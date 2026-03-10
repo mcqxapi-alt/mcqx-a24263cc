@@ -271,7 +271,44 @@ export function useChallengeRealtime({
     [challengeId]
   );
 
-  // Record answer
+  // Record answer — uses append via jsonb concatenation to avoid race conditions
+  const pendingAnswersRef = useRef<Array<{ field: string; answer: any }>>([]);
+  const flushingRef = useRef(false);
+
+  const flushAnswers = useCallback(async () => {
+    if (flushingRef.current || !challengeId) return;
+    flushingRef.current = true;
+
+    while (pendingAnswersRef.current.length > 0) {
+      const batch = [...pendingAnswersRef.current];
+      pendingAnswersRef.current = [];
+
+      // Group by field (challenger_answers or opponent_answers)
+      const grouped: Record<string, any[]> = {};
+      for (const item of batch) {
+        if (!grouped[item.field]) grouped[item.field] = [];
+        grouped[item.field].push(item.answer);
+      }
+
+      for (const [field, answers] of Object.entries(grouped)) {
+        // Read current, append, write — single field at a time
+        const { data: current } = await supabase
+          .from("challenges")
+          .select(field)
+          .eq("id", challengeId)
+          .single();
+
+        const currentAnswers = (current?.[field] as any[]) || [];
+        await supabase
+          .from("challenges")
+          .update({ [field]: [...currentAnswers, ...answers] })
+          .eq("id", challengeId);
+      }
+    }
+
+    flushingRef.current = false;
+  }, [challengeId]);
+
   const recordAnswer = useCallback(
     async (
       isChallenger: boolean,
@@ -284,30 +321,19 @@ export function useChallengeRealtime({
 
       const answersField = isChallenger ? "challenger_answers" : "opponent_answers";
 
-      // Get current answers
-      const { data: current } = await supabase
-        .from("challenges")
-        .select(answersField)
-        .eq("id", challengeId)
-        .single();
-
-      const currentAnswers = (current?.[answersField] as any[]) || [];
-      const newAnswers = [
-        ...currentAnswers,
-        {
+      pendingAnswersRef.current.push({
+        field: answersField,
+        answer: {
           question_index: questionIndex,
           selected_answer: selectedAnswer,
           time_taken_ms: timeTakenMs,
           is_correct: isCorrect,
         },
-      ];
+      });
 
-      await supabase
-        .from("challenges")
-        .update({ [answersField]: newAnswers })
-        .eq("id", challengeId);
+      await flushAnswers();
     },
-    [challengeId]
+    [challengeId, flushAnswers]
   );
 
   // Finish challenge
