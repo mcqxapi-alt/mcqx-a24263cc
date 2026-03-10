@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Mail, Loader2, Eye, EyeOff } from "lucide-react";
+import { Mail, Loader2, Eye, EyeOff, Chrome } from "lucide-react";
+import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, Navigate, useLocation, useSearchParams } from "react-router-dom";
@@ -184,7 +185,39 @@ export default function Login() {
             </p>
           </div>
 
-          <div className="glass rounded-2xl p-8">
+          <div className="glass rounded-2xl p-8 space-y-5">
+            {/* Google Sign In */}
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="w-full"
+              onClick={async () => {
+                const { error } = await lovable.auth.signInWithOAuth("google", {
+                  redirect_uri: window.location.origin,
+                });
+                if (error) {
+                  toast({
+                    title: "Google sign-in failed",
+                    description: String(error),
+                    variant: "destructive",
+                  });
+                }
+              }}
+            >
+              <Chrome className="w-5 h-5 mr-2" />
+              Continue with Google
+            </Button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border/50" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">or</span>
+              </div>
+            </div>
+
             <form onSubmit={handleEmailAuth} className="space-y-4">
               <div>
                 <div className="relative">
