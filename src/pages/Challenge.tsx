@@ -505,9 +505,15 @@ export default function Challenge() {
     
     await finishChallenge(isChallenger, score, totalTimeMs);
 
-    // Check if opponent has finished
+    // Fetch fresh challenge state to check if opponent has finished (avoid stale state)
+    const { data: freshChallenge } = await supabase
+      .from("challenges")
+      .select("challenger_finished_at, opponent_finished_at, status")
+      .eq("id", challenge.id)
+      .single();
+
     const opponentFinishedField = isChallenger ? "opponent_finished_at" : "challenger_finished_at";
-    if (challenge[opponentFinishedField]) {
+    if (freshChallenge?.[opponentFinishedField] || freshChallenge?.status === "finished") {
       setStep("result");
     } else {
       setStep("waiting");
