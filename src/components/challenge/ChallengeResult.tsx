@@ -60,7 +60,9 @@ export function ChallengeResult({
   chapterInfo,
   isComplete,
   showGuestNudge,
+  totalQuestions,
 }: ChallengeResultProps) {
+  const { toast } = useToast();
   const result = determineWinner(myScore, theirScore, myTimeMs, theirTimeMs);
   const showConfetti = isComplete && result === "win";
 
