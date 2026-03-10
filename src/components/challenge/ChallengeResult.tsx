@@ -16,6 +16,8 @@ type ChallengeResultProps = {
   chapterInfo: { name: string; subject_name: string } | null;
   isComplete: boolean;
   showGuestNudge: boolean;
+  challengeChapterId?: string;
+  totalQuestions?: number;
 };
 
 function formatTime(ms: number | null): string {
