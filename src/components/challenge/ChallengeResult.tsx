@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
-import { Crown, Swords, Trophy, Clock } from "lucide-react";
+import { Crown, Swords, Trophy, Clock, RotateCcw, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { VictoryConfetti } from "./VictoryConfetti";
+import { useToast } from "@/hooks/use-toast";
 
 type ChallengeResultProps = {
   isChallenger: boolean;
