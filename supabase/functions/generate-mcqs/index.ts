@@ -292,6 +292,7 @@ serve(async (req) => {
 
     const isGerman = subjectName.toLowerCase() === 'german';
     const isEnglish = subjectName.toLowerCase() === 'english' || subjectName.toLowerCase().includes('english');
+    const isEconomics = subjectName.toLowerCase() === 'economics' || subjectName.toLowerCase().includes('economics');
     const subjectGuidelines = getSubjectGuidelines(subjectName);
     
     const germanSystemPrompt = `You are India's TOP CBSE Class 12 German language examiner with 25+ years experience setting board exam papers.
