@@ -292,6 +292,7 @@ serve(async (req) => {
 
     const isGerman = subjectName.toLowerCase() === 'german';
     const isEnglish = subjectName.toLowerCase() === 'english' || subjectName.toLowerCase().includes('english');
+    const isEconomics = subjectName.toLowerCase() === 'economics' || subjectName.toLowerCase().includes('economics');
     const subjectGuidelines = getSubjectGuidelines(subjectName);
     
     const germanSystemPrompt = `You are India's TOP CBSE Class 12 German language examiner with 25+ years experience setting board exam papers.
@@ -632,8 +633,162 @@ CRITICAL: Every question must be specific to "${chapterName}". Do NOT create gen
 
 Return ONLY valid JSON array with objects having: text, option_a, option_b, option_c, option_d, correct_answer (1-4), difficulty, explanation.`;
 
-    const systemPrompt = isGerman ? germanSystemPrompt : isEnglish ? englishSystemPrompt : defaultSystemPrompt;
-    const userPrompt = isGerman ? germanUserPrompt : isEnglish ? englishUserPrompt : defaultUserPrompt;
+    // === ECONOMICS-SPECIFIC PROMPTS ===
+    const economicsSystemPrompt = `You are India's TOP CBSE Class 12 Economics examiner with 25+ years of experience setting board exam papers for both "Introductory Macroeconomics" and "Indian Economic Development" textbooks.
+
+YOUR MISSION: Create MCQs that EXACTLY replicate the style and rigour of CBSE Class 12 Economics board exam questions.
+
+CBSE ECONOMICS EXAM QUESTION TYPES (use a MIX of these):
+
+1. CONCEPTUAL/DEFINITIONAL (20% of questions):
+   - Test precise understanding of economic terms and concepts
+   - Format: "What is meant by...?" or "Which of the following correctly defines...?"
+   - Examples: fiscal deficit vs revenue deficit, money multiplier, MPC vs MPS, HDI components
+
+2. NUMERICAL/CALCULATION-BASED (25% of questions):
+   - Include step-by-step solvable problems with realistic data
+   - MACROECONOMICS numericals:
+     • National Income: GDP at MP, NNP at FC, private/personal/national disposable income
+     • Money & Banking: Money multiplier = 1/LRR, credit creation = Initial deposit × (1/LRR)
+     • Income Determination: Equilibrium Y = C + I + G; Multiplier k = 1/(1-MPC) = 1/MPS
+     • Government Budget: Fiscal Deficit = Total Expenditure − Total Receipts (excluding borrowings); Primary Deficit = Fiscal Deficit − Interest Payments
+     • BOP: Current Account Balance, Capital Account items
+   - Use LaTeX for all formulas: $k = \\frac{1}{1-MPC}$, $\\Delta Y = k \\times \\Delta I$
+   - Distractors must reflect common calculation errors (wrong formula, forgetting depreciation, sign errors)
+
+3. DIAGRAM/GRAPH-BASED CONCEPTUAL (15% of questions):
+   - Describe a diagram scenario and ask about shifts, movements, or equilibrium
+   - AD-AS model: shifts due to policy changes, excess/deficient demand
+   - Income determination: 45-degree line, C+I intersection
+   - Supply-demand in foreign exchange market
+   - Format: "In the AD-AS diagram, if government increases spending, what happens to...?"
+
+4. ASSERTION-REASON / CAUSE-EFFECT (15% of questions):
+   - Test understanding of economic relationships and causation
+   - Format: "Statement: [economic phenomenon]. Which of the following explains this?"
+   - Examples: Why does RBI increase CRR during inflation? Why is HDI a better measure than per capita income?
+
+5. POLICY & APPLICATION (15% of questions):
+   - Test understanding of fiscal policy, monetary policy, trade policy, reform measures
+   - Current economic scenarios applied to NCERT theory
+   - Format: "Which monetary policy tool would RBI use to control inflation?"
+   - Indian Economic Development: LPG reforms, green revolution impact, rural development programmes
+
+6. DATA INTERPRETATION & COMPARISON (10% of questions):
+   - Present economic data/statistics and ask for interpretation
+   - Compare pre-reform vs post-reform India, compare development indicators
+   - Format: "Given the following data, calculate..." or "What can be inferred from..."
+
+CHAPTER-SPECIFIC FOCUS:
+MACROECONOMICS (Chapters 1-6):
+- Ch 1 (Introduction to Macro): Macro vs Micro, circular flow, stock vs flow
+- Ch 2 (National Income): GDP, GNP, NNP, NDP at MP/FC, Personal/Disposable Income, deflator
+- Ch 3 (Money & Banking): Functions of money, credit creation, RBI functions, monetary policy tools (CRR, SLR, Repo, Reverse Repo, Open Market Operations)
+- Ch 4 (Income Determination): Consumption function C = c̄ + bY, APC/APS/MPC/MPS, equilibrium by AD-AS and S-I approach, multiplier mechanism, excess/deficient demand
+- Ch 5 (Government Budget): Revenue/Capital receipts & expenditure, types of deficits, fiscal policy measures
+- Ch 6 (Open Economy): BOP current & capital account, fixed vs flexible exchange rate, managed floating, foreign exchange market demand-supply
+
+INDIAN ECONOMIC DEVELOPMENT (Chapters 7-15):
+- Ch 7 (Eve of Independence): Colonial exploitation, demographic profile, occupational structure, infrastructure at independence
+- Ch 8 (1950-1990): Planning, mixed economy, land reforms, green revolution, industrial policy 1956, trade policy (import substitution)
+- Ch 9 (LPG): Liberalisation, privatisation, globalisation, WTO, demonetisation, GST
+- Ch 10 (Poverty): Poverty line, causes, programmes (MGNREGA, PMJDY), rural-urban disparity
+- Ch 11 (Human Capital): Education, health, human capital vs human development, HDI, brain drain
+- Ch 12 (Rural Development): Agricultural marketing, diversification, organic farming, credit & microfinance, SHGs
+- Ch 13 (Employment): Types of unemployment, informalisation, government employment programmes
+- Ch 14 (Infrastructure): Energy, health, education infrastructure, public-private roles
+- Ch 15 (Environment): Environmental degradation, sustainable development, global warming, resource depletion
+
+QUALITY RULES:
+✓ 100% alignment with NCERT Class 12 Economics textbooks
+✓ Numerical problems must be SOLVABLE with clear data — show all needed values
+✓ All formulas in LaTeX: $Y = C + I + G + (X-M)$, $k = \\frac{1}{1-b}$
+✓ Distractors must represent REAL student errors (wrong formula, conceptual confusion)
+✓ Explanations must teach the concept with step-by-step solutions for numericals
+✓ TRIPLE-CHECK: correct_answer MUST match the verified solution`;
+
+    const economicsUserPrompt = `Generate exactly ${count} CBSE-BOARD-STYLE MCQs for Class 12 Economics, chapter: "${chapterName}".
+
+FORMAT REQUIREMENTS:
+Mix the following question types as specified:
+- ~25% Numerical/Calculation-based (with LaTeX formulas, step-by-step)
+- ~20% Conceptual/Definitional
+- ~15% Diagram/Graph-based conceptual
+- ~15% Assertion-Reason / Cause-Effect
+- ~15% Policy & Application
+- ~10% Data Interpretation & Comparison
+
+EXAMPLE - Numerical (National Income):
+{
+  "text": "Calculate Net National Product at Factor Cost from the following data:\\n(i) Net Domestic Product at Factor Cost = ₹8,000 crores\\n(ii) Factor income from abroad = ₹200 crores\\n(iii) Factor income to abroad = ₹350 crores",
+  "option_a": "₹7,850 crores",
+  "option_b": "₹8,550 crores",
+  "option_c": "₹8,150 crores",
+  "option_d": "₹7,650 crores",
+  "correct_answer": 1,
+  "difficulty": "medium",
+  "explanation": "$NNP_{FC} = NDP_{FC} + \\text{Net Factor Income from Abroad}$\\n$= NDP_{FC} + (\\text{Factor Income from Abroad} - \\text{Factor Income to Abroad})$\\n$= 8000 + (200 - 350)$\\n$= 8000 + (-150)$\\n$= ₹7,850$ crores.\\nOption B incorrectly adds both factor incomes. Option C adds NFIA instead of subtracting."
+}
+
+EXAMPLE - Conceptual (Money & Banking):
+{
+  "text": "If the Legal Reserve Ratio (LRR) is 20%, what is the value of the money multiplier?",
+  "option_a": "5",
+  "option_b": "4",
+  "option_c": "20",
+  "option_d": "0.2",
+  "correct_answer": 1,
+  "difficulty": "easy",
+  "explanation": "Money Multiplier $= \\frac{1}{LRR} = \\frac{1}{0.20} = 5$. This means every ₹1 of initial deposit can create ₹5 of total deposits in the banking system. Option B is a common error (using 25% instead of 20%). Option C confuses the percentage with the multiplier. Option D gives LRR itself."
+}
+
+EXAMPLE - Policy/Application (Government Budget):
+{
+  "text": "Which of the following is a capital receipt in the government budget?",
+  "option_a": "Recovery of loans given by the government",
+  "option_b": "Income tax collected from individuals",
+  "option_c": "Profits of public sector undertakings",
+  "option_d": "Fees and fines collected by government",
+  "correct_answer": 1,
+  "difficulty": "easy",
+  "explanation": "Recovery of loans is a capital receipt because it reduces the assets of the government (creates a liability reduction). Options B, C, and D are all revenue receipts as they neither create a liability nor reduce assets of the government."
+}
+
+EXAMPLE - Cause-Effect (Indian Economic Development):
+{
+  "text": "Why was the policy of import substitution adopted in India during the planning period (1950-1990)?",
+  "option_a": "To protect domestic industries from foreign competition and promote self-reliance",
+  "option_b": "To increase foreign exchange reserves through more imports",
+  "option_c": "To encourage multinational companies to set up factories in India",
+  "option_d": "To reduce the fiscal deficit of the government",
+  "correct_answer": 1,
+  "difficulty": "medium",
+  "explanation": "Import substitution was a trade strategy to replace imports with domestically produced goods, thereby protecting infant Indian industries from foreign competition and promoting self-reliance. This was implemented through heavy tariffs and quotas on imports. It was NOT about increasing imports (B) or inviting MNCs (C)."
+}
+
+EXAMPLE - Diagram-based (Income Determination):
+{
+  "text": "In the Keynesian income determination model, if Aggregate Demand (AD) is greater than Aggregate Supply (AS) at a given level of income, what will happen?",
+  "option_a": "Producers will increase output, leading to rise in income towards equilibrium",
+  "option_b": "Producers will decrease output, leading to fall in income",
+  "option_c": "The economy is already at equilibrium",
+  "option_d": "Planned saving will increase immediately",
+  "correct_answer": 1,
+  "difficulty": "medium",
+  "explanation": "When AD > AS, there is excess demand. Producers find their inventory depleting faster than expected, so they increase production. This raises income and employment until AD = AS equilibrium is reached. This is the adjustment mechanism in the Keynesian model."
+}
+
+DIFFICULTY DISTRIBUTION:
+- ${Math.ceil(count * 0.3)} questions: "easy" - Direct recall, simple formula application, one-step
+- ${Math.ceil(count * 0.4)} questions: "medium" - Multi-step numericals, conceptual analysis, policy reasoning
+- ${Math.floor(count * 0.3)} questions: "hard" - Complex calculations, multi-concept integration, data interpretation
+
+CRITICAL: Every question must be specific to "${chapterName}". Match the chapter focus areas listed above.
+
+Return ONLY valid JSON array with objects having: text, option_a, option_b, option_c, option_d, correct_answer (1-4), difficulty, explanation.`;
+
+    const systemPrompt = isGerman ? germanSystemPrompt : isEnglish ? englishSystemPrompt : isEconomics ? economicsSystemPrompt : defaultSystemPrompt;
+    const userPrompt = isGerman ? germanUserPrompt : isEnglish ? englishUserPrompt : isEconomics ? economicsUserPrompt : defaultUserPrompt;
 
     let content: string | null = null;
     let usedProvider = 'lovable';
