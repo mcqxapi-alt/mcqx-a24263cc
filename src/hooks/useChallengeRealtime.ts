@@ -174,7 +174,7 @@ export function useChallengeRealtime({
   }, [challengeId]); // Only depend on challengeId
 
   // Debounced progress update to reduce network overhead
-  const progressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const progressTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastProgressRef = useRef<number>(-1);
 
   const updateProgress = useCallback(
