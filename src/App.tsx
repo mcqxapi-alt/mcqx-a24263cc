@@ -14,6 +14,7 @@ import Challenge from "./pages/Challenge";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Analytics from "./pages/Analytics";
+import Leaderboard from "./pages/Leaderboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -56,6 +57,7 @@ function AnimatedRoutes() {
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </motion.div>

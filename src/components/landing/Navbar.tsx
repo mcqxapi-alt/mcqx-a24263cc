@@ -20,6 +20,14 @@ export function Navbar() {
           />
         </Link>
         <div className="flex items-center gap-2 sm:gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="transition-all duration-300 text-xs sm:text-sm px-2 sm:px-3"
+          >
+            <Link to="/leaderboard">Leaderboard</Link>
+          </Button>
           {user ? (
             <Button
               variant="ghost"
