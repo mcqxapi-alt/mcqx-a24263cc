@@ -554,6 +554,32 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_leaderboard: {
+        Args: { p_limit?: number; p_metric?: string }
+        Returns: {
+          accuracy: number
+          avatar_url: string
+          challenge_wins: number
+          display_name: string
+          streak_days: number
+          total_attempts: number
+          total_correct: number
+          user_id: string
+        }[]
+      }
+      get_leaderboard_by_wins: {
+        Args: { p_limit?: number }
+        Returns: {
+          accuracy: number
+          avatar_url: string
+          challenge_wins: number
+          display_name: string
+          streak_days: number
+          total_attempts: number
+          total_correct: number
+          user_id: string
+        }[]
+      }
       get_mixed_questions_for_power_user: {
         Args: {
           p_chapter_id: string
