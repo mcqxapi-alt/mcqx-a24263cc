@@ -1,6 +1,6 @@
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
-import { SubjectCarousel } from "@/components/landing/SubjectCarousel";
+import { BrowseMenu } from "@/components/landing/BrowseMenu";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { ChallengeTeaser } from "@/components/landing/ChallengeTeaser";
 import { CTASection } from "@/components/landing/CTASection";
@@ -11,7 +11,7 @@ export default function Landing() {
     <div className="min-h-screen gradient-mesh-animated">
       <Navbar />
       <HeroSection />
-      <SubjectCarousel />
+      <BrowseMenu />
       <HowItWorks />
       <ChallengeTeaser />
       <CTASection />

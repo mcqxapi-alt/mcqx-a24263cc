@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      boards: {
+        Row: {
+          created_at: string
+          display_order: number
+          icon: string
+          id: string
+          name: string
+          type: Database["public"]["Enums"]["board_type"]
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          icon?: string
+          id?: string
+          name: string
+          type?: Database["public"]["Enums"]["board_type"]
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          icon?: string
+          id?: string
+          name?: string
+          type?: Database["public"]["Enums"]["board_type"]
+        }
+        Relationships: []
+      }
       bookmarks: {
         Row: {
           created_at: string
@@ -198,6 +225,38 @@ export type Database = {
             columns: ["subject_id"]
             isOneToOne: false
             referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classes: {
+        Row: {
+          board_id: string
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+        }
+        Insert: {
+          board_id: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: string
+        }
+        Update: {
+          board_id?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classes_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
             referencedColumns: ["id"]
           },
         ]
@@ -395,6 +454,7 @@ export type Database = {
       }
       subjects: {
         Row: {
+          class_id: string | null
           created_at: string
           display_order: number
           icon: string
@@ -402,6 +462,7 @@ export type Database = {
           name: string
         }
         Insert: {
+          class_id?: string | null
           created_at?: string
           display_order?: number
           icon: string
@@ -409,13 +470,22 @@ export type Database = {
           name: string
         }
         Update: {
+          class_id?: string | null
           created_at?: string
           display_order?: number
           icon?: string
           id?: string
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "subjects_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_difficulty_state: {
         Row: {
@@ -727,6 +797,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      board_type: "board" | "competitive" | "state"
       challenge_status: "open" | "closed" | "lobby" | "playing" | "finished"
       question_difficulty: "easy" | "medium" | "hard"
       question_source: "verified" | "ai"
@@ -859,6 +930,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      board_type: ["board", "competitive", "state"],
       challenge_status: ["open", "closed", "lobby", "playing", "finished"],
       question_difficulty: ["easy", "medium", "hard"],
       question_source: ["verified", "ai"],

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
@@ -15,7 +15,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -60,6 +60,7 @@ type Step = "subject" | "chapter" | "practice" | "result";
 
 export default function Practice() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const { validateAnswer, clearCache } = useSecureQuestions();
   const [shownPowerUserToast, setShownPowerUserToast] = useState(false);
   const [shownDifficultyUpToast, setShownDifficultyUpToast] = useState(false);
@@ -95,6 +96,18 @@ export default function Practice() {
       return data as Subject[];
     },
   });
+
+  // Auto-select subject from URL param
+  useEffect(() => {
+    const subjectParam = searchParams.get("subject");
+    if (subjectParam && subjects.length > 0 && !selectedSubject) {
+      const found = subjects.find((s) => s.id === subjectParam);
+      if (found) {
+        setSelectedSubject(found);
+        setStep("chapter");
+      }
+    }
+  }, [searchParams, subjects, selectedSubject]);
 
   // Fetch chapters for selected subject
   const { data: chapters = [], isLoading: loadingChapters } = useQuery({
