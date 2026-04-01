@@ -1,100 +1,52 @@
 
 
-# Dashboard Weak Areas Consolidation
+# Restructure for Multi-Board, Multi-Class Expansion
 
-## The Problem
+## Current State
+Flat hierarchy: `subjects` → `chapters` → `questions`. All subjects are CBSE Class 12 only, with no concept of board, class, or exam type.
 
-The dashboard currently has **two separate "Weak Areas" sections**:
+## Plan
 
-1. **In PerformanceSection** (Your Performance grid) — A basic, static placeholder card that shows "No weak areas identified yet" and never receives actual data
-2. **In WeakAreasCard** (below, paired with Challenge Arena) — The proper AI-powered "Focus Areas" widget with real data, trend indicators, and AI insights
+### 1. New Database Tables
 
-This creates visual clutter and confusion.
+**`boards`** — top-level grouping (CBSE, ICSE, JEE, etc.):
+- `id`, `name`, `type` (enum: board/competitive/state), `icon`, `display_order`
 
----
+**`classes`** — grade within a board:
+- `id`, `board_id` (FK → boards), `name` (e.g. "Class 12"), `display_order`
 
-## The Solution
+**Modify `subjects`** — add nullable `class_id` (FK → classes). Migrate existing subjects to a new "CBSE / Class 12" record.
 
-Remove the static Weak Areas card from `PerformanceSection` and keep only the AI-powered `WeakAreasCard`. Then redesign the Performance section to be a clean 2-column layout.
+Hierarchy: **Board → Class → Subject → Chapter → Question**
 
----
+### 2. Seed Data
+- Insert one board: "CBSE" (type: board)
+- Insert class records for Classes 6–12
+- Link all existing subjects to CBSE Class 12
+- Other classes start empty for future content
 
-## Changes
+### 3. Landing Page Mega-Menu
+Replace `SubjectCarousel` with a new `BrowseMenu` component:
+- **3 tabs**: Board Exams | Competitive | State Boards
+- Under "Board Exams": show boards (initially CBSE)
+- Click board → shows classes (6–12)
+- Click class → shows subjects as cards
+- Click subject → navigates to `/practice?subject={id}`
+- Mobile (360px): renders as accordion with dropdowns
 
-### 1. Refactor PerformanceSection (2 cards instead of 3)
+### 4. Update Practice Flow
+- If `?subject=` param present: skip to chapter selection (current behavior)
+- If no param: show Board → Class → Subject → Chapter drill-down
 
-**File:** `src/components/dashboard/PerformanceSection.tsx`
+### 5. Update Navbar
+Add "Explore" dropdown mirroring the mega-menu categories.
 
-- Remove the third "Weak Areas" card entirely
-- Convert from 3-column to 2-column grid layout
-- Keep only:
-  - **Accuracy Breakdown** — Correct/Incorrect progress bars
-  - **Speed Stats** — Avg time per question
-- Update the grid classes: `md:grid-cols-3` → `md:grid-cols-2`
-- Remove the `weakAreas` prop since it's no longer needed
+### 6. No Breaking Changes
+Challenges, sessions, and all existing features reference `chapter_id` which stays the same. Existing subjects just gain a `class_id` link.
 
-### 2. Update Dashboard.tsx
-
-**File:** `src/pages/Dashboard.tsx`
-
-- Remove the unused `weakAreas` prop from `PerformanceSection` (currently defaults to empty array anyway)
-- No other changes needed — `WeakAreasCard` already exists in the correct location
-
----
-
-## Visual Result
-
-**Before:**
-```text
-┌─────────────────────────────────────────────────────┐
-│ Your Performance                                    │
-├─────────────────┬─────────────────┬─────────────────┤
-│ Accuracy        │ Speed Stats     │ Weak Areas      │
-│ Breakdown       │                 │ (STATIC/EMPTY)  │
-└─────────────────┴─────────────────┴─────────────────┘
-
-┌────────────────────────┬────────────────────────────┐
-│ Challenge Arena        │ Focus Areas (AI-powered)   │
-│                        │ ← The REAL weak areas!     │
-└────────────────────────┴────────────────────────────┘
-```
-
-**After:**
-```text
-┌─────────────────────────────────────────────────────┐
-│ Your Performance                                    │
-├──────────────────────────┬──────────────────────────┤
-│ Accuracy Breakdown       │ Speed Stats              │
-│ (wider, more spacious)   │ (wider, more spacious)   │
-└──────────────────────────┴──────────────────────────┘
-
-┌────────────────────────┬────────────────────────────┐
-│ Challenge Arena        │ Focus Areas (AI-powered)   │
-└────────────────────────┴────────────────────────────┘
-```
-
----
-
-## Technical Details
-
-### PerformanceSection.tsx changes:
-
-```tsx
-// Remove the weakAreas prop from type definition
-type Props = {
-  totalAttempts: number;
-  totalCorrect: number;
-  avgTimePerQuestion?: number;
-  // weakAreas removed
-};
-
-// Update grid layout
-<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-  {/* Accuracy Breakdown */}
-  {/* Speed Stats */}
-  {/* Weak Areas card REMOVED */}
-</div>
-```
-
-This creates a cleaner dashboard with no duplicate content and better visual balance.
+## Technical Summary
+- **Migration SQL**: create `boards`, `classes` tables with public SELECT RLS; add `class_id` to `subjects`; seed CBSE + Classes 6–12
+- **New file**: `src/components/landing/BrowseMenu.tsx`
+- **Modified files**: `Landing.tsx`, `Practice.tsx`, `Navbar.tsx`
+- **Remove/replace**: `SubjectCarousel` usage on landing
 
