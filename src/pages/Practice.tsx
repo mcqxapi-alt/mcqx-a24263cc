@@ -13,6 +13,9 @@ import {
   BookOpen,
   AlertTriangle,
   TrendingUp,
+  GraduationCap,
+  Trophy,
+  MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useSearchParams } from "react-router-dom";
@@ -41,12 +44,28 @@ type Subject = {
   id: string;
   name: string;
   icon: string;
+  class_id: string | null;
 };
 
 type Chapter = {
   id: string;
   name: string;
   subject_id: string;
+};
+
+type BoardRecord = {
+  id: string;
+  name: string;
+  type: string;
+  icon: string;
+  display_order: number;
+};
+
+type ClassRecord = {
+  id: string;
+  board_id: string;
+  name: string;
+  display_order: number;
 };
 
 // Extended question type that includes validated answer data, recycled flag, and difficulty
@@ -56,7 +75,15 @@ type Question = QuestionWithRecycled & {
   difficulty?: DifficultyLevel;
 };
 
-type Step = "subject" | "chapter" | "practice" | "result";
+type Step = "category" | "board" | "class" | "subject" | "chapter" | "practice" | "result";
+
+type CategoryType = "board" | "competitive" | "state";
+
+const categories = [
+  { type: "board" as CategoryType, label: "Board Exams", description: "CBSE, ICSE & more", icon: GraduationCap, color: "from-primary/20 to-primary/5" },
+  { type: "competitive" as CategoryType, label: "Competitive Exams", description: "JEE, NEET, CUET & more", icon: Trophy, color: "from-accent/20 to-accent/5" },
+  { type: "state" as CategoryType, label: "State Boards", description: "State-level board exams", icon: MapPin, color: "from-secondary/40 to-secondary/10" },
+];
 
 export default function Practice() {
   const { user } = useAuth();
@@ -66,12 +93,14 @@ export default function Practice() {
   const [shownDifficultyUpToast, setShownDifficultyUpToast] = useState(false);
   const { fetchSmartQuestions, recordQuestionProgress, incrementRecycleCount } = useSmartQuestions();
   const { updateDifficultyState, getDifficultyStats, currentDifficulty } = useAdaptiveDifficulty();
-  const [step, setStep] = useState<Step>("subject");
+  const [step, setStep] = useState<Step>("category");
+  const [selectedCategory, setSelectedCategory] = useState<CategoryType | null>(null);
+  const [selectedBoard, setSelectedBoard] = useState<BoardRecord | null>(null);
+  const [selectedClass, setSelectedClass] = useState<ClassRecord | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [previousDifficulty, setPreviousDifficulty] = useState<DifficultyLevel>("medium");
-  // Track questions seen in current session (for guests only)
   const guestSeenIds = useRef<Set<string>>(new Set());
   const [currentQ, setCurrentQ] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -84,14 +113,53 @@ export default function Practice() {
   const [isReporting, setIsReporting] = useState(false);
   const { toast } = useToast();
 
-  // Fetch subjects
-  const { data: subjects = [], isLoading: loadingSubjects } = useQuery({
-    queryKey: ["subjects"],
+  // Fetch boards
+  const { data: boards = [], isLoading: loadingBoards } = useQuery({
+    queryKey: ["boards"],
     queryFn: async () => {
+      const { data, error } = await supabase.from("boards").select("*").order("display_order");
+      if (error) throw error;
+      return data as BoardRecord[];
+    },
+  });
+
+  // Fetch classes for selected board
+  const { data: classes = [], isLoading: loadingClasses } = useQuery({
+    queryKey: ["classes", selectedBoard?.id],
+    queryFn: async () => {
+      if (!selectedBoard) return [];
+      const { data, error } = await supabase
+        .from("classes")
+        .select("*")
+        .eq("board_id", selectedBoard.id)
+        .order("display_order");
+      if (error) throw error;
+      return data as ClassRecord[];
+    },
+    enabled: !!selectedBoard,
+  });
+
+  // Fetch subjects for selected class
+  const { data: subjects = [], isLoading: loadingSubjects } = useQuery({
+    queryKey: ["subjects", selectedClass?.id],
+    queryFn: async () => {
+      if (!selectedClass) return [];
       const { data, error } = await supabase
         .from("subjects")
         .select("*")
+        .eq("class_id", selectedClass.id)
         .order("display_order");
+      if (error) throw error;
+      return data as Subject[];
+    },
+    enabled: !!selectedClass,
+  });
+
+  // Fetch all subjects (for URL param shortcut)
+  const { data: allSubjects = [] } = useQuery({
+    queryKey: ["all-subjects"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("subjects").select("*").order("display_order");
       if (error) throw error;
       return data as Subject[];
     },
@@ -100,14 +168,25 @@ export default function Practice() {
   // Auto-select subject from URL param
   useEffect(() => {
     const subjectParam = searchParams.get("subject");
-    if (subjectParam && subjects.length > 0 && !selectedSubject) {
-      const found = subjects.find((s) => s.id === subjectParam);
+    if (subjectParam && allSubjects.length > 0 && !selectedSubject) {
+      const found = allSubjects.find((s) => s.id === subjectParam);
       if (found) {
         setSelectedSubject(found);
         setStep("chapter");
       }
     }
-  }, [searchParams, subjects, selectedSubject]);
+  }, [searchParams, allSubjects, selectedSubject]);
+
+  // Auto-skip board step if only one board for category
+  useEffect(() => {
+    if (step === "board" && selectedCategory && !loadingBoards) {
+      const filtered = boards.filter((b) => b.type === selectedCategory);
+      if (filtered.length === 1) {
+        setSelectedBoard(filtered[0]);
+        setStep("class");
+      }
+    }
+  }, [step, selectedCategory, boards, loadingBoards]);
 
   // Fetch chapters for selected subject
   const { data: chapters = [], isLoading: loadingChapters } = useQuery({
@@ -130,7 +209,6 @@ export default function Practice() {
     if (!q?.correct_answer && q?.correct_answer !== 0) return null;
     const raw = Number(q.correct_answer);
     if (!Number.isFinite(raw)) return null;
-    // correct_answer is 0-indexed in our secure functions
     if (raw >= 0 && raw <= 3) return raw;
     return null;
   };
@@ -139,7 +217,6 @@ export default function Practice() {
   const correctIndex = question ? getCorrectIndex(question) : null;
   const isCorrect = selectedAnswer !== null && correctIndex !== null && selectedAnswer === correctIndex;
   
-  // Score only counts questions that have been validated
   const score = answers.filter((a, i) => {
     const q = questions[i];
     const cIdx = getCorrectIndex(q);
@@ -147,6 +224,21 @@ export default function Practice() {
   }).length;
   const totalQuestions = questions.length;
   const accuracy = answers.length > 0 ? Math.round((score / answers.length) * 100) : 0;
+
+  const handleCategorySelect = (type: CategoryType) => {
+    setSelectedCategory(type);
+    setStep("board");
+  };
+
+  const handleBoardSelect = (board: BoardRecord) => {
+    setSelectedBoard(board);
+    setStep("class");
+  };
+
+  const handleClassSelect = (cls: ClassRecord) => {
+    setSelectedClass(cls);
+    setStep("subject");
+  };
 
   const handleSubjectSelect = (subject: Subject) => {
     setSelectedSubject(subject);
@@ -156,12 +248,11 @@ export default function Practice() {
   const handleChapterSelect = async (chapter: Chapter) => {
     setSelectedChapter(chapter);
     setIsGenerating(true);
-    clearCache(); // Clear any cached answer validations
+    clearCache();
 
     const targetCount = 10;
 
     try {
-      // Use smart question fetching
       const { questions: fetchedQuestions, isPowerUser } = await fetchSmartQuestions(
         user?.id || null,
         chapter.id,
@@ -171,12 +262,10 @@ export default function Practice() {
       );
 
       if (fetchedQuestions.length > 0) {
-        // For guests, track seen questions in memory
         if (!user) {
           fetchedQuestions.forEach(q => guestSeenIds.current.add(q.id));
         }
 
-        // Show power user toast (only once per session)
         if (isPowerUser && !shownPowerUserToast) {
           setShownPowerUserToast(true);
           toast({
@@ -221,10 +310,8 @@ export default function Practice() {
     setIsValidating(true);
     
     try {
-      // Validate answer server-side
       const result = await validateAnswer(question.id, selectedAnswer);
       
-      // Update the question with the correct answer and explanation
       const updatedQuestions = [...questions];
       updatedQuestions[currentQ] = {
         ...question,
@@ -236,7 +323,6 @@ export default function Practice() {
       setShowResult(true);
       setAnswers([...answers, selectedAnswer]);
 
-      // Record progress for authenticated users (non-blocking)
       if (user && selectedChapter) {
         recordQuestionProgress(
           user.id,
@@ -245,7 +331,6 @@ export default function Practice() {
           result.is_correct
         );
 
-        // Update adaptive difficulty state
         if (question.difficulty) {
           const prevDiff = currentDifficulty;
           const newDifficulty = await updateDifficultyState(
@@ -255,7 +340,6 @@ export default function Practice() {
             result.is_correct
           );
           
-          // Show toast when difficulty increases
           if (newDifficulty !== prevDiff) {
             setPreviousDifficulty(prevDiff);
             if (newDifficulty === "hard" && prevDiff === "medium" && !shownDifficultyUpToast) {
@@ -273,7 +357,6 @@ export default function Practice() {
           }
         }
 
-        // Increment recycle count if this was a recycled question
         if (question.is_recycled) {
           incrementRecycleCount(user.id, question.id);
         }
@@ -290,16 +373,13 @@ export default function Practice() {
     }
   };
 
-  // Save session to database when practice is complete
   const saveSession = async () => {
     if (!user || !selectedChapter || questions.length === 0) return;
 
     try {
-      // Calculate counts by source
       const verifiedCount = questions.filter(q => q.source === 'verified').length;
       const aiCount = questions.filter(q => q.source === 'ai').length;
 
-      // Insert session record
       const { error: sessionError } = await supabase.from("sessions").insert({
         user_id: user.id,
         chapter_id: selectedChapter.id,
@@ -316,17 +396,6 @@ export default function Practice() {
         return;
       }
 
-      // Update profile stats
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({
-          total_attempts: supabase.rpc ? undefined : undefined, // Will use raw SQL below
-          total_correct: supabase.rpc ? undefined : undefined,
-          last_practice_date: new Date().toISOString().split('T')[0],
-        })
-        .eq("id", user.id);
-
-      // Use RPC or direct increment for stats
       const { data: currentProfile } = await supabase
         .from("profiles")
         .select("total_attempts, total_correct, streak_days, last_practice_date")
@@ -338,12 +407,11 @@ export default function Practice() {
         const lastPractice = currentProfile.last_practice_date;
         const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
         
-        // Calculate new streak
         let newStreak = currentProfile.streak_days;
         if (lastPractice === yesterday) {
           newStreak = currentProfile.streak_days + 1;
         } else if (lastPractice !== today) {
-          newStreak = 1; // Reset streak if not consecutive
+          newStreak = 1;
         }
 
         await supabase
@@ -367,18 +435,20 @@ export default function Practice() {
       setSelectedAnswer(null);
       setShowResult(false);
     } else {
-      // Save session before showing results (non-blocking)
       saveSession();
       setStep("result");
     }
   };
 
   const handleRestart = () => {
-    setStep("subject");
+    setStep("category");
+    setSelectedCategory(null);
+    setSelectedBoard(null);
+    setSelectedClass(null);
     setSelectedSubject(null);
     setSelectedChapter(null);
     setQuestions([]);
-    guestSeenIds.current.clear(); // Reset guest seen questions for new subject
+    guestSeenIds.current.clear();
     setCurrentQ(0);
     setAnswers([]);
     setSelectedAnswer(null);
@@ -392,16 +462,43 @@ export default function Practice() {
       setAnswers([]);
       setSelectedAnswer(null);
       setShowResult(false);
-      // For authenticated users, the DB tracks progress
-      // For guests, questions are random anyway
       handleChapterSelect(selectedChapter);
     }
   };
 
   const goBack = () => {
-    if (step === "chapter") {
-      setStep("subject");
+    if (step === "board") {
+      setStep("category");
+      setSelectedCategory(null);
+      setSelectedBoard(null);
+    } else if (step === "class") {
+      // If auto-skipped board, go back to category
+      const filtered = selectedCategory ? boards.filter((b) => b.type === selectedCategory) : [];
+      if (filtered.length <= 1) {
+        setStep("category");
+        setSelectedCategory(null);
+        setSelectedBoard(null);
+      } else {
+        setStep("board");
+        setSelectedBoard(null);
+      }
+      setSelectedClass(null);
+    } else if (step === "subject") {
+      setStep("class");
       setSelectedSubject(null);
+      setSelectedClass(null);
+    } else if (step === "chapter") {
+      // If came from URL param, go back to category
+      if (searchParams.get("subject")) {
+        setStep("category");
+        setSelectedCategory(null);
+        setSelectedBoard(null);
+        setSelectedClass(null);
+        setSelectedSubject(null);
+      } else {
+        setStep("subject");
+        setSelectedSubject(null);
+      }
     } else if (step === "practice") {
       setStep("chapter");
       setSelectedChapter(null);
@@ -444,9 +541,19 @@ export default function Practice() {
 
   const progressPercent = totalQuestions > 0 ? ((currentQ + 1) / totalQuestions) * 100 : 0;
 
+  // Build breadcrumb
+  const breadcrumbParts: string[] = [];
+  if (selectedCategory) {
+    const cat = categories.find(c => c.type === selectedCategory);
+    if (cat) breadcrumbParts.push(cat.label);
+  }
+  if (selectedBoard) breadcrumbParts.push(selectedBoard.name);
+  if (selectedClass) breadcrumbParts.push(selectedClass.name);
+
+  const showBackButton = step !== "category" && step !== "result";
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Animated gradient background */}
       <div className="fixed inset-0 gradient-mesh-animated opacity-60" />
       <div className="fixed inset-0 bg-gradient-to-b from-transparent via-background/50 to-background" />
 
@@ -454,7 +561,7 @@ export default function Practice() {
       <header className="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border/30">
         <div className="container flex items-center justify-between h-24 sm:h-32">
           <div className="flex items-center gap-4">
-            {(step === "chapter" || step === "practice") && (
+            {showBackButton && (
               <motion.button
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -468,6 +575,22 @@ export default function Practice() {
               <img src={mcqxLogo} alt="MCQX" className="h-20 sm:h-28 w-auto" />
             </Link>
           </div>
+
+          {/* Breadcrumb */}
+          {breadcrumbParts.length > 0 && step !== "practice" && step !== "result" && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground"
+            >
+              {breadcrumbParts.map((part, i) => (
+                <span key={i} className="flex items-center gap-1.5">
+                  {i > 0 && <ChevronRight className="w-3.5 h-3.5" />}
+                  <span className={i === breadcrumbParts.length - 1 ? "text-foreground font-medium" : ""}>{part}</span>
+                </span>
+              ))}
+            </motion.div>
+          )}
 
           {/* Session Info */}
           {step === "practice" && totalQuestions > 0 && (
@@ -513,10 +636,10 @@ export default function Practice() {
       <main className="relative pt-32 sm:pt-40 pb-12 px-4 min-h-screen">
         <div className="container max-w-2xl">
           <AnimatePresence mode="wait">
-            {/* Subject Selection */}
-            {step === "subject" && (
+            {/* Category Selection */}
+            {step === "category" && (
               <motion.div
-                key="subject"
+                key="category"
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 30 }}
@@ -531,8 +654,155 @@ export default function Practice() {
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-4"
                   >
                     <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-                    <span className="text-sm">CBSE Class 12</span>
+                    <span className="text-sm">Start Practicing</span>
                   </motion.div>
+                  <h1 className="font-display text-4xl font-bold mb-2">Choose Your Path</h1>
+                  <p className="text-muted-foreground">Select the type of exam you're preparing for</p>
+                </div>
+
+                <div className="grid gap-4">
+                  {categories.map((cat, index) => (
+                    <motion.button
+                      key={cat.type}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.08, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                      whileHover={{ scale: 1.02, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => handleCategorySelect(cat.type)}
+                      className="relative glass rounded-2xl p-6 text-left transition-all duration-300 hover:border-primary/50 group overflow-hidden"
+                    >
+                      <div className={`absolute inset-0 bg-gradient-to-br ${cat.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                      <div className="relative flex items-center gap-5">
+                        <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                          <cat.icon className="w-7 h-7 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-display text-xl font-semibold group-hover:text-primary transition-colors">
+                            {cat.label}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">{cat.description}</p>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Board Selection */}
+            {step === "board" && selectedCategory && (
+              <motion.div
+                key="board"
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 30 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="space-y-6"
+              >
+                <div className="text-center mb-8">
+                  <h1 className="font-display text-3xl font-bold mb-2">Select Board</h1>
+                  <p className="text-muted-foreground">Choose your examination board</p>
+                </div>
+
+                {loadingBoards ? (
+                  <div className="flex flex-col items-center justify-center py-16 gap-4">
+                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground">Loading boards...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {boards.filter(b => b.type === selectedCategory).map((board, index) => (
+                      <motion.button
+                        key={board.id}
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        whileHover={{ scale: 1.01, x: 6 }}
+                        whileTap={{ scale: 0.99 }}
+                        onClick={() => handleBoardSelect(board)}
+                        className="w-full glass rounded-xl p-5 text-left transition-all duration-300 hover:border-primary/50 flex items-center justify-between group"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                            <BookOpen className="w-5 h-5 text-primary" />
+                          </div>
+                          <span className="font-display font-semibold text-lg group-hover:text-primary transition-colors">
+                            {board.name}
+                          </span>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                      </motion.button>
+                    ))}
+                    {boards.filter(b => b.type === selectedCategory).length === 0 && (
+                      <div className="text-center py-12 glass rounded-2xl">
+                        <p className="text-muted-foreground">Coming soon! We're adding content for this category.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* Class Selection */}
+            {step === "class" && selectedBoard && (
+              <motion.div
+                key="class"
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 30 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="space-y-6"
+              >
+                <div className="text-center mb-8">
+                  <h1 className="font-display text-3xl font-bold mb-2">{selectedBoard.name}</h1>
+                  <p className="text-muted-foreground">Select your class</p>
+                </div>
+
+                {loadingClasses ? (
+                  <div className="flex flex-col items-center justify-center py-16 gap-4">
+                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground">Loading classes...</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {classes.map((cls, index) => (
+                      <motion.button
+                        key={cls.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05, duration: 0.4 }}
+                        whileHover={{ scale: 1.03, y: -4 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => handleClassSelect(cls)}
+                        className="relative glass rounded-2xl p-6 text-center transition-all duration-300 hover:border-primary/50 group overflow-hidden"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        <div className="relative">
+                          <GraduationCap className="w-8 h-8 mx-auto mb-3 text-muted-foreground group-hover:text-primary transition-colors" />
+                          <h3 className="font-display text-lg font-semibold group-hover:text-primary transition-colors">
+                            {cls.name}
+                          </h3>
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* Subject Selection */}
+            {step === "subject" && (
+              <motion.div
+                key="subject"
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 30 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="space-y-6"
+              >
+                <div className="text-center mb-8">
                   <h1 className="font-display text-4xl font-bold mb-2">Pick a Subject</h1>
                   <p className="text-muted-foreground">Choose what you want to practice</p>
                 </div>
@@ -544,6 +814,11 @@ export default function Practice() {
                       <div className="absolute inset-0 blur-xl bg-primary/30 animate-pulse" />
                     </div>
                     <p className="text-sm text-muted-foreground">Loading subjects...</p>
+                  </div>
+                ) : subjects.length === 0 ? (
+                  <div className="text-center py-12 glass rounded-2xl">
+                    <BookOpen className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+                    <p className="text-muted-foreground">No subjects available for this class yet. Coming soon!</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -682,7 +957,6 @@ export default function Practice() {
                       Question {currentQ + 1}
                     </span>
                     <div className="flex items-center gap-2 flex-wrap">
-                      {/* Difficulty Badge */}
                       {question.difficulty && (
                         <DifficultyBadge difficulty={question.difficulty} />
                       )}
