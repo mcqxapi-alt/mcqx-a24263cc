@@ -1,52 +1,47 @@
 
 
-# Restructure for Multi-Board, Multi-Class Expansion
+# Add Board/Competitive/State Selection to Practice Page
 
-## Current State
-Flat hierarchy: `subjects` → `chapters` → `questions`. All subjects are CBSE Class 12 only, with no concept of board, class, or exam type.
+## What Changes
 
-## Plan
+When a user clicks "Start Practice" (or navigates to `/practice` without a `?subject=` param), instead of showing a flat list of all subjects, they'll see the same 3-tab drill-down used on the landing page: **Board Exams | Competitive | State Boards → Board → Class → Subject → Chapter**.
 
-### 1. New Database Tables
+## Steps
 
-**`boards`** — top-level grouping (CBSE, ICSE, JEE, etc.):
-- `id`, `name`, `type` (enum: board/competitive/state), `icon`, `display_order`
+### 1. Replace the "subject" step in Practice.tsx with a multi-step selector
 
-**`classes`** — grade within a board:
-- `id`, `board_id` (FK → boards), `name` (e.g. "Class 12"), `display_order`
+Currently the `step` state has: `"subject" | "chapter" | "practice" | "result"`.
 
-**Modify `subjects`** — add nullable `class_id` (FK → classes). Migrate existing subjects to a new "CBSE / Class 12" record.
+Change it to: `"category" | "board" | "class" | "subject" | "chapter" | "practice" | "result"`.
 
-Hierarchy: **Board → Class → Subject → Chapter → Question**
+- **Category step**: Show 3 large cards — Board Exams, Competitive Exams, State Boards (with icons: GraduationCap, Trophy, MapPin). Clicking one filters boards by that type.
+- **Board step**: Show boards of the selected type (e.g., CBSE under Board Exams). If only one board exists for that type, auto-skip to class step.
+- **Class step**: Show classes for the selected board (Class 6–12). Each as a card.
+- **Subject step**: Show subjects for the selected class (current grid UI, but filtered by `class_id`).
+- **Chapter step**: Unchanged — shows chapters for the selected subject.
 
-### 2. Seed Data
-- Insert one board: "CBSE" (type: board)
-- Insert class records for Classes 6–12
-- Link all existing subjects to CBSE Class 12
-- Other classes start empty for future content
+### 2. Fetch boards, classes alongside subjects
 
-### 3. Landing Page Mega-Menu
-Replace `SubjectCarousel` with a new `BrowseMenu` component:
-- **3 tabs**: Board Exams | Competitive | State Boards
-- Under "Board Exams": show boards (initially CBSE)
-- Click board → shows classes (6–12)
-- Click class → shows subjects as cards
-- Click subject → navigates to `/practice?subject={id}`
-- Mobile (360px): renders as accordion with dropdowns
+Add queries for `boards` and `classes` tables (same as BrowseMenu does). Filter subjects by `class_id` instead of showing all subjects.
 
-### 4. Update Practice Flow
-- If `?subject=` param present: skip to chapter selection (current behavior)
-- If no param: show Board → Class → Subject → Chapter drill-down
+### 3. Update back navigation
 
-### 5. Update Navbar
-Add "Explore" dropdown mirroring the mega-menu categories.
+The `goBack()` function needs to handle the new steps:
+- `subject` → `class` → `board` → `category`
+- `chapter` → `subject`
+- `practice` → `chapter`
 
-### 6. No Breaking Changes
-Challenges, sessions, and all existing features reference `chapter_id` which stays the same. Existing subjects just gain a `class_id` link.
+### 4. Update header breadcrumb
 
-## Technical Summary
-- **Migration SQL**: create `boards`, `classes` tables with public SELECT RLS; add `class_id` to `subjects`; seed CBSE + Classes 6–12
-- **New file**: `src/components/landing/BrowseMenu.tsx`
-- **Modified files**: `Landing.tsx`, `Practice.tsx`, `Navbar.tsx`
-- **Remove/replace**: `SubjectCarousel` usage on landing
+Remove the hardcoded "CBSE Class 12" badge. Instead show a dynamic breadcrumb: e.g., "Board Exams › CBSE › Class 12" based on selections.
+
+### 5. URL param shortcut preserved
+
+If `?subject=` param is present, skip directly to chapter step (current behavior unchanged).
+
+## Files Modified
+- `src/pages/Practice.tsx` — main changes (new steps, queries, UI)
+
+## No Database Changes
+All needed tables (`boards`, `classes`, `subjects.class_id`) already exist.
 
