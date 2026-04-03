@@ -62,69 +62,6 @@ export function Navbar() {
           />
         </Link>
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Explore dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="transition-all duration-300 text-xs sm:text-sm px-2 sm:px-3"
-              >
-                Explore <ChevronDown className="w-3.5 h-3.5 ml-1" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 glass border-border/40">
-              {["board", "competitive", "state"].map((type) => {
-                const typeBoards = boards.filter((b) => b.type === type);
-                const Icon = typeIcon[type] || GraduationCap;
-                const label = type === "board" ? "Board Exams" : type === "competitive" ? "Competitive" : "State Boards";
-                if (typeBoards.length === 0) {
-                  return (
-                    <DropdownMenuItem key={type} disabled className="text-muted-foreground text-xs">
-                      <Icon className="w-4 h-4 mr-2" /> {label} — Coming soon
-                    </DropdownMenuItem>
-                  );
-                }
-                return typeBoards.map((board) => (
-                  <DropdownMenuSub key={board.id}>
-                    <DropdownMenuSubTrigger>
-                      <Icon className="w-4 h-4 mr-2" /> {board.name}
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent className="glass border-border/40">
-                      {classes
-                        .filter((c) => c.board_id === board.id)
-                        .map((cls) => {
-                          const clsSubjects = subjects.filter((s) => s.class_id === cls.id);
-                          if (clsSubjects.length === 0) {
-                            return (
-                              <DropdownMenuItem key={cls.id} disabled className="text-xs text-muted-foreground">
-                                {cls.name} — Coming soon
-                              </DropdownMenuItem>
-                            );
-                          }
-                          return (
-                            <DropdownMenuSub key={cls.id}>
-                              <DropdownMenuSubTrigger>{cls.name}</DropdownMenuSubTrigger>
-                              <DropdownMenuSubContent className="glass border-border/40 max-h-60 overflow-y-auto">
-                                {clsSubjects.map((s) => (
-                                  <DropdownMenuItem
-                                    key={s.id}
-                                    onClick={() => navigate(`/practice?subject=${s.id}`)}
-                                  >
-                                    <span className="mr-2">{s.icon}</span> {s.name}
-                                  </DropdownMenuItem>
-                                ))}
-                              </DropdownMenuSubContent>
-                            </DropdownMenuSub>
-                          );
-                        })}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                ));
-              })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
           <Button
             variant="ghost"
             size="sm"
