@@ -1,52 +1,10 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import { ChevronDown, GraduationCap, Trophy, MapPin } from "lucide-react";
 import mcqxLogo from "@/assets/mcqx-logo.png";
-
-interface Board { id: string; name: string; type: string; }
-interface ClassRecord { id: string; board_id: string; name: string; }
-interface Subject { id: string; name: string; icon: string; class_id: string | null; }
 
 export function Navbar() {
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const [boards, setBoards] = useState<Board[]>([]);
-  const [classes, setClasses] = useState<ClassRecord[]>([]);
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-
-  useEffect(() => {
-    async function fetch() {
-      const [b, c, s] = await Promise.all([
-        supabase.from("boards").select("id,name,type").order("display_order"),
-        supabase.from("classes").select("id,board_id,name").order("display_order"),
-        supabase.from("subjects").select("id,name,icon,class_id").order("display_order"),
-      ]);
-      if (b.data) setBoards(b.data);
-      if (c.data) setClasses(c.data);
-      if (s.data) setSubjects(s.data as Subject[]);
-    }
-    fetch();
-  }, []);
-
-  const typeIcon: Record<string, typeof GraduationCap> = {
-    board: GraduationCap,
-    competitive: Trophy,
-    state: MapPin,
-  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border/30">
