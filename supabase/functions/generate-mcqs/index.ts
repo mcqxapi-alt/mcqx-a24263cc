@@ -242,6 +242,17 @@ HISTORY/POLITY-SPECIFIC RULES:
 - Include maps and chronology conceptually`;
   }
   
+  if (subject.includes('cuet') && subject.includes('english')) {
+    return `
+CUET ENGLISH-SPECIFIC RULES (NTA COMPETITIVE EXAM):
+- This is a LANGUAGE PROFICIENCY test, NOT literature
+- Test reading comprehension, grammar, vocabulary, idioms, and sentence structure
+- NO questions about novels, poems, stories, or NCERT textbook chapters
+- Questions must match NTA CUET-UG difficulty level
+- Include passage-based questions for reading comprehension topics
+- Grammar questions must test practical usage, not theoretical definitions`;
+  }
+
   if (subject.includes('english') || subject.includes('literature')) {
     return `
 ENGLISH/LITERATURE-SPECIFIC RULES (CBSE CLASS 12):
@@ -291,7 +302,8 @@ serve(async (req) => {
     console.log(`Generating ${count} HIGH-QUALITY MCQs for ${subjectName} - ${chapterName}`);
 
     const isGerman = subjectName.toLowerCase() === 'german';
-    const isEnglish = subjectName.toLowerCase() === 'english' || subjectName.toLowerCase().includes('english');
+    const isCuetEnglish = subjectName.toLowerCase().includes('cuet') && subjectName.toLowerCase().includes('english');
+    const isEnglish = !isCuetEnglish && (subjectName.toLowerCase() === 'english' || subjectName.toLowerCase().includes('english'));
     const isEconomics = subjectName.toLowerCase() === 'economics' || subjectName.toLowerCase().includes('economics');
     const subjectGuidelines = getSubjectGuidelines(subjectName);
     
@@ -787,8 +799,133 @@ CRITICAL: Every question must be specific to "${chapterName}". Match the chapter
 
 Return ONLY valid JSON array with objects having: text, option_a, option_b, option_c, option_d, correct_answer (1-4), difficulty, explanation.`;
 
-    const systemPrompt = isGerman ? germanSystemPrompt : isEnglish ? englishSystemPrompt : isEconomics ? economicsSystemPrompt : defaultSystemPrompt;
-    const userPrompt = isGerman ? germanUserPrompt : isEnglish ? englishUserPrompt : isEconomics ? economicsUserPrompt : defaultUserPrompt;
+    // === CUET ENGLISH-SPECIFIC PROMPTS ===
+    const cuetEnglishSystemPrompt = `You are India's TOP NTA CUET-UG English Language question paper setter with 20+ years experience creating competitive entrance exam questions.
+
+YOUR MISSION: Create MCQs that EXACTLY replicate the style, difficulty, and format of NTA CUET-UG English Language section questions.
+
+CUET ENGLISH IS NOT CBSE LITERATURE. It tests LANGUAGE PROFICIENCY, not knowledge of novels/poems/textbooks.
+
+CHAPTER-SPECIFIC QUESTION PATTERNS:
+
+**Reading Comprehension:**
+- Present a passage (150-250 words) on a factual/argumentative/literary topic
+- Ask 4-5 questions per passage testing: main idea, inference, vocabulary in context, tone, author's purpose
+- Passages should be from: editorials, science articles, social issues, historical events, philosophical musings
+- Format: "Read the passage and answer: [passage]\\nQ: What is the central argument of the passage?"
+
+**Vocabulary & Word Usage:**
+- Synonyms: "Choose the word closest in meaning to '[word]' as used in the sentence: '[sentence]'"
+- Antonyms: "Choose the word opposite in meaning to '[word]'"
+- One-word substitutions: "What single word means '[definition]'?"
+- Spelling corrections: "Identify the correctly spelled word"
+- Foreign words/phrases commonly used in English
+
+**English Grammar & Usage:**
+- Tenses (simple, continuous, perfect, perfect continuous — all 12 forms)
+- Subject-verb agreement with complex subjects
+- Articles (a/an/the/zero article) in context
+- Modals (can/could/may/might/shall/should/will/would/must)
+- Voice (active to passive transformation)
+- Narration (direct to indirect speech transformation)
+- Prepositions in idiomatic usage
+
+**Sentence Correction & Rearrangement:**
+- Spot the error: "Identify the part of the sentence that has an error"
+- Sentence improvement: "Choose the best replacement for the underlined part"
+- Sentence rearrangement: "Arrange sentences P, Q, R, S to form a coherent paragraph"
+- Para jumbles with logical connectors
+
+**Idioms, Phrases & Synonyms-Antonyms:**
+- "What does the idiom '[idiom]' mean?"
+- Phrasal verbs: "The word 'put up with' means..."
+- Proverbs and their meanings
+- Contextual usage of idioms in sentences
+
+**Cloze Test & Fill in the Blanks:**
+- Present a passage with numbered blanks
+- Each blank tests: vocabulary, grammar, collocations, prepositions, or conjunctions
+- Options should be close in meaning but only one fits the context perfectly
+
+QUALITY RULES:
+✓ Questions must test LANGUAGE SKILLS, not literature knowledge
+✓ NO questions about novels, poems, stories, or NCERT textbooks
+✓ Difficulty should match NTA CUET-UG competitive exam level
+✓ Distractors must be plausible — commonly confused words, near-synonyms
+✓ Grammar questions must test rules, not rote memorization
+✓ Passages for reading comprehension should be original, not from known sources
+✓ Every explanation must cite the grammar rule or reasoning clearly`;
+
+    const cuetEnglishUserPrompt = `Generate exactly ${count} NTA CUET-UG STYLE MCQs for CUET English, topic: "${chapterName}".
+
+MATCH THE TOPIC EXACTLY:
+- "Reading Comprehension" → passage-based questions with inference, tone, vocabulary
+- "Vocabulary & Word Usage" → synonyms, antonyms, one-word substitutions, contextual meaning
+- "English Grammar & Usage" → tenses, articles, subject-verb agreement, modals, voice, narration
+- "Sentence Correction & Rearrangement" → error spotting, sentence improvement, para jumbles
+- "Idioms, Phrases & Synonyms-Antonyms" → idiom meanings, phrasal verbs, proverbs
+- "Cloze Test & Fill in the Blanks" → contextual fill-ups testing vocabulary and grammar
+
+EXAMPLE - Reading Comprehension:
+{
+  "text": "Read the passage and answer:\\n\\n'The rise of artificial intelligence has sparked debates about the future of employment. While automation threatens routine jobs, it also creates new roles in data science, AI ethics, and human-machine collaboration. Economists argue that historical technological revolutions have always created more jobs than they destroyed, though the transition period can be painful for displaced workers.'\\n\\nWhat is the author's overall stance on AI and employment?",
+  "option_a": "Cautiously optimistic — AI will create new jobs despite short-term disruption",
+  "option_b": "Completely pessimistic — AI will destroy all jobs",
+  "option_c": "Neutral — the author presents no opinion",
+  "option_d": "Dismissive — the author considers the debate irrelevant",
+  "correct_answer": 1,
+  "difficulty": "medium",
+  "explanation": "The author acknowledges the threat ('threatens routine jobs') but balances it with positives ('creates new roles') and historical evidence ('always created more jobs'). The phrase 'transition period can be painful' shows awareness of downsides, making the tone cautiously optimistic, not purely positive or negative."
+}
+
+EXAMPLE - Grammar:
+{
+  "text": "Choose the correct option to fill the blank:\\n\\n'Neither the manager nor the employees ______ satisfied with the new policy.'",
+  "option_a": "were",
+  "option_b": "was",
+  "option_c": "is",
+  "option_d": "has been",
+  "correct_answer": 1,
+  "difficulty": "medium",
+  "explanation": "With 'neither...nor', the verb agrees with the subject closest to it. Here, 'employees' (plural) is closest, so the plural verb 'were' is correct. This is the rule of proximity in subject-verb agreement."
+}
+
+EXAMPLE - Vocabulary:
+{
+  "text": "Choose the word closest in meaning to 'EPHEMERAL':",
+  "option_a": "Transient",
+  "option_b": "Eternal",
+  "option_c": "Magnificent",
+  "option_d": "Mysterious",
+  "correct_answer": 1,
+  "difficulty": "easy",
+  "explanation": "'Ephemeral' means lasting for a very short time, which is synonymous with 'transient'. 'Eternal' is the antonym. 'Magnificent' and 'mysterious' are unrelated."
+}
+
+EXAMPLE - Idioms:
+{
+  "text": "What does the idiom 'to burn the midnight oil' mean?",
+  "option_a": "To work or study late into the night",
+  "option_b": "To waste resources carelessly",
+  "option_c": "To start a fire accidentally",
+  "option_d": "To wake up very early in the morning",
+  "correct_answer": 1,
+  "difficulty": "easy",
+  "explanation": "'Burning the midnight oil' refers to working or studying late at night, originating from the era when oil lamps were used for lighting. It implies hard work and dedication."
+}
+
+DIFFICULTY DISTRIBUTION:
+- ${Math.ceil(count * 0.3)} questions: "easy" - Common vocabulary, basic grammar rules, well-known idioms
+- ${Math.ceil(count * 0.4)} questions: "medium" - Advanced vocabulary, complex grammar, inference-based
+- ${Math.floor(count * 0.3)} questions: "hard" - Nuanced comprehension, tricky grammar exceptions, rare idioms
+
+CRITICAL: Questions must match the "${chapterName}" topic EXACTLY. Do NOT mix topics.
+CRITICAL: This is CUET (competitive exam), NOT CBSE literature. NO questions about poems, stories, or textbook chapters.
+
+Return ONLY valid JSON array with objects having: text, option_a, option_b, option_c, option_d, correct_answer (1-4), difficulty, explanation.`;
+
+    const systemPrompt = isGerman ? germanSystemPrompt : isCuetEnglish ? cuetEnglishSystemPrompt : isEnglish ? englishSystemPrompt : isEconomics ? economicsSystemPrompt : defaultSystemPrompt;
+    const userPrompt = isGerman ? germanUserPrompt : isCuetEnglish ? cuetEnglishUserPrompt : isEnglish ? englishUserPrompt : isEconomics ? economicsUserPrompt : defaultUserPrompt;
 
     let content: string | null = null;
     let usedProvider = 'lovable';
