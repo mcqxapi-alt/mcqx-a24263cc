@@ -291,7 +291,8 @@ serve(async (req) => {
     console.log(`Generating ${count} HIGH-QUALITY MCQs for ${subjectName} - ${chapterName}`);
 
     const isGerman = subjectName.toLowerCase() === 'german';
-    const isEnglish = subjectName.toLowerCase() === 'english' || subjectName.toLowerCase().includes('english');
+    const isCuetEnglish = subjectName.toLowerCase().includes('cuet') && subjectName.toLowerCase().includes('english');
+    const isEnglish = !isCuetEnglish && (subjectName.toLowerCase() === 'english' || subjectName.toLowerCase().includes('english'));
     const isEconomics = subjectName.toLowerCase() === 'economics' || subjectName.toLowerCase().includes('economics');
     const subjectGuidelines = getSubjectGuidelines(subjectName);
     
