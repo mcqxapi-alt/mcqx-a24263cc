@@ -572,7 +572,7 @@ export default function Practice() {
               </motion.button>
             )}
             <Link to="/" className="flex items-center gap-2 transition-transform duration-300 hover:scale-105">
-              <img src={mcqxLogo} alt="MCQX" className="h-20 sm:h-28 w-auto" />
+              <img src={mcqxLogo} alt="MCQX" className="h-10 sm:h-12 w-auto" />
             </Link>
           </div>
 

@@ -16,7 +16,7 @@ export function Navbar() {
           <img
             src={mcqxLogo}
             alt="MCQX"
-            className="h-20 sm:h-28 w-auto border-2 border-none shadow-none rounded-none"
+            className="h-10 sm:h-12 w-auto"
           />
         </Link>
         <div className="flex items-center gap-2 sm:gap-3">
