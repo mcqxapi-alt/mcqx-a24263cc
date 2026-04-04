@@ -163,7 +163,7 @@ export default function Login() {
       {/* Header */}
       <header className="p-6">
         <Link to="/" className="inline-flex items-center gap-2">
-          <img src={mcqxLogo} alt="MCQX" className="h-10 sm:h-12 w-auto" />
+          <img src={mcqxLogo} alt="MCQX" className="h-14 sm:h-16 w-auto" />
         </Link>
       </header>
 
