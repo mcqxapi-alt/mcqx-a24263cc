@@ -568,7 +568,7 @@ export default function Challenge() {
           </div>
         </header>
 
-        <main className="relative pt-32 sm:pt-40 pb-12 px-4 min-h-screen flex items-center justify-center">
+        <main className="relative pt-20 sm:pt-24 pb-12 px-4 min-h-screen flex items-center justify-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -662,7 +662,7 @@ export default function Challenge() {
         </div>
       </header>
 
-      <main className="relative pt-32 sm:pt-40 pb-12 px-4 min-h-screen">
+      <main className="relative pt-20 sm:pt-24 pb-12 px-4 min-h-screen">
         <div className="container max-w-2xl">
           <AnimatePresence mode="wait">
             {/* Menu */}
