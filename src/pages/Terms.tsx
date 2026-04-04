@@ -106,7 +106,7 @@ We never sell your data. Period. No cap. 🔒`,
             <img 
               src={mcqxLogo} 
               alt="MCQX" 
-              className="h-14 sm:h-16 w-auto group-hover:scale-105 transition-transform"
+              className="h-16 sm:h-20 w-auto group-hover:scale-105 transition-transform"
             />
             <span className="font-display font-bold text-lg">MCQX</span>
           </Link>
