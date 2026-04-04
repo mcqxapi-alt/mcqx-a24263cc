@@ -560,7 +560,7 @@ export default function Challenge() {
         <header className="fixed top-0 left-0 right-0 z-40 glass-strong border-b border-border/30">
           <div className="container flex items-center justify-between h-16 sm:h-18 px-3 sm:px-4">
             <Link to="/" className="flex items-center gap-2 transition-transform duration-300 hover:scale-105">
-              <img src={mcqxLogo} alt="MCQX" className="h-14 sm:h-16 w-auto" />
+              <img src={mcqxLogo} alt="MCQX" className="h-16 sm:h-20 w-auto" />
             </Link>
             <Button variant="ghost" size="sm" asChild className="text-xs sm:text-sm px-2 sm:px-3">
               <Link to="/">Home</Link>
@@ -652,7 +652,7 @@ export default function Challenge() {
               </motion.button>
             )}
             <Link to="/" className="flex items-center gap-2 transition-transform duration-300 hover:scale-105">
-              <img src={mcqxLogo} alt="MCQX" className="h-14 sm:h-16 w-auto" />
+              <img src={mcqxLogo} alt="MCQX" className="h-16 sm:h-20 w-auto" />
             </Link>
           </div>
 
