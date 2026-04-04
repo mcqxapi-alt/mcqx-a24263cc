@@ -8,7 +8,7 @@ export function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border/30">
-      <div className="container flex items-center justify-between h-16 sm:h-18 px-3 sm:px-4">
+      <div className="container flex items-center justify-between h-28 sm:h-36 px-3 sm:px-4">
         <Link
           to="/"
           className="flex items-center gap-2 transition-transform duration-300 hover:scale-105"
@@ -16,7 +16,7 @@ export function Navbar() {
           <img
             src={mcqxLogo}
             alt="MCQX"
-            className="h-16 sm:h-20 w-auto"
+            className="h-24 sm:h-[7.5rem] w-auto"
           />
         </Link>
         <div className="flex items-center gap-2 sm:gap-3">

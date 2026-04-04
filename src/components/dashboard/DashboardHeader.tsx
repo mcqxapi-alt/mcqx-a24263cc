@@ -26,10 +26,10 @@ export function DashboardHeader({ displayName, avatarUrl, email, onSignOut, sign
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border/30">
-      <div className="container flex items-center justify-between h-16 sm:h-20">
+      <div className="container flex items-center justify-between h-28 sm:h-36">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 transition-transform duration-300 hover:scale-105">
-          <img src={mcqxLogo} alt="MCQX" className="h-16 sm:h-20 w-auto" />
+          <img src={mcqxLogo} alt="MCQX" className="h-24 sm:h-[7.5rem] w-auto" />
         </Link>
 
         {/* Center tagline - hidden on mobile */}
