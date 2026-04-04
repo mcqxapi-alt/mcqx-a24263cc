@@ -115,7 +115,7 @@ export default function Leaderboard() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <Link to="/">
-            <img src={mcqxLogo} alt="MCQX" className="h-16 sm:h-20 w-auto" />
+            <img src={mcqxLogo} alt="MCQX" className="h-24 sm:h-[7.5rem] w-auto" />
           </Link>
           <div className="flex-1" />
           <h1 className="font-display text-lg font-bold tracking-tight">Leaderboard</h1>
