@@ -398,7 +398,7 @@ export default function AdminReview() {
               <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <img src={mcqxLogo} alt="MCQX Logo" className="h-20 sm:h-28 w-auto rounded-lg" />
+              <img src={mcqxLogo} alt="MCQX Logo" className="h-10 sm:h-12 w-auto" />
               <div>
                 <h1 className="text-xl font-bold text-foreground">Admin Review</h1>
                 <p className="text-sm text-muted-foreground">Manage reported questions</p>

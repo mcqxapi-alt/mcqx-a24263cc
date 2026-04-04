@@ -558,9 +558,9 @@ export default function Challenge() {
 
         {/* Header */}
         <header className="fixed top-0 left-0 right-0 z-40 glass-strong border-b border-border/30">
-          <div className="container flex items-center justify-between h-24 sm:h-32 px-3 sm:px-4">
+          <div className="container flex items-center justify-between h-16 sm:h-18 px-3 sm:px-4">
             <Link to="/" className="flex items-center gap-2 transition-transform duration-300 hover:scale-105">
-              <img src={mcqxLogo} alt="MCQX" className="h-20 sm:h-28 w-auto" />
+              <img src={mcqxLogo} alt="MCQX" className="h-10 sm:h-12 w-auto" />
             </Link>
             <Button variant="ghost" size="sm" asChild className="text-xs sm:text-sm px-2 sm:px-3">
               <Link to="/">Home</Link>
@@ -568,7 +568,7 @@ export default function Challenge() {
           </div>
         </header>
 
-        <main className="relative pt-32 sm:pt-40 pb-12 px-4 min-h-screen flex items-center justify-center">
+        <main className="relative pt-20 sm:pt-24 pb-12 px-4 min-h-screen flex items-center justify-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -639,7 +639,7 @@ export default function Challenge() {
 
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-40 glass-strong border-b border-border/30">
-        <div className="container flex items-center justify-between h-24 sm:h-32 px-3 sm:px-4">
+        <div className="container flex items-center justify-between h-16 sm:h-18 px-3 sm:px-4">
           <div className="flex items-center gap-2 sm:gap-4">
             {(step === "subject" || step === "chapter") && (
               <motion.button
@@ -652,7 +652,7 @@ export default function Challenge() {
               </motion.button>
             )}
             <Link to="/" className="flex items-center gap-2 transition-transform duration-300 hover:scale-105">
-              <img src={mcqxLogo} alt="MCQX" className="h-20 sm:h-28 w-auto" />
+              <img src={mcqxLogo} alt="MCQX" className="h-10 sm:h-12 w-auto" />
             </Link>
           </div>
 
@@ -662,7 +662,7 @@ export default function Challenge() {
         </div>
       </header>
 
-      <main className="relative pt-32 sm:pt-40 pb-12 px-4 min-h-screen">
+      <main className="relative pt-20 sm:pt-24 pb-12 px-4 min-h-screen">
         <div className="container max-w-2xl">
           <AnimatePresence mode="wait">
             {/* Menu */}

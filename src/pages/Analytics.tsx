@@ -120,7 +120,7 @@ export default function Analytics() {
             <img 
               src={mcqxLogo} 
               alt="MCQX" 
-              className="h-8 w-8 rounded-lg group-hover:scale-105 transition-transform"
+              className="h-10 sm:h-12 w-auto group-hover:scale-105 transition-transform"
             />
             <span className="font-display font-bold text-lg hidden sm:block">MCQX</span>
           </Link>
