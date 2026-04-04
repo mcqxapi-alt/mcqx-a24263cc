@@ -559,7 +559,7 @@ export default function Practice() {
 
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border/30">
-        <div className="container flex items-center justify-between h-16 sm:h-18">
+        <div className="container flex items-center justify-between h-28 sm:h-36">
           <div className="flex items-center gap-4">
             {showBackButton && (
               <motion.button
@@ -633,7 +633,7 @@ export default function Practice() {
         </div>
       </header>
 
-      <main className="relative pt-20 sm:pt-24 pb-12 px-4 min-h-screen">
+      <main className="relative pt-32 sm:pt-40 pb-12 px-4 min-h-screen">
         <div className="container max-w-2xl">
           <AnimatePresence mode="wait">
             {/* Category Selection */}
