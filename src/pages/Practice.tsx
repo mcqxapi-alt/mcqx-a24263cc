@@ -559,7 +559,7 @@ export default function Practice() {
 
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border/30">
-        <div className="container flex items-center justify-between h-24 sm:h-32">
+        <div className="container flex items-center justify-between h-16 sm:h-18">
           <div className="flex items-center gap-4">
             {showBackButton && (
               <motion.button

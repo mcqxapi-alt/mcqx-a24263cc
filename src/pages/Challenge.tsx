@@ -558,7 +558,7 @@ export default function Challenge() {
 
         {/* Header */}
         <header className="fixed top-0 left-0 right-0 z-40 glass-strong border-b border-border/30">
-          <div className="container flex items-center justify-between h-24 sm:h-32 px-3 sm:px-4">
+          <div className="container flex items-center justify-between h-16 sm:h-18 px-3 sm:px-4">
             <Link to="/" className="flex items-center gap-2 transition-transform duration-300 hover:scale-105">
               <img src={mcqxLogo} alt="MCQX" className="h-10 sm:h-12 w-auto" />
             </Link>
@@ -639,7 +639,7 @@ export default function Challenge() {
 
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-40 glass-strong border-b border-border/30">
-        <div className="container flex items-center justify-between h-24 sm:h-32 px-3 sm:px-4">
+        <div className="container flex items-center justify-between h-16 sm:h-18 px-3 sm:px-4">
           <div className="flex items-center gap-2 sm:gap-4">
             {(step === "subject" || step === "chapter") && (
               <motion.button
