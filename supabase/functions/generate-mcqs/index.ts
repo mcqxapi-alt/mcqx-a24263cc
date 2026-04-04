@@ -242,6 +242,17 @@ HISTORY/POLITY-SPECIFIC RULES:
 - Include maps and chronology conceptually`;
   }
   
+  if (subject.includes('cuet') && subject.includes('english')) {
+    return `
+CUET ENGLISH-SPECIFIC RULES (NTA COMPETITIVE EXAM):
+- This is a LANGUAGE PROFICIENCY test, NOT literature
+- Test reading comprehension, grammar, vocabulary, idioms, and sentence structure
+- NO questions about novels, poems, stories, or NCERT textbook chapters
+- Questions must match NTA CUET-UG difficulty level
+- Include passage-based questions for reading comprehension topics
+- Grammar questions must test practical usage, not theoretical definitions`;
+  }
+
   if (subject.includes('english') || subject.includes('literature')) {
     return `
 ENGLISH/LITERATURE-SPECIFIC RULES (CBSE CLASS 12):
