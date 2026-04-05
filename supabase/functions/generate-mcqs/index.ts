@@ -301,10 +301,16 @@ serve(async (req) => {
 
     console.log(`Generating ${count} HIGH-QUALITY MCQs for ${subjectName} - ${chapterName}`);
 
-    const isGerman = subjectName.toLowerCase() === 'german';
-    const isCuetEnglish = subjectName.toLowerCase().includes('cuet') && subjectName.toLowerCase().includes('english');
-    const isEnglish = !isCuetEnglish && (subjectName.toLowerCase() === 'english' || subjectName.toLowerCase().includes('english'));
-    const isEconomics = subjectName.toLowerCase() === 'economics' || subjectName.toLowerCase().includes('economics');
+    const subjectLower = subjectName.toLowerCase();
+    const isGerman = subjectLower === 'german';
+    const isCuet = subjectLower.includes('cuet');
+    const isCuetEnglish = isCuet && subjectLower.includes('english');
+    const isCuetPhysics = isCuet && subjectLower.includes('physics');
+    const isCuetChemistry = isCuet && subjectLower.includes('chemistry');
+    const isCuetMath = isCuet && (subjectLower.includes('math') || subjectLower.includes('mathematics'));
+    const isCuetSubject = isCuetEnglish || isCuetPhysics || isCuetChemistry || isCuetMath;
+    const isEnglish = !isCuetEnglish && (subjectLower === 'english' || subjectLower.includes('english'));
+    const isEconomics = !isCuet && (subjectLower === 'economics' || subjectLower.includes('economics'));
     const subjectGuidelines = getSubjectGuidelines(subjectName);
     
     const germanSystemPrompt = `You are India's TOP CBSE Class 12 German language examiner with 25+ years experience setting board exam papers.
