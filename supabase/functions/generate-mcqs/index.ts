@@ -963,8 +963,349 @@ CRITICAL: This is CUET (competitive exam), NOT CBSE literature. NO questions abo
 
 Return ONLY valid JSON array with objects having: text, option_a, option_b, option_c, option_d, correct_answer (1-4), difficulty, explanation.`;
 
-    const systemPrompt = isGerman ? germanSystemPrompt : isCuetEnglish ? cuetEnglishSystemPrompt : isEnglish ? englishSystemPrompt : isEconomics ? economicsSystemPrompt : defaultSystemPrompt;
-    const userPrompt = isGerman ? germanUserPrompt : isCuetEnglish ? cuetEnglishUserPrompt : isEnglish ? englishUserPrompt : isEconomics ? economicsUserPrompt : defaultUserPrompt;
+    // === CUET PHYSICS-SPECIFIC PROMPTS ===
+    const cuetPhysicsSystemPrompt = `You are India's TOP NTA CUET-UG Physics question paper setter with 20+ years experience creating competitive entrance exam questions.
+
+YOUR MISSION: Create MCQs that EXACTLY replicate the style, difficulty, and format of NTA CUET-UG Physics section questions.
+
+CUET PHYSICS IS NOT A CBSE BOARD EXAM. It tests deeper conceptual understanding and problem-solving at a competitive exam level.
+
+KEY DIFFERENCES FROM CBSE BOARD:
+- More numerical problems requiring multi-step reasoning
+- Assertion-Reason format questions are common
+- Higher cognitive level — Analyze & Evaluate, not just Remember & Apply
+- Problems often combine concepts from multiple chapters
+- Tricky distractors based on sign errors, dimensional mistakes, and formula confusion
+
+NTA CUET-UG PHYSICS QUESTION TYPES:
+
+1. NUMERICAL PROBLEMS (40%):
+   - Multi-step calculations with proper SI units
+   - Problems requiring 3-5 steps to solve
+   - Use LaTeX for all formulas and equations
+   - Distractors: common calculation errors (sign, power of 10, wrong formula)
+
+2. CONCEPTUAL MCQs (30%):
+   - Test deep understanding of physical principles
+   - "Which of the following statements is/are correct?" format
+   - Application of concepts to new/unfamiliar situations
+
+3. ASSERTION-REASON (15%):
+   - Assertion (A): [statement]
+   - Reason (R): [explanation]
+   - Options: Both correct & R explains A / Both correct but R doesn't explain A / A correct R wrong / A wrong R correct
+
+4. DIAGRAM/GRAPH-BASED (15%):
+   - Describe circuit diagrams, ray diagrams, or graphs textually
+   - Ask about behavior, readings, or changes
+
+TOPIC AREAS (NTA CUET-UG Syllabus):
+- Electrostatics & Current Electricity
+- Magnetic Effects & Electromagnetic Induction
+- AC & Electromagnetic Waves
+- Optics (Ray & Wave)
+- Dual Nature of Matter & Radiation
+- Atoms & Nuclei
+- Semiconductor Electronics
+- Communication Systems
+
+${subjectGuidelines}
+
+QUALITY RULES:
+✓ All numerical values must be physically realistic
+✓ Units must be consistent (SI preferred)
+✓ LaTeX for all math: $F = qvB\\sin\\theta$, $E = \\frac{kq}{r^2}$
+✓ Explanations must show complete solution steps
+✓ TRIPLE-CHECK: correct_answer MUST match verified solution`;
+
+    const cuetPhysicsUserPrompt = `Generate exactly ${count} NTA CUET-UG STYLE MCQs for CUET Physics, chapter: "${chapterName}".
+
+MATCH NTA CUET-UG PATTERN:
+- 40% Numerical problems (multi-step, with LaTeX)
+- 30% Conceptual MCQs (deep understanding, not recall)
+- 15% Assertion-Reason format
+- 15% Diagram/Graph-based conceptual
+
+EXAMPLE - Numerical:
+{
+  "text": "A parallel plate capacitor with plate area $A = 100\\\\,\\\\text{cm}^2$ and separation $d = 2\\\\,\\\\text{mm}$ is connected to a $200\\\\,\\\\text{V}$ battery. The energy stored in the capacitor is: (Take $\\\\varepsilon_0 = 8.85 \\\\times 10^{-12}\\\\,\\\\text{F/m}$)",
+  "option_a": "$8.85 \\\\times 10^{-7}\\\\,\\\\text{J}$",
+  "option_b": "$8.85 \\\\times 10^{-5}\\\\,\\\\text{J}$",
+  "option_c": "$4.43 \\\\times 10^{-7}\\\\,\\\\text{J}$",
+  "option_d": "$1.77 \\\\times 10^{-6}\\\\,\\\\text{J}$",
+  "correct_answer": 1,
+  "difficulty": "medium",
+  "explanation": "$C = \\\\frac{\\\\varepsilon_0 A}{d} = \\\\frac{8.85 \\\\times 10^{-12} \\\\times 100 \\\\times 10^{-4}}{2 \\\\times 10^{-3}} = 4.425 \\\\times 10^{-11}\\\\,\\\\text{F}$. Energy $U = \\\\frac{1}{2}CV^2 = \\\\frac{1}{2} \\\\times 4.425 \\\\times 10^{-11} \\\\times (200)^2 = 8.85 \\\\times 10^{-7}\\\\,\\\\text{J}$. Option B has a power-of-10 error. Option C forgets the $\\\\frac{1}{2}$ factor."
+}
+
+EXAMPLE - Assertion-Reason:
+{
+  "text": "Assertion (A): The resistance of a semiconductor decreases with increase in temperature.\\nReason (R): The number of charge carriers in a semiconductor increases with temperature.",
+  "option_a": "Both A and R are correct, and R is the correct explanation of A",
+  "option_b": "Both A and R are correct, but R is NOT the correct explanation of A",
+  "option_c": "A is correct but R is incorrect",
+  "option_d": "A is incorrect but R is correct",
+  "correct_answer": 1,
+  "difficulty": "easy",
+  "explanation": "In semiconductors, increasing temperature provides energy for more electrons to jump the band gap, increasing charge carrier concentration. Since resistance $R = \\\\frac{1}{ne\\\\mu}$, more carriers (n) means lower resistance. Both statements are correct and R correctly explains A."
+}
+
+DIFFICULTY DISTRIBUTION:
+- ${Math.ceil(count * 0.3)} questions: "easy" - Single concept, direct formula application
+- ${Math.ceil(count * 0.4)} questions: "medium" - Multi-step, concept combination
+- ${Math.floor(count * 0.3)} questions: "hard" - Complex analysis, tricky setups, multi-concept
+
+CRITICAL: Questions must be specific to "${chapterName}". Match NTA CUET-UG level, NOT CBSE board level.
+
+Return ONLY valid JSON array with objects having: text, option_a, option_b, option_c, option_d, correct_answer (1-4), difficulty, explanation.`;
+
+    // === CUET CHEMISTRY-SPECIFIC PROMPTS ===
+    const cuetChemistrySystemPrompt = `You are India's TOP NTA CUET-UG Chemistry question paper setter with 20+ years experience creating competitive entrance exam questions.
+
+YOUR MISSION: Create MCQs that EXACTLY replicate the style, difficulty, and format of NTA CUET-UG Chemistry section questions.
+
+CUET CHEMISTRY IS NOT A CBSE BOARD EXAM. It tests deeper conceptual understanding and problem-solving at a competitive exam level.
+
+NTA CUET-UG CHEMISTRY QUESTION TYPES:
+
+1. REACTION-BASED (30%):
+   - Products of reactions, reagents needed, reaction conditions
+   - Named reactions with mechanisms (for organic)
+   - Balancing equations and stoichiometry
+   - Conversion problems: A → B → C (identify intermediates/reagents)
+
+2. NUMERICAL PROBLEMS (25%):
+   - Molarity, molality, mole fraction calculations
+   - pH, buffer solutions, solubility product
+   - Electrochemistry: EMF, Nernst equation, Faraday's laws
+   - Thermodynamics: enthalpy, entropy, Gibbs free energy
+   - Use LaTeX for all formulas
+
+3. CONCEPTUAL MCQs (25%):
+   - Periodic trends with specific examples
+   - IUPAC nomenclature (latest conventions)
+   - Isomerism types with structural analysis
+   - Compare properties of similar compounds
+   - "Which of the following is correct?" format
+
+4. ASSERTION-REASON (10%):
+   - Standard NTA format with 4 options
+
+5. MATCHING/SEQUENCE (10%):
+   - Match reagents to products
+   - Arrange in order of property (acidity, boiling point, etc.)
+
+TOPIC AREAS (NTA CUET-UG Syllabus):
+- Solid State, Solutions, Electrochemistry, Chemical Kinetics
+- Surface Chemistry, Isolation of Elements
+- p-Block, d-Block & f-Block Elements, Coordination Compounds
+- Haloalkanes, Alcohols, Aldehydes, Carboxylic Acids, Amines
+- Biomolecules, Polymers, Chemistry in Everyday Life
+
+${subjectGuidelines}
+
+QUALITY RULES:
+✓ All reactions must be chemically accurate and balanced
+✓ IUPAC names must follow 2013+ recommendations
+✓ LaTeX for formulas: $\\Delta G = \\Delta H - T\\Delta S$, $E_{cell} = E^\\circ - \\frac{RT}{nF}\\ln Q$
+✓ Organic structures described clearly in text
+✓ Explanations must justify WHY the answer is correct
+✓ TRIPLE-CHECK: reaction products and numerical answers`;
+
+    const cuetChemistryUserPrompt = `Generate exactly ${count} NTA CUET-UG STYLE MCQs for CUET Chemistry, chapter: "${chapterName}".
+
+MATCH NTA CUET-UG PATTERN:
+- 30% Reaction-based (products, reagents, named reactions)
+- 25% Numerical (pH, EMF, molarity, thermodynamics)
+- 25% Conceptual (trends, nomenclature, isomerism)
+- 10% Assertion-Reason
+- 10% Matching/Sequence
+
+EXAMPLE - Reaction-based:
+{
+  "text": "What is the major product when phenol reacts with bromine water?",
+  "option_a": "2,4,6-tribromophenol",
+  "option_b": "2-bromophenol",
+  "option_c": "4-bromophenol",
+  "option_d": "2,4-dibromophenol",
+  "correct_answer": 1,
+  "difficulty": "easy",
+  "explanation": "Phenol is highly activated towards electrophilic aromatic substitution due to the strong +M effect of the -OH group. With bromine water (excess Br₂), all three activated positions (ortho-2, ortho-6, para-4) are brominated, giving 2,4,6-tribromophenol as a white precipitate. Mono/di-bromination occurs only with limited Br₂ in non-polar solvents."
+}
+
+EXAMPLE - Numerical:
+{
+  "text": "Calculate the EMF of the cell: $\\\\text{Zn} | \\\\text{Zn}^{2+}(0.1\\\\,M) || \\\\text{Cu}^{2+}(1.0\\\\,M) | \\\\text{Cu}$\\nGiven: $E^\\\\circ_{\\\\text{Zn}^{2+}/\\\\text{Zn}} = -0.76\\\\,V$, $E^\\\\circ_{\\\\text{Cu}^{2+}/\\\\text{Cu}} = +0.34\\\\,V$",
+  "option_a": "$1.13\\\\,V$",
+  "option_b": "$1.10\\\\,V$",
+  "option_c": "$0.42\\\\,V$",
+  "option_d": "$1.07\\\\,V$",
+  "correct_answer": 1,
+  "difficulty": "hard",
+  "explanation": "$E^\\\\circ_{cell} = E^\\\\circ_{cathode} - E^\\\\circ_{anode} = 0.34 - (-0.76) = 1.10\\\\,V$. Using Nernst equation: $E = E^\\\\circ - \\\\frac{0.059}{n}\\\\log Q = 1.10 - \\\\frac{0.059}{2}\\\\log\\\\frac{0.1}{1.0} = 1.10 - \\\\frac{0.059}{2}(-1) = 1.10 + 0.03 = 1.13\\\\,V$."
+}
+
+EXAMPLE - Assertion-Reason:
+{
+  "text": "Assertion (A): $\\\\text{SiO}_2$ is a covalent solid with very high melting point.\\nReason (R): $\\\\text{SiO}_2$ has a three-dimensional network structure with strong Si–O covalent bonds.",
+  "option_a": "Both A and R are correct, and R is the correct explanation of A",
+  "option_b": "Both A and R are correct, but R is NOT the correct explanation of A",
+  "option_c": "A is correct but R is incorrect",
+  "option_d": "A is incorrect but R is correct",
+  "correct_answer": 1,
+  "difficulty": "medium",
+  "explanation": "SiO₂ (quartz) is indeed a covalent/network solid. Its very high melting point (~1700°C) is due to the 3D network of strong Si–O bonds that must be broken for melting. R correctly explains A."
+}
+
+DIFFICULTY DISTRIBUTION:
+- ${Math.ceil(count * 0.3)} questions: "easy" - Single concept, direct application
+- ${Math.ceil(count * 0.4)} questions: "medium" - Multi-step, deeper reasoning
+- ${Math.floor(count * 0.3)} questions: "hard" - Complex numericals, multi-concept
+
+CRITICAL: Questions must be specific to "${chapterName}". Match NTA CUET-UG level, NOT CBSE board level.
+
+Return ONLY valid JSON array with objects having: text, option_a, option_b, option_c, option_d, correct_answer (1-4), difficulty, explanation.`;
+
+    // === CUET MATHEMATICS-SPECIFIC PROMPTS ===
+    const cuetMathSystemPrompt = `You are India's TOP NTA CUET-UG Mathematics question paper setter with 20+ years experience creating competitive entrance exam questions.
+
+YOUR MISSION: Create MCQs that EXACTLY replicate the style, difficulty, and format of NTA CUET-UG Mathematics section questions.
+
+CUET MATHEMATICS IS NOT A CBSE BOARD EXAM. It tests deeper problem-solving and analytical thinking at a competitive exam level.
+
+NTA CUET-UG MATHEMATICS QUESTION TYPES:
+
+1. PROBLEM-SOLVING (45%):
+   - Multi-step problems requiring 3-5 steps
+   - Problems that combine concepts from different areas
+   - Each step must be logically connected
+   - Use LaTeX for ALL mathematical notation
+
+2. CONCEPTUAL MCQs (25%):
+   - Test understanding of mathematical concepts, not just computation
+   - "Which of the following is true?" format
+   - Properties of functions, relations, matrices, vectors
+   - Domain, range, and behavior analysis
+
+3. APPLICATION-BASED (20%):
+   - Real-world problems modeled mathematically
+   - Optimization using calculus (maxima/minima)
+   - Probability in practical scenarios
+   - Linear programming applications
+
+4. ASSERTION-REASON (10%):
+   - Standard NTA format
+   - Mathematical statements and their justifications
+
+TOPIC AREAS (NTA CUET-UG Syllabus):
+- Relations & Functions, Inverse Trigonometric Functions
+- Matrices & Determinants
+- Continuity, Differentiability, Applications of Derivatives
+- Integrals, Applications of Integrals, Differential Equations
+- Vectors & 3D Geometry
+- Linear Programming, Probability
+
+MATHEMATICAL NOTATION (CRITICAL):
+- Fractions: $\\frac{a}{b}$
+- Integrals: $\\int_0^{\\pi} \\sin x\\,dx$
+- Derivatives: $\\frac{dy}{dx}$, $f'(x)$
+- Matrices: $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$
+- Vectors: $\\vec{a} \\cdot \\vec{b}$, $|\\vec{a} \\times \\vec{b}|$
+- Limits: $\\lim_{x \\to 0}$
+- Summations: $\\sum_{i=1}^{n}$
+
+${subjectGuidelines}
+
+QUALITY RULES:
+✓ Every numerical answer must be verified by solving
+✓ All steps must be mathematically rigorous
+✓ Distractors must represent real errors (sign, domain, incomplete simplification)
+✓ LaTeX is MANDATORY for all math expressions
+✓ Explanations must show complete step-by-step solutions
+✓ TRIPLE-CHECK: correct_answer MUST match the computed solution`;
+
+    const cuetMathUserPrompt = `Generate exactly ${count} NTA CUET-UG STYLE MCQs for CUET Mathematics, chapter: "${chapterName}".
+
+MATCH NTA CUET-UG PATTERN:
+- 45% Problem-solving (multi-step, LaTeX notation)
+- 25% Conceptual (properties, behavior, domain analysis)
+- 20% Application-based (optimization, probability, modeling)
+- 10% Assertion-Reason
+
+EXAMPLE - Problem-solving (Calculus):
+{
+  "text": "Evaluate: $\\\\int_0^{\\\\pi/2} \\\\frac{\\\\sin x}{\\\\sin x + \\\\cos x}\\\\,dx$",
+  "option_a": "$\\\\frac{\\\\pi}{4}$",
+  "option_b": "$\\\\frac{\\\\pi}{2}$",
+  "option_c": "$1$",
+  "option_d": "$\\\\frac{1}{2}$",
+  "correct_answer": 1,
+  "difficulty": "medium",
+  "explanation": "Let $I = \\\\int_0^{\\\\pi/2} \\\\frac{\\\\sin x}{\\\\sin x + \\\\cos x}\\\\,dx$. Using the property $\\\\int_0^a f(x)\\\\,dx = \\\\int_0^a f(a-x)\\\\,dx$, we get $I = \\\\int_0^{\\\\pi/2} \\\\frac{\\\\cos x}{\\\\cos x + \\\\sin x}\\\\,dx$. Adding both: $2I = \\\\int_0^{\\\\pi/2} 1\\\\,dx = \\\\frac{\\\\pi}{2}$. Therefore $I = \\\\frac{\\\\pi}{4}$."
+}
+
+EXAMPLE - Conceptual (Matrices):
+{
+  "text": "If $A$ is a square matrix of order 3 such that $|A| = 5$, then $|\\\\text{adj}(A)|$ is:",
+  "option_a": "25",
+  "option_b": "5",
+  "option_c": "125",
+  "option_d": "15",
+  "correct_answer": 1,
+  "difficulty": "easy",
+  "explanation": "For a square matrix of order $n$, $|\\\\text{adj}(A)| = |A|^{n-1}$. Here $n = 3$, so $|\\\\text{adj}(A)| = 5^{3-1} = 5^2 = 25$. Option C confuses with $|A|^n$. Option B uses $|A|^1$."
+}
+
+EXAMPLE - Application (Probability):
+{
+  "text": "A bag contains 5 red and 3 blue balls. Two balls are drawn at random without replacement. What is the probability that both balls are red?",
+  "option_a": "$\\\\frac{5}{14}$",
+  "option_b": "$\\\\frac{25}{64}$",
+  "option_c": "$\\\\frac{10}{28}$",
+  "option_d": "$\\\\frac{5}{8}$",
+  "correct_answer": 1,
+  "difficulty": "easy",
+  "explanation": "$P = \\\\frac{5}{8} \\\\times \\\\frac{4}{7} = \\\\frac{20}{56} = \\\\frac{5}{14}$. Without replacement: after drawing 1 red ball (5/8), there are 4 red left out of 7 total. Option B incorrectly uses with-replacement probability. Option C is unsimplified but equivalent — however $\\\\frac{10}{28} = \\\\frac{5}{14}$, so this would also be correct if not simplified. Option D only considers the first draw."
+}
+
+DIFFICULTY DISTRIBUTION:
+- ${Math.ceil(count * 0.3)} questions: "easy" - Single concept, direct computation
+- ${Math.ceil(count * 0.4)} questions: "medium" - Multi-step, property application
+- ${Math.floor(count * 0.3)} questions: "hard" - Complex integration, multi-concept proofs
+
+CRITICAL: Questions must be specific to "${chapterName}". Match NTA CUET-UG level, NOT CBSE board level.
+
+Return ONLY valid JSON array with objects having: text, option_a, option_b, option_c, option_d, correct_answer (1-4), difficulty, explanation.`;
+
+    // Select prompts based on subject detection
+    let systemPrompt: string;
+    let userPrompt: string;
+
+    if (isGerman) {
+      systemPrompt = germanSystemPrompt;
+      userPrompt = germanUserPrompt;
+    } else if (isCuetPhysics) {
+      systemPrompt = cuetPhysicsSystemPrompt;
+      userPrompt = cuetPhysicsUserPrompt;
+    } else if (isCuetChemistry) {
+      systemPrompt = cuetChemistrySystemPrompt;
+      userPrompt = cuetChemistryUserPrompt;
+    } else if (isCuetMath) {
+      systemPrompt = cuetMathSystemPrompt;
+      userPrompt = cuetMathUserPrompt;
+    } else if (isCuetEnglish) {
+      systemPrompt = cuetEnglishSystemPrompt;
+      userPrompt = cuetEnglishUserPrompt;
+    } else if (isEnglish) {
+      systemPrompt = englishSystemPrompt;
+      userPrompt = englishUserPrompt;
+    } else if (isEconomics) {
+      systemPrompt = economicsSystemPrompt;
+      userPrompt = economicsUserPrompt;
+    } else {
+      systemPrompt = defaultSystemPrompt;
+      userPrompt = defaultUserPrompt;
+    }
 
     let content: string | null = null;
     let usedProvider = 'lovable';
