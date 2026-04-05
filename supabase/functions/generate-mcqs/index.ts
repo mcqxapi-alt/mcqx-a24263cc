@@ -253,6 +253,39 @@ CUET ENGLISH-SPECIFIC RULES (NTA COMPETITIVE EXAM):
 - Grammar questions must test practical usage, not theoretical definitions`;
   }
 
+  if (subject.includes('cuet') && subject.includes('physics')) {
+    return `
+CUET PHYSICS-SPECIFIC RULES (NTA COMPETITIVE EXAM):
+- Questions must match NTA CUET-UG pattern — NOT CBSE board style
+- Focus on numerical problems with multiple concepts tested together
+- Include assertion-reason type questions
+- Test application of formulas in unfamiliar contexts
+- Distractors should reflect sign errors, unit confusion, and formula mix-ups
+- Include conceptual MCQs that test deep understanding over rote recall`;
+  }
+
+  if (subject.includes('cuet') && subject.includes('chemistry')) {
+    return `
+CUET CHEMISTRY-SPECIFIC RULES (NTA COMPETITIVE EXAM):
+- Questions must match NTA CUET-UG pattern — NOT CBSE board style
+- Include reaction-based questions testing products, reagents, and conditions
+- IUPAC naming must follow latest conventions
+- Numerical problems: molarity, pH, electrochemistry, thermodynamics
+- Include assertion-reason and matching-type conceptual questions
+- Organic chemistry: test named reactions, mechanisms, and conversions`;
+  }
+
+  if (subject.includes('cuet') && (subject.includes('math') || subject.includes('mathematics'))) {
+    return `
+CUET MATHEMATICS-SPECIFIC RULES (NTA COMPETITIVE EXAM):
+- Questions must match NTA CUET-UG pattern — NOT CBSE board style
+- Multi-step problems requiring 3-5 steps to solve
+- Test conceptual depth: why a formula works, not just applying it
+- Include problems combining multiple topics (e.g., calculus + algebra)
+- Distractors must reflect real student errors: sign mistakes, domain errors, incomplete simplification
+- Use LaTeX for all mathematical notation`;
+  }
+
   if (subject.includes('english') || subject.includes('literature')) {
     return `
 ENGLISH/LITERATURE-SPECIFIC RULES (CBSE CLASS 12):
