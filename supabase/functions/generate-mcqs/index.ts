@@ -286,7 +286,65 @@ CUET MATHEMATICS-SPECIFIC RULES (NTA COMPETITIVE EXAM):
 - Use LaTeX for all mathematical notation`;
   }
 
-  if (subject.includes('english') || subject.includes('literature')) {
+  if (subject.includes('cuet') && subject.includes('biology')) {
+    return `
+CUET BIOLOGY-SPECIFIC RULES (NTA COMPETITIVE EXAM):
+- Questions must match NTA CUET-UG pattern — NOT CBSE board style
+- Include assertion-reason type questions
+- Test process sequences (cell cycle, Krebs cycle, DNA replication steps)
+- Include diagram-based conceptual questions (heart, nephron, flower structure)
+- Genetics: Mendelian ratios, pedigree analysis, molecular biology
+- Ecology: population interactions, ecosystems, biodiversity
+- Distractors should reflect common confusions between similar biological terms`;
+  }
+
+  if (subject.includes('cuet') && subject.includes('economics')) {
+    return `
+CUET ECONOMICS-SPECIFIC RULES (NTA COMPETITIVE EXAM):
+- Questions must match NTA CUET-UG pattern — NOT CBSE board style
+- Include numerical problems: national income, money multiplier, multiplier effect
+- Test graph/diagram-based reasoning: AD-AS model, demand-supply curves
+- Assertion-reason questions on economic relationships
+- Policy application: fiscal vs monetary policy, LPG reforms impact
+- Data interpretation from economic indicators
+- Use LaTeX for all formulas: $k = \\frac{1}{1-MPC}$`;
+  }
+
+  if (subject.includes('cuet') && subject.includes('history')) {
+    return `
+CUET HISTORY-SPECIFIC RULES (NTA COMPETITIVE EXAM):
+- Questions must match NTA CUET-UG pattern — NOT CBSE board style
+- Source-based questions: interpret archaeological evidence, inscriptions, texts
+- Map-based conceptual questions: locate kingdoms, trade routes, important sites
+- Assertion-reason format for cause-effect in historical events
+- Chronological ordering and timeline-based questions
+- Compare and contrast different historical perspectives
+- Focus on themes: Bricks Beads & Bones, Kings Farmers & Towns, Bhakti-Sufi, Mughal Courts, Colonial Cities`;
+  }
+
+  if (subject.includes('cuet') && (subject.includes('political') || subject.includes('polity'))) {
+    return `
+CUET POLITICAL SCIENCE-SPECIFIC RULES (NTA COMPETITIVE EXAM):
+- Questions must match NTA CUET-UG pattern — NOT CBSE board style
+- Test constitutional provisions with specific article numbers
+- Assertion-reason on political concepts and their implications
+- Case-based questions on landmark judgments and political events
+- Compare political ideologies and institutional mechanisms
+- Contemporary politics: coalition politics, social movements, globalization
+- International relations: Cold War, NAM, UN, emerging power dynamics`;
+  }
+
+  if (subject.includes('cuet') && subject.includes('general')) {
+    return `
+CUET GENERAL TEST-SPECIFIC RULES (NTA COMPETITIVE EXAM):
+- Questions must match NTA CUET-UG General Test pattern
+- General Knowledge: current affairs, static GK, awards, sports, geography
+- Mental Ability: logical reasoning, series, coding-decoding, blood relations, direction sense
+- Numerical Ability: simplification, percentages, ratio-proportion, time-speed-distance, averages
+- General English within General Test: basic grammar, vocabulary, comprehension
+- Quantitative Reasoning: data interpretation, number series, basic algebra`;
+  }
+
     return `
 ENGLISH/LITERATURE-SPECIFIC RULES (CBSE CLASS 12):
 - EXTRACT-BASED MCQs: Present a short extract (2-4 lines) from the chapter, then ask inference/comprehension questions about it
