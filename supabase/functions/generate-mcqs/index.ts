@@ -345,6 +345,7 @@ CUET GENERAL TEST-SPECIFIC RULES (NTA COMPETITIVE EXAM):
 - Quantitative Reasoning: data interpretation, number series, basic algebra`;
   }
 
+  if (subject.includes('english') || subject.includes('literature')) {
     return `
 ENGLISH/LITERATURE-SPECIFIC RULES (CBSE CLASS 12):
 - EXTRACT-BASED MCQs: Present a short extract (2-4 lines) from the chapter, then ask inference/comprehension questions about it
