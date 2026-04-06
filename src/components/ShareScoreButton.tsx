@@ -63,7 +63,7 @@ https://mcqx.lovable.app/practice`;
   };
 
   const handleLinkedInShare = () => {
-    const linkedInMessage = `${getEmoji()} Just scored ${score}/${totalQuestions} (${accuracy}%) on MCQX practicing ${subjectName} - ${chapterName}! ${getFlexMessage()} #MCQX #Learning #CBSE`;
+    const linkedInMessage = `${getEmoji()} Just scored ${score}/${totalQuestions} (${accuracy}%) on MCQX practicing ${subjectName} - ${chapterName}! ${getFlexMessage()} #MCQX #Learning #ExamPrep`;
     const encodedMessage = encodeURIComponent(linkedInMessage);
     const url = encodeURIComponent("https://mcqx.lovable.app/practice");
     window.open(

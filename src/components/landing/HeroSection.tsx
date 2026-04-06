@@ -35,7 +35,7 @@ export function HeroSection() {
           >
             <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-primary animate-pulse" />
             <span className="text-xs sm:text-sm text-muted-foreground">
-              CBSE Class 12 • Verified + AI-powered MCQs
+              Boards & Competitive Exams • Verified + AI-powered MCQs
             </span>
           </motion.div>
 
