@@ -1340,6 +1340,310 @@ CRITICAL: Questions must be specific to "${chapterName}". Match NTA CUET-UG leve
 
 Return ONLY valid JSON array with objects having: text, option_a, option_b, option_c, option_d, correct_answer (1-4), difficulty, explanation.`;
 
+    // === CUET BIOLOGY-SPECIFIC PROMPTS ===
+    const cuetBiologySystemPrompt = `You are India's TOP NTA CUET-UG Biology question paper setter with 20+ years experience.
+
+YOUR MISSION: Create MCQs matching NTA CUET-UG Biology section — NOT CBSE board style.
+
+NTA CUET-UG BIOLOGY QUESTION TYPES:
+1. CONCEPTUAL MCQs (35%): Deep understanding of biological processes, not rote recall
+2. ASSERTION-REASON (20%): Standard NTA format testing cause-effect in biology
+3. DIAGRAM/PROCESS-BASED (20%): Describe diagrams textually, test identification of parts/stages
+4. APPLICATION-BASED (15%): Apply biological concepts to new scenarios (genetic crosses, ecological problems)
+5. MATCHING/SEQUENCE (10%): Match structures to functions, arrange stages in order
+
+TOPIC AREAS: Reproduction, Genetics & Evolution, Biology & Human Welfare, Biotechnology, Ecology
+
+${subjectGuidelines}
+
+QUALITY RULES:
+✓ Scientific nomenclature must be accurate (genus species in italics indicated)
+✓ Genetic ratios and crosses must be mathematically verified
+✓ Process sequences must be in correct biological order
+✓ Explanations must cite specific biological mechanisms`;
+
+    const cuetBiologyUserPrompt = `Generate exactly ${count} NTA CUET-UG STYLE MCQs for CUET Biology, chapter: "${chapterName}".
+
+MATCH NTA CUET-UG PATTERN:
+- 35% Conceptual (deep understanding, processes)
+- 20% Assertion-Reason
+- 20% Diagram/Process-based
+- 15% Application-based (crosses, ecological scenarios)
+- 10% Matching/Sequence
+
+EXAMPLE - Assertion-Reason:
+{
+  "text": "Assertion (A): Ozone layer depletion increases the risk of skin cancer.\\nReason (R): UV-B radiation causes DNA damage and mutations in skin cells.",
+  "option_a": "Both A and R are correct, and R is the correct explanation of A",
+  "option_b": "Both A and R are correct, but R is NOT the correct explanation of A",
+  "option_c": "A is correct but R is incorrect",
+  "option_d": "A is incorrect but R is correct",
+  "correct_answer": 1,
+  "difficulty": "easy",
+  "explanation": "Ozone depletion allows more UV-B to reach Earth's surface. UV-B causes thymine dimers in DNA, leading to mutations that can cause skin cancer. R correctly explains the mechanism behind A."
+}
+
+EXAMPLE - Genetics Application:
+{
+  "text": "In a cross between two heterozygous tall plants (Tt × Tt), what fraction of the offspring will be homozygous?",
+  "option_a": "$\\\\frac{1}{2}$",
+  "option_b": "$\\\\frac{1}{4}$",
+  "option_c": "$\\\\frac{3}{4}$",
+  "option_d": "$\\\\frac{2}{3}$",
+  "correct_answer": 1,
+  "difficulty": "medium",
+  "explanation": "Tt × Tt gives: TT (1/4) + Tt (2/4) + tt (1/4). Homozygous = TT + tt = 1/4 + 1/4 = 1/2. Option B gives only one homozygous class. Option C is the phenotypic ratio for tall."
+}
+
+DIFFICULTY DISTRIBUTION:
+- ${Math.ceil(count * 0.3)} easy, ${Math.ceil(count * 0.4)} medium, ${Math.floor(count * 0.3)} hard
+
+Return ONLY valid JSON array with: text, option_a, option_b, option_c, option_d, correct_answer (1-4), difficulty, explanation.`;
+
+    // === CUET ECONOMICS-SPECIFIC PROMPTS ===
+    const cuetEconomicsSystemPrompt = `You are India's TOP NTA CUET-UG Economics question paper setter with 20+ years experience.
+
+YOUR MISSION: Create MCQs matching NTA CUET-UG Economics section — NOT CBSE board style.
+
+NTA CUET-UG ECONOMICS QUESTION TYPES:
+1. NUMERICAL/CALCULATION (30%): National income, multiplier, money creation, elasticity — use LaTeX
+2. CONCEPTUAL (25%): Economic theories, definitions, relationships
+3. ASSERTION-REASON (15%): Cause-effect in economic phenomena
+4. POLICY & APPLICATION (15%): Fiscal/monetary policy, reform impacts, current economy
+5. DATA INTERPRETATION (15%): Interpret economic data, compare indicators
+
+TOPICS: Macro (National Income, Money & Banking, AD-AS, Government Budget, BOP) and Indian Economy (Planning, LPG, Poverty, HRD, Rural Dev, Employment, Infrastructure, Environment)
+
+${subjectGuidelines}
+
+QUALITY RULES:
+✓ All formulas in LaTeX: $k = \\frac{1}{1-MPC}$, $Y = C + I + G + (X-M)$
+✓ Numerical problems must be fully solvable with given data
+✓ Distractors must reflect real student errors
+✓ Explanations must show step-by-step solutions for numericals`;
+
+    const cuetEconomicsUserPrompt = `Generate exactly ${count} NTA CUET-UG STYLE MCQs for CUET Economics, chapter: "${chapterName}".
+
+MATCH NTA CUET-UG PATTERN:
+- 30% Numerical (LaTeX, multi-step)
+- 25% Conceptual
+- 15% Assertion-Reason
+- 15% Policy & Application
+- 15% Data Interpretation
+
+EXAMPLE - Numerical:
+{
+  "text": "If MPC is 0.8 and autonomous investment increases by ₹500 crores, the increase in equilibrium income will be:",
+  "option_a": "₹2,500 crores",
+  "option_b": "₹500 crores",
+  "option_c": "₹400 crores",
+  "option_d": "₹625 crores",
+  "correct_answer": 1,
+  "difficulty": "medium",
+  "explanation": "Multiplier $k = \\\\frac{1}{1-MPC} = \\\\frac{1}{1-0.8} = 5$. Change in income $\\\\Delta Y = k \\\\times \\\\Delta I = 5 \\\\times 500 = ₹2,500$ crores."
+}
+
+EXAMPLE - Assertion-Reason:
+{
+  "text": "Assertion (A): Fiscal deficit is a better indicator of government borrowing than revenue deficit.\\nReason (R): Fiscal deficit includes both revenue and capital account borrowings.",
+  "option_a": "Both A and R are correct, and R is the correct explanation of A",
+  "option_b": "Both A and R are correct, but R is NOT the correct explanation of A",
+  "option_c": "A is correct but R is incorrect",
+  "option_d": "A is incorrect but R is correct",
+  "correct_answer": 1,
+  "difficulty": "medium",
+  "explanation": "Fiscal deficit = Total expenditure − Total receipts (excluding borrowings). It captures the total borrowing requirement including both revenue and capital deficits, making it comprehensive. R correctly explains why."
+}
+
+DIFFICULTY: ${Math.ceil(count * 0.3)} easy, ${Math.ceil(count * 0.4)} medium, ${Math.floor(count * 0.3)} hard
+
+Return ONLY valid JSON array with: text, option_a, option_b, option_c, option_d, correct_answer (1-4), difficulty, explanation.`;
+
+    // === CUET HISTORY-SPECIFIC PROMPTS ===
+    const cuetHistorySystemPrompt = `You are India's TOP NTA CUET-UG History question paper setter with 20+ years experience.
+
+YOUR MISSION: Create MCQs matching NTA CUET-UG History section based on NCERT Class 12 "Themes in Indian History" Parts I, II, III.
+
+NTA CUET-UG HISTORY QUESTION TYPES:
+1. SOURCE-BASED (30%): Present a historical source/text extract and ask inference questions
+2. CONCEPTUAL (25%): Test understanding of historical themes, causes, consequences
+3. ASSERTION-REASON (15%): Cause-effect relationships in historical events
+4. MAP/CHRONOLOGY-BASED (15%): Timeline ordering, locate events/kingdoms
+5. ANALYTICAL (15%): Compare perspectives, evaluate historiographical debates
+
+TOPICS: Harappan Civilization, Mauryan Empire, Bhakti-Sufi Traditions, Mughal Empire, Colonial India, Partition, Constitutional Making
+
+${subjectGuidelines}
+
+QUALITY RULES:
+✓ All facts must be historically accurate and aligned with NCERT
+✓ Source-based questions must use plausible historical text excerpts
+✓ Dates and chronology must be verified
+✓ Distractors must be plausible historical alternatives`;
+
+    const cuetHistoryUserPrompt = `Generate exactly ${count} NTA CUET-UG STYLE MCQs for CUET History, chapter: "${chapterName}".
+
+MATCH NTA CUET-UG PATTERN:
+- 30% Source-based (present extract, ask inference)
+- 25% Conceptual (themes, causes, consequences)
+- 15% Assertion-Reason
+- 15% Chronology/Map-based
+- 15% Analytical (compare, evaluate)
+
+EXAMPLE - Source-based:
+{
+  "text": "Read the source: 'The Great Bath at Mohenjodaro was a large rectangular tank in a courtyard surrounded by a corridor on all four sides.' What does this suggest about the Harappan civilization?",
+  "option_a": "They had advanced knowledge of water management and possibly ritualistic bathing practices",
+  "option_b": "They used the structure as a swimming pool for entertainment",
+  "option_c": "It was a water storage tank for irrigation purposes",
+  "option_d": "The structure served as a marketplace",
+  "correct_answer": 1,
+  "difficulty": "medium",
+  "explanation": "The elaborate construction of the Great Bath with waterproofing (bitumen layer) and drainage suggests ritual/ceremonial bathing rather than utilitarian purposes. Historians believe it had religious significance in Harappan culture."
+}
+
+EXAMPLE - Assertion-Reason:
+{
+  "text": "Assertion (A): Ashoka adopted the policy of Dhamma after the Kalinga War.\\nReason (R): The massive destruction in the Kalinga War deeply affected Ashoka.",
+  "option_a": "Both A and R are correct, and R is the correct explanation of A",
+  "option_b": "Both A and R are correct, but R is NOT the correct explanation of A",
+  "option_c": "A is correct but R is incorrect",
+  "option_d": "A is incorrect but R is correct",
+  "correct_answer": 1,
+  "difficulty": "easy",
+  "explanation": "The Kalinga War (261 BCE) resulted in massive casualties (~100,000 killed). This carnage profoundly affected Ashoka, leading him to embrace Buddhism and propagate Dhamma (moral law) as state policy."
+}
+
+DIFFICULTY: ${Math.ceil(count * 0.3)} easy, ${Math.ceil(count * 0.4)} medium, ${Math.floor(count * 0.3)} hard
+
+Return ONLY valid JSON array with: text, option_a, option_b, option_c, option_d, correct_answer (1-4), difficulty, explanation.`;
+
+    // === CUET POLITICAL SCIENCE-SPECIFIC PROMPTS ===
+    const cuetPolSciSystemPrompt = `You are India's TOP NTA CUET-UG Political Science question paper setter with 20+ years experience.
+
+YOUR MISSION: Create MCQs matching NTA CUET-UG Political Science section based on NCERT Class 12 "Politics in India since Independence" and "Contemporary World Politics".
+
+NTA CUET-UG POLITICAL SCIENCE QUESTION TYPES:
+1. CONCEPTUAL (30%): Political theories, constitutional provisions, ideologies
+2. ASSERTION-REASON (20%): Test understanding of political cause-effect
+3. CASE/EVENT-BASED (20%): Analyze specific political events, movements, judgments
+4. CONSTITUTIONAL PROVISIONS (15%): Articles, amendments, fundamental rights/duties
+5. COMPARATIVE (15%): Compare political systems, ideologies, international relations
+
+TOPICS: Cold War Era, NAM, End of Bipolarity, US Hegemony, Contemporary Centres of Power, International Organizations, Globalization, Indian Politics (1947-present), Challenges of Nation Building, Crisis of Democratic Order, Regional Aspirations, Recent Developments
+
+${subjectGuidelines}
+
+QUALITY RULES:
+✓ Constitutional articles and amendment numbers must be accurate
+✓ Political events must be dated correctly
+✓ Present multiple perspectives on contested political issues
+✓ Distractors must be plausible political interpretations`;
+
+    const cuetPolSciUserPrompt = `Generate exactly ${count} NTA CUET-UG STYLE MCQs for CUET Political Science, chapter: "${chapterName}".
+
+MATCH NTA CUET-UG PATTERN:
+- 30% Conceptual (theories, provisions, ideologies)
+- 20% Assertion-Reason
+- 20% Case/Event-based
+- 15% Constitutional provisions
+- 15% Comparative
+
+EXAMPLE - Constitutional:
+{
+  "text": "Which Article of the Indian Constitution provides for the Right to Constitutional Remedies?",
+  "option_a": "Article 32",
+  "option_b": "Article 21",
+  "option_c": "Article 19",
+  "option_d": "Article 14",
+  "correct_answer": 1,
+  "difficulty": "easy",
+  "explanation": "Article 32 provides the Right to Constitutional Remedies, which Dr. B.R. Ambedkar called the 'heart and soul' of the Constitution. It allows citizens to approach the Supreme Court for enforcement of Fundamental Rights."
+}
+
+EXAMPLE - Assertion-Reason:
+{
+  "text": "Assertion (A): India adopted a policy of Non-Alignment during the Cold War.\\nReason (R): India wanted to maintain strategic autonomy and not join any military bloc.",
+  "option_a": "Both A and R are correct, and R is the correct explanation of A",
+  "option_b": "Both A and R are correct, but R is NOT the correct explanation of A",
+  "option_c": "A is correct but R is incorrect",
+  "option_d": "A is incorrect but R is correct",
+  "correct_answer": 1,
+  "difficulty": "medium",
+  "explanation": "India's Non-Alignment policy under Nehru was driven by the desire to maintain independent foreign policy and not get drawn into US-Soviet rivalry. This strategic autonomy allowed India to receive aid from both blocs."
+}
+
+DIFFICULTY: ${Math.ceil(count * 0.3)} easy, ${Math.ceil(count * 0.4)} medium, ${Math.floor(count * 0.3)} hard
+
+Return ONLY valid JSON array with: text, option_a, option_b, option_c, option_d, correct_answer (1-4), difficulty, explanation.`;
+
+    // === CUET GENERAL TEST-SPECIFIC PROMPTS ===
+    const cuetGeneralTestSystemPrompt = `You are India's TOP NTA CUET-UG General Test question paper setter with 20+ years experience.
+
+YOUR MISSION: Create MCQs matching NTA CUET-UG General Test section covering General Knowledge, Current Affairs, Mental Ability, Numerical Ability, and General English.
+
+NTA CUET-UG GENERAL TEST QUESTION TYPES:
+1. GENERAL KNOWLEDGE & CURRENT AFFAIRS (30%): Static GK, awards, sports, geography, science facts, important dates
+2. MENTAL/LOGICAL ABILITY (30%): Series completion, coding-decoding, blood relations, direction sense, syllogisms, Venn diagrams, analogies
+3. NUMERICAL ABILITY (25%): Simplification, percentages, profit-loss, ratio-proportion, time-speed-distance, averages, SI/CI
+4. GENERAL ENGLISH (15%): Basic grammar, vocabulary, fill-in-the-blanks, error spotting
+
+${subjectGuidelines}
+
+QUALITY RULES:
+✓ GK facts must be current and accurate
+✓ Logical reasoning must have ONE unambiguous correct answer
+✓ Numerical problems must be solvable with basic arithmetic
+✓ English questions must test practical usage`;
+
+    const cuetGeneralTestUserPrompt = `Generate exactly ${count} NTA CUET-UG STYLE MCQs for CUET General Test, topic: "${chapterName}".
+
+MATCH THE TOPIC:
+- "General Knowledge" / "Current Affairs" → factual GK, awards, geography, science
+- "Mental Ability" / "Logical Reasoning" → series, coding, analogies, syllogisms
+- "Numerical Ability" / "Quantitative Aptitude" → arithmetic, percentages, ratios
+- "General English" → grammar, vocabulary, sentence correction
+
+EXAMPLE - Logical Reasoning:
+{
+  "text": "In a certain code, COMPUTER is written as RFUVQNPD. How will SCIENCE be written in that code?",
+  "option_a": "FDOFJDT",
+  "option_b": "FDOFJDU",
+  "option_c": "EDOFJDT",
+  "option_d": "FDOFJCT",
+  "correct_answer": 1,
+  "difficulty": "medium",
+  "explanation": "Each letter is replaced by the letter that comes after it in reverse alphabetical position. C→F, O→D, M→O... Following the same pattern for SCIENCE gives FDOFJDT."
+}
+
+EXAMPLE - Numerical:
+{
+  "text": "A shopkeeper marks an item 40% above cost price and offers a 20% discount. What is his profit percentage?",
+  "option_a": "12%",
+  "option_b": "20%",
+  "option_c": "15%",
+  "option_d": "8%",
+  "correct_answer": 1,
+  "difficulty": "easy",
+  "explanation": "Let CP = ₹100. MP = ₹140 (40% above). SP = 140 × 0.80 = ₹112 (20% discount). Profit = 112 − 100 = ₹12. Profit% = 12%. Option B ignores the discount effect."
+}
+
+EXAMPLE - GK:
+{
+  "text": "The Tropic of Cancer passes through how many Indian states?",
+  "option_a": "8",
+  "option_b": "6",
+  "option_c": "7",
+  "option_d": "9",
+  "correct_answer": 1,
+  "difficulty": "medium",
+  "explanation": "The Tropic of Cancer (23.5°N) passes through 8 Indian states: Gujarat, Rajasthan, Madhya Pradesh, Chhattisgarh, Jharkhand, West Bengal, Tripura, and Mizoram."
+}
+
+DIFFICULTY: ${Math.ceil(count * 0.3)} easy, ${Math.ceil(count * 0.4)} medium, ${Math.floor(count * 0.3)} hard
+
+Return ONLY valid JSON array with: text, option_a, option_b, option_c, option_d, correct_answer (1-4), difficulty, explanation.`;
+
     // Select prompts based on subject detection
     let systemPrompt: string;
     let userPrompt: string;
@@ -1356,6 +1660,21 @@ Return ONLY valid JSON array with objects having: text, option_a, option_b, opti
     } else if (isCuetMath) {
       systemPrompt = cuetMathSystemPrompt;
       userPrompt = cuetMathUserPrompt;
+    } else if (isCuetBiology) {
+      systemPrompt = cuetBiologySystemPrompt;
+      userPrompt = cuetBiologyUserPrompt;
+    } else if (isCuetEconomics) {
+      systemPrompt = cuetEconomicsSystemPrompt;
+      userPrompt = cuetEconomicsUserPrompt;
+    } else if (isCuetHistory) {
+      systemPrompt = cuetHistorySystemPrompt;
+      userPrompt = cuetHistoryUserPrompt;
+    } else if (isCuetPolSci) {
+      systemPrompt = cuetPolSciSystemPrompt;
+      userPrompt = cuetPolSciUserPrompt;
+    } else if (isCuetGeneralTest) {
+      systemPrompt = cuetGeneralTestSystemPrompt;
+      userPrompt = cuetGeneralTestUserPrompt;
     } else if (isCuetEnglish) {
       systemPrompt = cuetEnglishSystemPrompt;
       userPrompt = cuetEnglishUserPrompt;
