@@ -341,7 +341,12 @@ serve(async (req) => {
     const isCuetPhysics = isCuet && subjectLower.includes('physics');
     const isCuetChemistry = isCuet && subjectLower.includes('chemistry');
     const isCuetMath = isCuet && (subjectLower.includes('math') || subjectLower.includes('mathematics'));
-    const isCuetSubject = isCuetEnglish || isCuetPhysics || isCuetChemistry || isCuetMath;
+    const isCuetBiology = isCuet && subjectLower.includes('biology');
+    const isCuetEconomics = isCuet && subjectLower.includes('economics');
+    const isCuetHistory = isCuet && subjectLower.includes('history');
+    const isCuetPolSci = isCuet && (subjectLower.includes('political') || subjectLower.includes('polity'));
+    const isCuetGeneralTest = isCuet && (subjectLower.includes('general test') || subjectLower.includes('general'));
+    const isCuetSubject = isCuetEnglish || isCuetPhysics || isCuetChemistry || isCuetMath || isCuetBiology || isCuetEconomics || isCuetHistory || isCuetPolSci || isCuetGeneralTest;
     const isEnglish = !isCuetEnglish && (subjectLower === 'english' || subjectLower.includes('english'));
     const isEconomics = !isCuet && (subjectLower === 'economics' || subjectLower.includes('economics'));
     const subjectGuidelines = getSubjectGuidelines(subjectName);
