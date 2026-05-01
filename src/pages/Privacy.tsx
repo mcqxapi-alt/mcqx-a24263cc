@@ -167,7 +167,7 @@ We won't suddenly start selling your data. Any major privacy changes will be cle
       </header>
 
       {/* Content */}
-      <main className="relative max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+      <main className="relative max-w-4xl mx-auto px-4 sm:px-6 pt-32 sm:pt-40 pb-12 sm:pb-16">
         {/* Hero */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

@@ -141,7 +141,7 @@ export default function Analytics() {
         </div>
       </header>
 
-      <main className="relative max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+      <main className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-32 sm:pt-40 pb-6 sm:pb-10">
         {/* Hero Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

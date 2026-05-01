@@ -123,7 +123,7 @@ export default function Leaderboard() {
         </div>
       </header>
 
-      <main className="container max-w-2xl px-4 py-6 space-y-6">
+      <main className="container max-w-2xl px-4 pt-32 sm:pt-40 pb-6 space-y-6">
         {/* Hero */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
