@@ -405,36 +405,37 @@ export default function AdminReview() {
               <p className="text-xs text-muted-foreground">Manage reported questions</p>
             </div>
           </div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <Button onClick={() => setShowAddDialog(true)} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add Question
-              </Button>
-              <Badge variant="outline" className="text-primary border-primary">
-                <Flag className="h-3 w-3 mr-1" />
-                {reports.length} Pending
-              </Badge>
-            </div>
-          </div>
-          
-          {/* Question Stats Row */}
-          <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border/40">
-            <span className="text-sm text-muted-foreground">Question Bank:</span>
-            <Badge variant="outline" className="gap-1">
-              <Database className="h-3 w-3" />
-              {questionStats?.total ?? "..."} Total
-            </Badge>
-            <Badge variant="outline" className="text-green-600 border-green-600 gap-1">
-              <CheckCircle className="h-3 w-3" />
-              {questionStats?.verified ?? "..."} Verified
-            </Badge>
-            <Badge variant="outline" className="text-blue-600 border-blue-600 gap-1">
-              <Sparkles className="h-3 w-3" />
-              {questionStats?.ai ?? "..."} AI
+          <div className="flex items-center gap-3 flex-wrap">
+            <Button onClick={() => setShowAddDialog(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Add Question</span>
+            </Button>
+            <Badge variant="outline" className="text-primary border-primary">
+              <Flag className="h-3 w-3 mr-1" />
+              {reports.length}
             </Badge>
           </div>
         </div>
       </header>
+
+      {/* Question Stats Row */}
+      <div className="container pt-32 sm:pt-40">
+        <div className="flex items-center gap-3 flex-wrap pb-4 border-b border-border/40">
+          <span className="text-sm text-muted-foreground">Question Bank:</span>
+          <Badge variant="outline" className="gap-1">
+            <Database className="h-3 w-3" />
+            {questionStats?.total ?? "..."} Total
+          </Badge>
+          <Badge variant="outline" className="text-green-600 border-green-600 gap-1">
+            <CheckCircle className="h-3 w-3" />
+            {questionStats?.verified ?? "..."} Verified
+          </Badge>
+          <Badge variant="outline" className="text-blue-600 border-blue-600 gap-1">
+            <Sparkles className="h-3 w-3" />
+            {questionStats?.ai ?? "..."} AI
+          </Badge>
+        </div>
+      </div>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
