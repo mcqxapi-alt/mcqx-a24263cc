@@ -391,19 +391,20 @@ export default function AdminReview() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border/40 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <img src={mcqxLogo} alt="MCQX Logo" className="h-24 sm:h-[7.5rem] w-auto" />
-              <div>
-                <h1 className="text-xl font-bold text-foreground">Admin Review</h1>
-                <p className="text-sm text-muted-foreground">Manage reported questions</p>
-              </div>
+      <header className="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border/30">
+        <div className="container flex items-center justify-between h-28 sm:h-36">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <Link to="/" className="flex items-center gap-2 transition-transform duration-300 hover:scale-105">
+              <img src={mcqxLogo} alt="MCQX" className="h-24 sm:h-[7.5rem] w-auto" />
+            </Link>
+            <div className="hidden md:block">
+              <h1 className="text-lg font-bold text-foreground">Admin Review</h1>
+              <p className="text-xs text-muted-foreground">Manage reported questions</p>
             </div>
+          </div>
             <div className="flex items-center gap-3 flex-wrap">
               <Button onClick={() => setShowAddDialog(true)} className="gap-2">
                 <Plus className="h-4 w-4" />

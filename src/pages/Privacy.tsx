@@ -152,15 +152,10 @@ We won't suddenly start selling your data. Any major privacy changes will be cle
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-50 glass border-b border-white/5">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 group">
-            <img 
-              src={mcqxLogo} 
-              alt="MCQX" 
-              className="h-24 sm:h-[7.5rem] w-auto group-hover:scale-105 transition-transform"
-            />
-            <span className="font-display font-bold text-lg">MCQX</span>
+      <header className="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border/30">
+        <div className="container flex items-center justify-between h-28 sm:h-36">
+          <Link to="/" className="flex items-center gap-2 transition-transform duration-300 hover:scale-105">
+            <img src={mcqxLogo} alt="MCQX" className="h-24 sm:h-[7.5rem] w-auto" />
           </Link>
           <Button variant="ghost" size="sm" asChild>
             <Link to="/" className="gap-2">
