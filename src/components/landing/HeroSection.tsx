@@ -55,9 +55,9 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
-            className="text-base sm:text-xl text-muted-foreground mb-8 sm:mb-10 max-w-xl mx-auto text-balance px-2"
+            className="text-base sm:text-xl text-muted-foreground mb-8 sm:mb-10 max-w-2xl mx-auto text-balance px-2"
           >
-            Practice unlimited MCQs, get instant feedback, and challenge your friends. No signup needed to start.
+            India's smartest MCQ platform for school boards <span className="text-foreground font-medium">(CBSE, ICSE, State Boards)</span> and competitive exams <span className="text-foreground font-medium">(CUET, JEE, NEET & more)</span>. Practice unlimited questions, get instant AI feedback, and challenge friends — no signup needed to start.
           </motion.p>
 
           {/* CTA Buttons */}

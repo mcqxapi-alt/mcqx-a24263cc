@@ -109,20 +109,21 @@ export default function Leaderboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="glass-strong border-b border-border/30 sticky top-0 z-50">
-        <div className="container flex items-center h-16 px-4 gap-3">
-          <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <Link to="/">
-            <img src={mcqxLogo} alt="MCQX" className="h-24 sm:h-[7.5rem] w-auto" />
-          </Link>
-          <div className="flex-1" />
-          <h1 className="font-display text-lg font-bold tracking-tight">Leaderboard</h1>
+      <header className="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border/30">
+        <div className="container flex items-center justify-between h-28 sm:h-36">
+          <div className="flex items-center gap-3">
+            <Link to="/" className="text-muted-foreground hover:text-foreground transition-colors">
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+            <Link to="/" className="flex items-center gap-2 transition-transform duration-300 hover:scale-105">
+              <img src={mcqxLogo} alt="MCQX" className="h-24 sm:h-[7.5rem] w-auto" />
+            </Link>
+          </div>
+          <h1 className="font-display text-lg font-bold tracking-tight hidden sm:block">Leaderboard</h1>
         </div>
       </header>
 
-      <main className="container max-w-2xl px-4 py-6 space-y-6">
+      <main className="container max-w-2xl px-4 pt-32 sm:pt-40 pb-6 space-y-6">
         {/* Hero */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

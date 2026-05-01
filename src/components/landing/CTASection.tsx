@@ -20,7 +20,7 @@ export function CTASection() {
               Ready to become <span className="neon-text">unstoppable</span>?
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground mb-6 sm:mb-8 max-w-md mx-auto">
-              Join thousands of students crushing their exams. No signup required to start practicing.
+              Join thousands of students preparing for boards and competitive exams. CBSE, ICSE, CUET, JEE, NEET — all in one place. No signup required to start.
             </p>
             <Button variant="neon" size="xl" asChild className="group">
               <Link to="/practice">
