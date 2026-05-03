@@ -5,21 +5,22 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { AnimatePresence, motion } from "framer-motion";
+import { lazy, Suspense } from "react";
 import Landing from "./pages/Landing";
-import Practice from "./pages/Practice";
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import AdminReview from "./pages/AdminReview";
-import Challenge from "./pages/Challenge";
-import Terms from "./pages/Terms";
-import Privacy from "./pages/Privacy";
-import Analytics from "./pages/Analytics";
-import Leaderboard from "./pages/Leaderboard";
-import NotFound from "./pages/NotFound";
+
+const Practice = lazy(() => import("./pages/Practice"));
+const Login = lazy(() => import("./pages/Login"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const AdminReview = lazy(() => import("./pages/AdminReview"));
+const Challenge = lazy(() => import("./pages/Challenge"));
+const Terms = lazy(() => import("./pages/Terms"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Analytics = lazy(() => import("./pages/Analytics"));
+const Leaderboard = lazy(() => import("./pages/Leaderboard"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
-// Page transition variants for smooth navigation
 const pageVariants = {
   initial: { opacity: 0 },
   in: { opacity: 1 },
@@ -46,20 +47,22 @@ function AnimatedRoutes() {
         transition={pageTransition}
         className="min-h-screen"
       >
-        <Routes location={location}>
-          <Route path="/" element={<Landing />} />
-          <Route path="/practice" element={<Practice />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/admin" element={<AdminReview />} />
-          <Route path="/challenge" element={<Challenge />} />
-          <Route path="/challenge/:id" element={<Challenge />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Suspense fallback={<div className="min-h-screen gradient-mesh-animated" />}>
+          <Routes location={location}>
+            <Route path="/" element={<Landing />} />
+            <Route path="/practice" element={<Practice />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/admin" element={<AdminReview />} />
+            <Route path="/challenge" element={<Challenge />} />
+            <Route path="/challenge/:id" element={<Challenge />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </motion.div>
     </AnimatePresence>
   );
