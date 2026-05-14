@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { AnimatePresence, motion } from "framer-motion";
 import { lazy, Suspense } from "react";
 import Landing from "./pages/Landing";
+import { RouteSEO } from "@/components/RouteSEO";
 
 const Practice = lazy(() => import("./pages/Practice"));
 const Login = lazy(() => import("./pages/Login"));
@@ -38,6 +39,7 @@ function AnimatedRoutes() {
 
   return (
     <AnimatePresence mode="wait" initial={false}>
+      <RouteSEO />
       <motion.div
         key={location.pathname}
         initial="initial"

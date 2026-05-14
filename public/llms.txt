@@ -1,0 +1,18 @@
+# MCQX
+
+> Smart MCQ practice platform for board exams (CBSE, ICSE, State) and competitive exams (CUET, JEE, NEET) with instant feedback, AI-powered questions, and friend challenges.
+
+MCQX helps students practice multiple-choice questions across subjects and exam patterns. Verified question bank is supplemented by AI-generated MCQs (Gemini) following strict NCERT and exam-board guidelines.
+
+## Pages
+
+- [Home](/): Landing page with overview of subjects, exams, and features.
+- [Practice](/practice): Choose category → board → class → subject → chapter and start practicing MCQs.
+- [Challenge](/challenge): Real-time 1v1 MCQ duels against friends.
+- [Leaderboard](/leaderboard): Top scorers across the platform.
+- [Login](/login): Sign in to track streaks, accuracy, and join challenges.
+
+## Optional
+
+- [Terms](/terms): Terms of service.
+- [Privacy](/privacy): Privacy policy.
