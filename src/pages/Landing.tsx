@@ -10,11 +10,13 @@ export default function Landing() {
   return (
     <div className="min-h-screen gradient-mesh-animated">
       <Navbar />
-      <HeroSection />
-      <BrowseMenu />
-      <HowItWorks />
-      <ChallengeTeaser />
-      <CTASection />
+      <main>
+        <HeroSection />
+        <BrowseMenu />
+        <HowItWorks />
+        <ChallengeTeaser />
+        <CTASection />
+      </main>
       <Footer />
     </div>
   );
