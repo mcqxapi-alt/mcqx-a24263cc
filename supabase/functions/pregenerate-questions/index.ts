@@ -163,20 +163,50 @@ serve(async (req) => {
   try {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
 
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SUPABASE_ANON_KEY) {
       throw new Error('Missing required environment variables');
+    }
+
+    // Require an authenticated admin caller
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    const supabaseUser = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: userData, error: userErr } = await supabaseUser.auth.getUser();
+    if (userErr || !userData?.user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    const { data: isAdmin } = await supabaseUser.rpc('has_role', {
+      _user_id: userData.user.id,
+      _role: 'admin',
+    });
+    if (!isAdmin) {
+      return new Response(
+        JSON.stringify({ error: 'Forbidden' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
       auth: { persistSession: false },
     });
 
-    // Parse request body for optional parameters
+    // Parse request body for optional parameters, with server-side caps
     const body = await req.json().catch(() => ({}));
-    const batchSize = body.batchSize || 3; // Number of chapters to process at once
-    const questionsPerChapter = body.questionsPerChapter || 10;
-    const minThreshold = body.minThreshold || 10; // Only generate for chapters with fewer than this
+    const batchSize = Math.min(Math.max(Number(body.batchSize) || 3, 1), 10);
+    const questionsPerChapter = Math.min(Math.max(Number(body.questionsPerChapter) || 10, 1), 20);
+    const minThreshold = Math.min(Math.max(Number(body.minThreshold) || 10, 1), 50);
 
     // Find chapters that need questions
     const { data: chaptersNeedingQuestions, error: fetchError } = await supabaseAdmin
