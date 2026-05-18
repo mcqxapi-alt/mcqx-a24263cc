@@ -772,6 +772,36 @@ export type Database = {
         Args: { p_question_id: string; p_user_id: string }
         Returns: undefined
       }
+      join_open_challenge: {
+        Args: { p_challenge_id: string }
+        Returns: {
+          challenger_answers: Json | null
+          challenger_finished_at: string | null
+          challenger_id: string
+          challenger_ready: boolean
+          challenger_score: number | null
+          challenger_time_ms: number | null
+          chapter_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          opponent_answers: Json | null
+          opponent_finished_at: string | null
+          opponent_id: string | null
+          opponent_ready: boolean
+          opponent_score: number | null
+          opponent_time_ms: number | null
+          question_ids: string[]
+          started_at: string | null
+          status: Database["public"]["Enums"]["challenge_status"]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "challenges"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       record_question_progress: {
         Args: {
           p_chapter_id: string
