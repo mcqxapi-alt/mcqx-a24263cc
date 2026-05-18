@@ -20,7 +20,7 @@ function renderLatex(latex: string, displayMode: boolean): string | null {
       throwOnError: false,
       displayMode,
       strict: false,
-      trust: true,
+      trust: false,
       output: "html",
     });
   } catch {
