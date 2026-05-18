@@ -300,13 +300,9 @@ export default function Challenge() {
   const joinChallenge = async (challengeData: RealtimeChallenge) => {
     setIsJoining(true);
     
-    const { error: joinError } = await supabase
-      .from("challenges")
-      .update({ 
-        opponent_id: user?.id,
-        status: "lobby" 
-      })
-      .eq("id", challengeData.id);
+    const { error: joinError } = await supabase.rpc("join_open_challenge", {
+      p_challenge_id: challengeData.id,
+    });
 
     if (joinError) {
       toast({ title: "Failed to join challenge", variant: "destructive" });
