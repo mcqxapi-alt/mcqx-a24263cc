@@ -92,7 +92,8 @@ export default function Practice() {
   const [shownPowerUserToast, setShownPowerUserToast] = useState(false);
   const [shownDifficultyUpToast, setShownDifficultyUpToast] = useState(false);
   const { fetchSmartQuestions, recordQuestionProgress, incrementRecycleCount } = useSmartQuestions();
-  const { updateDifficultyState, getDifficultyStats, currentDifficulty } = useAdaptiveDifficulty();
+  const { updateDifficultyState, getDifficultyStats, currentDifficulty, setCurrentDifficulty } = useAdaptiveDifficulty();
+  const difficultyHydratedRef = useRef(false);
   const [step, setStep] = useState<Step>("category");
   const [selectedCategory, setSelectedCategory] = useState<CategoryType | null>(null);
   const [selectedBoard, setSelectedBoard] = useState<BoardRecord | null>(null);
