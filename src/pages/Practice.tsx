@@ -250,6 +250,19 @@ export default function Practice() {
     setSelectedChapter(chapter);
     setIsGenerating(true);
     clearCache();
+    difficultyHydratedRef.current = false;
+
+    // Hydrate the user's current difficulty for THIS chapter before any answers,
+    // so the first transition toast compares against the real stored level.
+    if (user) {
+      try {
+        const stats = await getDifficultyStats(user.id, chapter.id);
+        setPreviousDifficulty(stats.currentDifficulty);
+        difficultyHydratedRef.current = true;
+      } catch (e) {
+        console.warn("Could not hydrate difficulty stats:", e);
+      }
+    }
 
     const targetCount = 10;
 
