@@ -93,6 +93,7 @@ export default function Practice() {
   const [shownDifficultyUpToast, setShownDifficultyUpToast] = useState(false);
   const { fetchSmartQuestions, recordQuestionProgress, incrementRecycleCount } = useSmartQuestions();
   const { updateDifficultyState, getDifficultyStats, currentDifficulty } = useAdaptiveDifficulty();
+  const difficultyHydratedRef = useRef(false);
   const [step, setStep] = useState<Step>("category");
   const [selectedCategory, setSelectedCategory] = useState<CategoryType | null>(null);
   const [selectedBoard, setSelectedBoard] = useState<BoardRecord | null>(null);
@@ -249,6 +250,19 @@ export default function Practice() {
     setSelectedChapter(chapter);
     setIsGenerating(true);
     clearCache();
+    difficultyHydratedRef.current = false;
+
+    // Hydrate the user's current difficulty for THIS chapter before any answers,
+    // so the first transition toast compares against the real stored level.
+    if (user) {
+      try {
+        const stats = await getDifficultyStats(user.id, chapter.id);
+        setPreviousDifficulty(stats.currentDifficulty);
+        difficultyHydratedRef.current = true;
+      } catch (e) {
+        console.warn("Could not hydrate difficulty stats:", e);
+      }
+    }
 
     const targetCount = 10;
 
@@ -332,6 +346,7 @@ export default function Practice() {
         );
 
         if (question.difficulty) {
+          // Use the hydrated/tracked level as the "before" value, not the hook's local default
           const prevDiff = currentDifficulty;
           const newDifficulty = await updateDifficultyState(
             user.id,
@@ -339,19 +354,32 @@ export default function Practice() {
             question.difficulty,
             result.is_correct
           );
-          
-          if (newDifficulty !== prevDiff) {
+
+          // Only emit a transition toast if we actually know the prior level
+          // (avoids the false "medium → hard" toast on the first answer of a session)
+          if (difficultyHydratedRef.current && newDifficulty !== prevDiff) {
             setPreviousDifficulty(prevDiff);
-            if (newDifficulty === "hard" && prevDiff === "medium" && !shownDifficultyUpToast) {
-              setShownDifficultyUpToast(true);
+            const order: DifficultyLevel[] = ["easy", "medium", "hard"];
+            const isPromotion = order.indexOf(newDifficulty) > order.indexOf(prevDiff);
+            if (isPromotion) {
+              if (newDifficulty === "hard") {
+                if (!shownDifficultyUpToast) {
+                  setShownDifficultyUpToast(true);
+                  toast({
+                    title: "🔥 Difficulty Increased!",
+                    description: "You're crushing it! Moving to harder questions.",
+                  });
+                }
+              } else {
+                toast({
+                  title: "📈 Level Up!",
+                  description: `Nice progress — ${newDifficulty} difficulty unlocked.`,
+                });
+              }
+            } else {
               toast({
-                title: "🔥 Difficulty Increased!",
-                description: "You're crushing it! Moving to harder questions.",
-              });
-            } else if (newDifficulty === "medium" && prevDiff === "easy") {
-              toast({
-                title: "📈 Level Up!",
-                description: "Nice progress! Medium difficulty unlocked.",
+                title: "🎯 Adjusting difficulty",
+                description: `Easing back to ${newDifficulty} questions so you can build momentum.`,
               });
             }
           }

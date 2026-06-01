@@ -191,9 +191,27 @@ export function useSmartQuestions() {
         // Power user: get mixed questions (70% new, 30% recycled)
         questions = await fetchMixedQuestionsForPowerUser(userId, chapterId, targetCount + 10);
       } else {
-        // Regular user: only unseen questions
-        const unseenQuestions = await fetchUnseenQuestionsForUser(userId, chapterId, targetCount + 10);
-        questions = unseenQuestions.map(q => ({ ...q, is_recycled: false }));
+        // Regular authenticated user: try adaptive selection first (difficulty-weighted by user level)
+        try {
+          const { data: adaptive, error: adaptiveError } = await supabase.rpc("get_adaptive_questions", {
+            p_user_id: userId,
+            p_chapter_id: chapterId,
+            p_limit: targetCount + 5,
+          });
+          if (!adaptiveError && adaptive && (adaptive as any[]).length > 0) {
+            questions = (adaptive as QuestionPublic[]).map(q => ({ ...q, is_recycled: false }));
+          }
+        } catch (e) {
+          console.warn("Adaptive fetch failed, falling back to unseen:", e);
+        }
+
+        // Fallback / top-up with plain unseen pool if adaptive came up short
+        if (questions.length < targetCount) {
+          const unseenQuestions = await fetchUnseenQuestionsForUser(userId, chapterId, targetCount + 10);
+          const existing = new Set(questions.map(q => q.id));
+          const extra = unseenQuestions.filter(q => !existing.has(q.id)).map(q => ({ ...q, is_recycled: false }));
+          questions = [...questions, ...extra];
+        }
       }
     } else {
       // Guest: fetch random questions
