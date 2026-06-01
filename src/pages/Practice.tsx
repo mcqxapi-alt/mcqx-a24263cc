@@ -346,6 +346,7 @@ export default function Practice() {
         );
 
         if (question.difficulty) {
+          // Use the hydrated/tracked level as the "before" value, not the hook's local default
           const prevDiff = currentDifficulty;
           const newDifficulty = await updateDifficultyState(
             user.id,
@@ -353,19 +354,32 @@ export default function Practice() {
             question.difficulty,
             result.is_correct
           );
-          
-          if (newDifficulty !== prevDiff) {
+
+          // Only emit a transition toast if we actually know the prior level
+          // (avoids the false "medium → hard" toast on the first answer of a session)
+          if (difficultyHydratedRef.current && newDifficulty !== prevDiff) {
             setPreviousDifficulty(prevDiff);
-            if (newDifficulty === "hard" && prevDiff === "medium" && !shownDifficultyUpToast) {
-              setShownDifficultyUpToast(true);
+            const order: DifficultyLevel[] = ["easy", "medium", "hard"];
+            const isPromotion = order.indexOf(newDifficulty) > order.indexOf(prevDiff);
+            if (isPromotion) {
+              if (newDifficulty === "hard") {
+                if (!shownDifficultyUpToast) {
+                  setShownDifficultyUpToast(true);
+                  toast({
+                    title: "🔥 Difficulty Increased!",
+                    description: "You're crushing it! Moving to harder questions.",
+                  });
+                }
+              } else {
+                toast({
+                  title: "📈 Level Up!",
+                  description: `Nice progress — ${newDifficulty} difficulty unlocked.`,
+                });
+              }
+            } else {
               toast({
-                title: "🔥 Difficulty Increased!",
-                description: "You're crushing it! Moving to harder questions.",
-              });
-            } else if (newDifficulty === "medium" && prevDiff === "easy") {
-              toast({
-                title: "📈 Level Up!",
-                description: "Nice progress! Medium difficulty unlocked.",
+                title: "🎯 Adjusting difficulty",
+                description: `Easing back to ${newDifficulty} questions so you can build momentum.`,
               });
             }
           }
