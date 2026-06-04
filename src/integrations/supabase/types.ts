@@ -14,6 +14,164 @@ export type Database = {
   }
   public: {
     Tables: {
+      amm_content: {
+        Row: {
+          body: string
+          channel: string | null
+          created_at: string
+          decision_id: string | null
+          external_id: string | null
+          id: string
+          metadata: Json
+          metrics: Json
+          published_at: string | null
+          scheduled_for: string | null
+          status: string
+          title: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          channel?: string | null
+          created_at?: string
+          decision_id?: string | null
+          external_id?: string | null
+          id?: string
+          metadata?: Json
+          metrics?: Json
+          published_at?: string | null
+          scheduled_for?: string | null
+          status?: string
+          title?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          channel?: string | null
+          created_at?: string
+          decision_id?: string | null
+          external_id?: string | null
+          id?: string
+          metadata?: Json
+          metrics?: Json
+          published_at?: string | null
+          scheduled_for?: string | null
+          status?: string
+          title?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "amm_content_decision_id_fkey"
+            columns: ["decision_id"]
+            isOneToOne: false
+            referencedRelation: "amm_decisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      amm_decisions: {
+        Row: {
+          actions: Json
+          created_at: string
+          executed_at: string | null
+          id: string
+          metrics_snapshot: Json
+          reasoning: string | null
+          run_date: string
+          status: string
+          triggered_by: string
+        }
+        Insert: {
+          actions?: Json
+          created_at?: string
+          executed_at?: string | null
+          id?: string
+          metrics_snapshot?: Json
+          reasoning?: string | null
+          run_date?: string
+          status?: string
+          triggered_by?: string
+        }
+        Update: {
+          actions?: Json
+          created_at?: string
+          executed_at?: string | null
+          id?: string
+          metrics_snapshot?: Json
+          reasoning?: string | null
+          run_date?: string
+          status?: string
+          triggered_by?: string
+        }
+        Relationships: []
+      }
+      amm_events: {
+        Row: {
+          campaign: string | null
+          created_at: string
+          event_type: string
+          id: string
+          medium: string | null
+          metadata: Json
+          path: string | null
+          session_ref: string | null
+          source: string | null
+          user_id: string | null
+        }
+        Insert: {
+          campaign?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          medium?: string | null
+          metadata?: Json
+          path?: string | null
+          session_ref?: string | null
+          source?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          campaign?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          medium?: string | null
+          metadata?: Json
+          path?: string | null
+          session_ref?: string | null
+          source?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      amm_targets: {
+        Row: {
+          created_at: string
+          goal: number
+          id: string
+          metric: string
+          month: string
+        }
+        Insert: {
+          created_at?: string
+          goal: number
+          id?: string
+          metric: string
+          month: string
+        }
+        Update: {
+          created_at?: string
+          goal?: number
+          id?: string
+          metric?: string
+          month?: string
+        }
+        Relationships: []
+      }
       boards: {
         Row: {
           created_at: string
