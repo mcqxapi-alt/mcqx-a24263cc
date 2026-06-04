@@ -13,6 +13,7 @@ const Practice = lazy(() => import("./pages/Practice"));
 const Login = lazy(() => import("./pages/Login"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const AdminReview = lazy(() => import("./pages/AdminReview"));
+const AdminMarketing = lazy(() => import("./pages/AdminMarketing"));
 const Challenge = lazy(() => import("./pages/Challenge"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
@@ -56,6 +57,7 @@ function AnimatedRoutes() {
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin" element={<AdminReview />} />
+            <Route path="/admin/marketing" element={<AdminMarketing />} />
             <Route path="/challenge" element={<Challenge />} />
             <Route path="/challenge/:id" element={<Challenge />} />
             <Route path="/terms" element={<Terms />} />
