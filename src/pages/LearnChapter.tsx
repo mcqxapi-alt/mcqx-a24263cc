@@ -47,7 +47,7 @@ export default function LearnChapter() {
       const { data, error } = await supabase.rpc("get_seo_page", { p_slug: slug });
       const row = Array.isArray(data) ? data[0] : data;
       if (error || !row) { setNotFound(true); setLoading(false); return; }
-      setPage(row as SeoPage);
+      setPage({ ...row, faq: Array.isArray(row.faq) ? row.faq : [] } as unknown as SeoPage);
       if (row.question_ids?.length) {
         const { data: qs } = await supabase.rpc("get_questions_by_ids", { p_question_ids: row.question_ids });
         setQuestions((qs ?? []).slice(0, 5) as PreviewQ[]);
