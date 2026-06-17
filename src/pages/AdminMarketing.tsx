@@ -127,6 +127,21 @@ export default function AdminMarketing() {
     }
   };
 
+  const [seoRunning, setSeoRunning] = useState(false);
+  const runSeo = async () => {
+    setSeoRunning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("amm-generate-seo-page", { body: { batch_size: 5 } });
+      if (error) throw error;
+      const okCount = (data?.results ?? []).filter((r: any) => r.ok).length;
+      toast({ title: "SEO pages generated", description: `${okCount} new landing pages live` });
+    } catch (e: any) {
+      toast({ title: "SEO generation failed", description: e?.message ?? "Unknown error", variant: "destructive" });
+    } finally {
+      setSeoRunning(false);
+    }
+  };
+
   if (authLoading || adminLoading) {
     return (
       <div className="min-h-screen gradient-mesh flex items-center justify-center">
