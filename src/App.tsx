@@ -65,6 +65,7 @@ function AnimatedRoutes() {
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/learn/:slug" element={<LearnChapter />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
