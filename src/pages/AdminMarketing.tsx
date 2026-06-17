@@ -127,6 +127,21 @@ export default function AdminMarketing() {
     }
   };
 
+  const [seoRunning, setSeoRunning] = useState(false);
+  const runSeo = async () => {
+    setSeoRunning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("amm-generate-seo-page", { body: { batch_size: 5 } });
+      if (error) throw error;
+      const okCount = (data?.results ?? []).filter((r: any) => r.ok).length;
+      toast({ title: "SEO pages generated", description: `${okCount} new landing pages live` });
+    } catch (e: any) {
+      toast({ title: "SEO generation failed", description: e?.message ?? "Unknown error", variant: "destructive" });
+    } finally {
+      setSeoRunning(false);
+    }
+  };
+
   if (authLoading || adminLoading) {
     return (
       <div className="min-h-screen gradient-mesh flex items-center justify-center">
@@ -158,10 +173,16 @@ export default function AdminMarketing() {
               <Sparkles className="w-5 h-5 text-primary" /> Marketing Cockpit
             </h1>
           </div>
-          <Button onClick={runCycle} disabled={running} variant="neon" size="sm">
-            {running ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Play className="w-4 h-4 mr-2" />}
-            Run AMM now
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={runSeo} disabled={seoRunning} variant="outline" size="sm">
+              {seoRunning ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
+              Generate SEO pages
+            </Button>
+            <Button onClick={runCycle} disabled={running} variant="neon" size="sm">
+              {running ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Play className="w-4 h-4 mr-2" />}
+              Run AMM now
+            </Button>
+          </div>
         </div>
       </header>
 

@@ -556,6 +556,74 @@ export type Database = {
           },
         ]
       }
+      seo_pages: {
+        Row: {
+          board_name: string
+          chapter_id: string
+          chapter_name: string
+          class_name: string
+          created_at: string
+          faq: Json
+          generated_at: string
+          id: string
+          intro_md: string
+          meta_description: string
+          published: boolean
+          question_ids: string[]
+          slug: string
+          subject_name: string
+          title: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          board_name: string
+          chapter_id: string
+          chapter_name: string
+          class_name: string
+          created_at?: string
+          faq?: Json
+          generated_at?: string
+          id?: string
+          intro_md: string
+          meta_description: string
+          published?: boolean
+          question_ids?: string[]
+          slug: string
+          subject_name: string
+          title: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          board_name?: string
+          chapter_id?: string
+          chapter_name?: string
+          class_name?: string
+          created_at?: string
+          faq?: Json
+          generated_at?: string
+          id?: string
+          intro_md?: string
+          meta_description?: string
+          published?: boolean
+          question_ids?: string[]
+          slug?: string
+          subject_name?: string
+          title?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seo_pages_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: true
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sessions: {
         Row: {
           ai_count: number
@@ -892,6 +960,24 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_seo_page: {
+        Args: { p_slug: string }
+        Returns: {
+          board_name: string
+          chapter_id: string
+          chapter_name: string
+          class_name: string
+          faq: Json
+          generated_at: string
+          id: string
+          intro_md: string
+          meta_description: string
+          question_ids: string[]
+          slug: string
+          subject_name: string
+          title: string
+        }[]
+      }
       get_unseen_questions_for_user: {
         Args: { p_chapter_id: string; p_limit?: number; p_user_id: string }
         Returns: {
@@ -930,6 +1016,7 @@ export type Database = {
         Args: { p_question_id: string; p_user_id: string }
         Returns: undefined
       }
+      increment_seo_view: { Args: { p_slug: string }; Returns: undefined }
       join_open_challenge: {
         Args: { p_challenge_id: string }
         Returns: {
@@ -959,6 +1046,13 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      list_seo_slugs: {
+        Args: never
+        Returns: {
+          slug: string
+          updated_at: string
+        }[]
       }
       record_question_progress: {
         Args: {
