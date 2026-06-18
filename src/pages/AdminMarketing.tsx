@@ -201,10 +201,18 @@ export default function AdminMarketing() {
               <Sparkles className="w-5 h-5 text-primary" /> Marketing Cockpit
             </h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button onClick={runKeywordRank} disabled={krRunning} variant="outline" size="sm">
+              {krRunning ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <TrendingUp className="w-4 h-4 mr-2" />}
+              Rank keywords
+            </Button>
             <Button onClick={runSeo} disabled={seoRunning} variant="outline" size="sm">
               {seoRunning ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
               Generate SEO pages
+            </Button>
+            <Button onClick={runGsc} disabled={gscRunning} variant="outline" size="sm">
+              {gscRunning ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Zap className="w-4 h-4 mr-2" />}
+              Submit to Google
             </Button>
             <Button onClick={runCycle} disabled={running} variant="neon" size="sm">
               {running ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Play className="w-4 h-4 mr-2" />}
