@@ -142,6 +142,34 @@ export default function AdminMarketing() {
     }
   };
 
+  const [gscRunning, setGscRunning] = useState(false);
+  const runGsc = async () => {
+    setGscRunning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("amm-gsc-submit", { body: {} });
+      if (error) throw error;
+      toast({ title: "Submitted to Google", description: `Sitemap + IndexNow pinged for ${data?.steps?.find?.((s: any) => s.step === "fresh_urls")?.count ?? 0} fresh URLs` });
+    } catch (e: any) {
+      toast({ title: "GSC submit failed", description: e?.message ?? "Unknown error", variant: "destructive" });
+    } finally {
+      setGscRunning(false);
+    }
+  };
+
+  const [krRunning, setKrRunning] = useState(false);
+  const runKeywordRank = async () => {
+    setKrRunning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("amm-keyword-rank", { body: { limit: 20 } });
+      if (error) throw error;
+      toast({ title: "Keyword research done", description: `${data?.count ?? 0} chapters ranked by search volume` });
+    } catch (e: any) {
+      toast({ title: "Keyword research failed", description: e?.message ?? "Link Semrush connector first", variant: "destructive" });
+    } finally {
+      setKrRunning(false);
+    }
+  };
+
   if (authLoading || adminLoading) {
     return (
       <div className="min-h-screen gradient-mesh flex items-center justify-center">
