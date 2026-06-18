@@ -142,6 +142,34 @@ export default function AdminMarketing() {
     }
   };
 
+  const [gscRunning, setGscRunning] = useState(false);
+  const runGsc = async () => {
+    setGscRunning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("amm-gsc-submit", { body: {} });
+      if (error) throw error;
+      toast({ title: "Submitted to Google", description: `Sitemap + IndexNow pinged for ${data?.steps?.find?.((s: any) => s.step === "fresh_urls")?.count ?? 0} fresh URLs` });
+    } catch (e: any) {
+      toast({ title: "GSC submit failed", description: e?.message ?? "Unknown error", variant: "destructive" });
+    } finally {
+      setGscRunning(false);
+    }
+  };
+
+  const [krRunning, setKrRunning] = useState(false);
+  const runKeywordRank = async () => {
+    setKrRunning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("amm-keyword-rank", { body: { limit: 20 } });
+      if (error) throw error;
+      toast({ title: "Keyword research done", description: `${data?.count ?? 0} chapters ranked by search volume` });
+    } catch (e: any) {
+      toast({ title: "Keyword research failed", description: e?.message ?? "Link Semrush connector first", variant: "destructive" });
+    } finally {
+      setKrRunning(false);
+    }
+  };
+
   if (authLoading || adminLoading) {
     return (
       <div className="min-h-screen gradient-mesh flex items-center justify-center">
@@ -173,10 +201,18 @@ export default function AdminMarketing() {
               <Sparkles className="w-5 h-5 text-primary" /> Marketing Cockpit
             </h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button onClick={runKeywordRank} disabled={krRunning} variant="outline" size="sm">
+              {krRunning ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <TrendingUp className="w-4 h-4 mr-2" />}
+              Rank keywords
+            </Button>
             <Button onClick={runSeo} disabled={seoRunning} variant="outline" size="sm">
               {seoRunning ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
               Generate SEO pages
+            </Button>
+            <Button onClick={runGsc} disabled={gscRunning} variant="outline" size="sm">
+              {gscRunning ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Zap className="w-4 h-4 mr-2" />}
+              Submit to Google
             </Button>
             <Button onClick={runCycle} disabled={running} variant="neon" size="sm">
               {running ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Play className="w-4 h-4 mr-2" />}
