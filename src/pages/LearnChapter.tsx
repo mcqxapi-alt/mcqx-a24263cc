@@ -4,7 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ChevronRight, BookOpen, Zap, Target } from "lucide-react";
+import { ChevronRight, ChevronLeft, BookOpen, Zap, Target, Link2 } from "lucide-react";
 
 const RichText = lazy(() => import("@/components/RichText").then(m => ({ default: m.RichText })));
 
