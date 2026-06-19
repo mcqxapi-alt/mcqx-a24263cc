@@ -216,6 +216,53 @@ export default function LearnChapter() {
           </section>
         )}
 
+        {/* Prev / Next chapter navigation */}
+        {(prev || next) && (
+          <nav className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-10" aria-label="Chapter navigation">
+            {prev ? (
+              <Link to={`/learn/${prev.slug}`} className="block">
+                <Card className="p-4 hover:border-primary transition-colors h-full">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mb-1">
+                    <ChevronLeft className="w-3 h-3" /> Previous chapter
+                  </p>
+                  <p className="font-semibold">{prev.chapter_name}</p>
+                </Card>
+              </Link>
+            ) : <div />}
+            {next ? (
+              <Link to={`/learn/${next.slug}`} className="block md:text-right">
+                <Card className="p-4 hover:border-primary transition-colors h-full">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 md:justify-end mb-1">
+                    Next chapter <ChevronRight className="w-3 h-3" />
+                  </p>
+                  <p className="font-semibold">{next.chapter_name}</p>
+                </Card>
+              </Link>
+            ) : <div />}
+          </nav>
+        )}
+
+        {/* Related chapters from the same subject */}
+        {related.length > 0 && (
+          <section className="mb-12">
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <Link2 className="w-5 h-5 text-primary" /> More {page.subject_name} chapters · {page.class_name}
+            </h2>
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {related.map(r => (
+                <li key={r.slug}>
+                  <Link
+                    to={`/learn/${r.slug}`}
+                    className="block p-3 rounded-md border border-border hover:border-primary hover:bg-accent/30 transition-colors text-sm"
+                  >
+                    {r.chapter_name} MCQs
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         <div className="text-center border-t border-border pt-8 mt-12">
           <p className="text-sm text-muted-foreground mb-3">Ready to test yourself?</p>
           <Link to={`/practice?utm_source=seo&utm_medium=learn_footer&utm_campaign=${page.slug}`}>
