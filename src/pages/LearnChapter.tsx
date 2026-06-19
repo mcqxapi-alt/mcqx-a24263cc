@@ -4,7 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ChevronRight, BookOpen, Zap, Target } from "lucide-react";
+import { ChevronRight, ChevronLeft, BookOpen, Zap, Target, Link2 } from "lucide-react";
 
 const RichText = lazy(() => import("@/components/RichText").then(m => ({ default: m.RichText })));
 
@@ -34,10 +34,18 @@ interface PreviewQ {
   option_d: string;
 }
 
+interface RelatedPage {
+  slug: string;
+  chapter_name: string;
+}
+
 export default function LearnChapter() {
   const { slug } = useParams<{ slug: string }>();
   const [page, setPage] = useState<SeoPage | null>(null);
   const [questions, setQuestions] = useState<PreviewQ[]>([]);
+  const [prev, setPrev] = useState<RelatedPage | null>(null);
+  const [next, setNext] = useState<RelatedPage | null>(null);
+  const [related, setRelated] = useState<RelatedPage[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -52,6 +60,24 @@ export default function LearnChapter() {
         const { data: qs } = await supabase.rpc("get_questions_by_ids", { p_question_ids: row.question_ids });
         setQuestions((qs ?? []).slice(0, 5) as PreviewQ[]);
       }
+
+      // Fetch sibling chapters in same board/class/subject for internal linking
+      const { data: siblings } = await supabase
+        .from("seo_pages")
+        .select("slug, chapter_name")
+        .eq("published", true)
+        .eq("board_name", row.board_name)
+        .eq("class_name", row.class_name)
+        .eq("subject_name", row.subject_name)
+        .order("chapter_name", { ascending: true })
+        .limit(200);
+      if (siblings && siblings.length) {
+        const idx = siblings.findIndex(s => s.slug === row.slug);
+        setPrev(idx > 0 ? siblings[idx - 1] : null);
+        setNext(idx >= 0 && idx < siblings.length - 1 ? siblings[idx + 1] : null);
+        setRelated(siblings.filter(s => s.slug !== row.slug).slice(0, 8));
+      }
+
       setLoading(false);
       // Fire-and-forget view counter
       supabase.rpc("increment_seo_view", { p_slug: slug }).then(() => {});
@@ -187,6 +213,53 @@ export default function LearnChapter() {
                 </Card>
               ))}
             </div>
+          </section>
+        )}
+
+        {/* Prev / Next chapter navigation */}
+        {(prev || next) && (
+          <nav className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-10" aria-label="Chapter navigation">
+            {prev ? (
+              <Link to={`/learn/${prev.slug}`} className="block">
+                <Card className="p-4 hover:border-primary transition-colors h-full">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mb-1">
+                    <ChevronLeft className="w-3 h-3" /> Previous chapter
+                  </p>
+                  <p className="font-semibold">{prev.chapter_name}</p>
+                </Card>
+              </Link>
+            ) : <div />}
+            {next ? (
+              <Link to={`/learn/${next.slug}`} className="block md:text-right">
+                <Card className="p-4 hover:border-primary transition-colors h-full">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 md:justify-end mb-1">
+                    Next chapter <ChevronRight className="w-3 h-3" />
+                  </p>
+                  <p className="font-semibold">{next.chapter_name}</p>
+                </Card>
+              </Link>
+            ) : <div />}
+          </nav>
+        )}
+
+        {/* Related chapters from the same subject */}
+        {related.length > 0 && (
+          <section className="mb-12">
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <Link2 className="w-5 h-5 text-primary" /> More {page.subject_name} chapters · {page.class_name}
+            </h2>
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {related.map(r => (
+                <li key={r.slug}>
+                  <Link
+                    to={`/learn/${r.slug}`}
+                    className="block p-3 rounded-md border border-border hover:border-primary hover:bg-accent/30 transition-colors text-sm"
+                  >
+                    {r.chapter_name} MCQs
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </section>
         )}
 
