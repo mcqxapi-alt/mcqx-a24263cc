@@ -34,10 +34,18 @@ interface PreviewQ {
   option_d: string;
 }
 
+interface RelatedPage {
+  slug: string;
+  chapter_name: string;
+}
+
 export default function LearnChapter() {
   const { slug } = useParams<{ slug: string }>();
   const [page, setPage] = useState<SeoPage | null>(null);
   const [questions, setQuestions] = useState<PreviewQ[]>([]);
+  const [prev, setPrev] = useState<RelatedPage | null>(null);
+  const [next, setNext] = useState<RelatedPage | null>(null);
+  const [related, setRelated] = useState<RelatedPage[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -52,6 +60,24 @@ export default function LearnChapter() {
         const { data: qs } = await supabase.rpc("get_questions_by_ids", { p_question_ids: row.question_ids });
         setQuestions((qs ?? []).slice(0, 5) as PreviewQ[]);
       }
+
+      // Fetch sibling chapters in same board/class/subject for internal linking
+      const { data: siblings } = await supabase
+        .from("seo_pages")
+        .select("slug, chapter_name")
+        .eq("published", true)
+        .eq("board_name", row.board_name)
+        .eq("class_name", row.class_name)
+        .eq("subject_name", row.subject_name)
+        .order("chapter_name", { ascending: true })
+        .limit(200);
+      if (siblings && siblings.length) {
+        const idx = siblings.findIndex(s => s.slug === row.slug);
+        setPrev(idx > 0 ? siblings[idx - 1] : null);
+        setNext(idx >= 0 && idx < siblings.length - 1 ? siblings[idx + 1] : null);
+        setRelated(siblings.filter(s => s.slug !== row.slug).slice(0, 8));
+      }
+
       setLoading(false);
       // Fire-and-forget view counter
       supabase.rpc("increment_seo_view", { p_slug: slug }).then(() => {});
