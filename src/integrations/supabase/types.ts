@@ -419,6 +419,125 @@ export type Database = {
           },
         ]
       }
+      exam_pages: {
+        Row: {
+          created_at: string
+          exam_id: string
+          faq: Json
+          generated_at: string
+          id: string
+          intro_md: string
+          language: string
+          meta_description: string
+          published: boolean
+          question_ids: string[]
+          slug: string
+          syllabus_md: string
+          title: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          created_at?: string
+          exam_id: string
+          faq?: Json
+          generated_at?: string
+          id?: string
+          intro_md?: string
+          language?: string
+          meta_description: string
+          published?: boolean
+          question_ids?: string[]
+          slug: string
+          syllabus_md?: string
+          title: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          created_at?: string
+          exam_id?: string
+          faq?: Json
+          generated_at?: string
+          id?: string
+          intro_md?: string
+          language?: string
+          meta_description?: string
+          published?: boolean
+          question_ids?: string[]
+          slug?: string
+          syllabus_md?: string
+          title?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_pages_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exam_targets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exam_targets: {
+        Row: {
+          annual_aspirants: number | null
+          created_at: string
+          id: string
+          language: string
+          last_quality_check: string | null
+          mcq_count: number | null
+          name: string
+          quality_score: number | null
+          region: string | null
+          seed_chapter_ids: string[] | null
+          slug: string
+          status: string
+          syllabus_json: Json | null
+          tier: number
+          updated_at: string
+          word_count: number | null
+        }
+        Insert: {
+          annual_aspirants?: number | null
+          created_at?: string
+          id?: string
+          language?: string
+          last_quality_check?: string | null
+          mcq_count?: number | null
+          name: string
+          quality_score?: number | null
+          region?: string | null
+          seed_chapter_ids?: string[] | null
+          slug: string
+          status?: string
+          syllabus_json?: Json | null
+          tier?: number
+          updated_at?: string
+          word_count?: number | null
+        }
+        Update: {
+          annual_aspirants?: number | null
+          created_at?: string
+          id?: string
+          language?: string
+          last_quality_check?: string | null
+          mcq_count?: number | null
+          name?: string
+          quality_score?: number | null
+          region?: string | null
+          seed_chapter_ids?: string[] | null
+          slug?: string
+          status?: string
+          syllabus_json?: Json | null
+          tier?: number
+          updated_at?: string
+          word_count?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

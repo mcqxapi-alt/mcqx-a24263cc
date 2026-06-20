@@ -35,6 +35,21 @@ type Content = {
   created_at: string;
 };
 
+type ExamTarget = {
+  id: string;
+  slug: string;
+  name: string;
+  language: string;
+  region: string | null;
+  tier: number;
+  annual_aspirants: number | null;
+  status: string;
+  quality_score: number | null;
+  word_count: number | null;
+  mcq_count: number | null;
+  last_quality_check: string | null;
+};
+
 export default function AdminMarketing() {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useAdminCheck();
@@ -169,6 +184,69 @@ export default function AdminMarketing() {
       setKrRunning(false);
     }
   };
+
+  const { data: examTargets = [] } = useQuery({
+    queryKey: ["exam-targets"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("exam_targets")
+        .select("*")
+        .order("tier", { ascending: true })
+        .order("annual_aspirants", { ascending: false });
+      if (error) throw error;
+      return data as ExamTarget[];
+    },
+    enabled: !!isAdmin,
+  });
+
+  const [genId, setGenId] = useState<string | null>(null);
+  const generateExam = async (examId: string) => {
+    setGenId(examId);
+    try {
+      const { data, error } = await supabase.functions.invoke("amm-generate-exam-page", { body: { exam_id: examId } });
+      if (error) throw error;
+      if (data?.gate_passed) {
+        toast({ title: "Draft generated — ready for review", description: `Score ${data.quality_score}/100 · ${data.word_count} words · ${data.mcq_count} MCQs` });
+      } else {
+        toast({
+          title: "Draft saved — quality gate NOT passed",
+          description: (data?.gate_reasons ?? []).join(" · ") || "Fix issues then regenerate",
+          variant: "destructive",
+        });
+      }
+      qc.invalidateQueries({ queryKey: ["exam-targets"] });
+    } catch (e: any) {
+      toast({ title: "Generation failed", description: e?.message ?? "Unknown error", variant: "destructive" });
+    } finally {
+      setGenId(null);
+    }
+  };
+
+  const publishExam = useMutation({
+    mutationFn: async (exam: ExamTarget) => {
+      if (exam.status !== "ready_for_review") throw new Error("Quality gate must pass first");
+      const { error: pErr } = await supabase.from("exam_pages").update({ published: true }).eq("slug", exam.slug);
+      if (pErr) throw pErr;
+      const { error: tErr } = await supabase.from("exam_targets").update({ status: "published" }).eq("id", exam.id);
+      if (tErr) throw tErr;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["exam-targets"] });
+      toast({ title: "Published live", description: "Page is now indexable. Sitemap updates on next deploy." });
+    },
+    onError: (e: any) => toast({ title: "Publish failed", description: e?.message, variant: "destructive" }),
+  });
+
+  const unpublishExam = useMutation({
+    mutationFn: async (exam: ExamTarget) => {
+      await supabase.from("exam_pages").update({ published: false }).eq("slug", exam.slug);
+      await supabase.from("exam_targets").update({ status: "ready_for_review" }).eq("id", exam.id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["exam-targets"] });
+      toast({ title: "Unpublished" });
+    },
+  });
 
   if (authLoading || adminLoading) {
     return (
@@ -336,6 +414,78 @@ export default function AdminMarketing() {
             </div>
           )}
         </section>
+
+        {/* Exam Targets — rural/underserved competitive exams expansion */}
+        <section>
+          <h2 className="font-display text-lg font-bold mb-3 flex items-center gap-2">
+            <Target className="w-4 h-4 text-primary" /> Exam Targets
+            <span className="text-xs font-normal text-muted-foreground">
+              · drafts only become indexable when you click Publish
+            </span>
+          </h2>
+          <div className="grid gap-3">
+            {examTargets.map((ex) => {
+              const isGen = genId === ex.id;
+              const canPublish = ex.status === "ready_for_review";
+              const isLive = ex.status === "published";
+              return (
+                <Card key={ex.id} className="glass">
+                  <CardContent className="pt-4 space-y-3">
+                    <div className="flex items-start justify-between flex-wrap gap-2">
+                      <div>
+                        <div className="font-semibold">{ex.name}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          Tier {ex.tier} · {ex.language.toUpperCase()} · {ex.region ?? "India"} · ~{(ex.annual_aspirants ?? 0).toLocaleString()} aspirants/year
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant={isLive ? "default" : canPublish ? "secondary" : "outline"}>
+                          {ex.status}
+                        </Badge>
+                        {ex.quality_score != null && ex.quality_score > 0 && (
+                          <Badge variant="outline">Q {ex.quality_score}/100</Badge>
+                        )}
+                      </div>
+                    </div>
+                    {(ex.word_count || ex.mcq_count) ? (
+                      <div className="text-xs text-muted-foreground">
+                        {ex.word_count ?? 0} words · {ex.mcq_count ?? 0} MCQs
+                        {ex.last_quality_check && ` · checked ${new Date(ex.last_quality_check).toLocaleDateString()}`}
+                      </div>
+                    ) : null}
+                    <div className="flex gap-2 flex-wrap">
+                      <Button size="sm" variant="outline" onClick={() => generateExam(ex.id)} disabled={isGen}>
+                        {isGen ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Sparkles className="w-3 h-3 mr-1" />}
+                        {ex.status === "draft" ? "Generate draft" : "Regenerate"}
+                      </Button>
+                      {(canPublish || isLive) && (
+                        <Button size="sm" variant="ghost" asChild>
+                          <Link to={`/exam/${ex.slug}`} target="_blank" rel="noopener">Preview</Link>
+                        </Button>
+                      )}
+                      {canPublish && (
+                        <Button size="sm" variant="neon" onClick={() => publishExam.mutate(ex)} disabled={publishExam.isPending}>
+                          <Check className="w-3 h-3 mr-1" /> Publish live
+                        </Button>
+                      )}
+                      {isLive && (
+                        <Button size="sm" variant="ghost" onClick={() => unpublishExam.mutate(ex)}>
+                          <Pause className="w-3 h-3 mr-1" /> Unpublish
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+            {examTargets.length === 0 && (
+              <Card className="glass"><CardContent className="py-6 text-center text-sm text-muted-foreground">
+                No exam targets seeded yet.
+              </CardContent></Card>
+            )}
+          </div>
+        </section>
+
 
         {/* History */}
         {decisions.length > 1 && (

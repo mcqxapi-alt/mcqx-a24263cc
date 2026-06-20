@@ -20,6 +20,7 @@ const Privacy = lazy(() => import("./pages/Privacy"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const LearnChapter = lazy(() => import("./pages/LearnChapter"));
+const LearnExam = lazy(() => import("./pages/LearnExam"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -66,6 +67,7 @@ function AnimatedRoutes() {
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/learn/:slug" element={<LearnChapter />} />
+            <Route path="/exam/:slug" element={<LearnExam />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
