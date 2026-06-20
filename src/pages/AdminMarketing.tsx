@@ -415,6 +415,78 @@ export default function AdminMarketing() {
           )}
         </section>
 
+        {/* Exam Targets — rural/underserved competitive exams expansion */}
+        <section>
+          <h2 className="font-display text-lg font-bold mb-3 flex items-center gap-2">
+            <Target className="w-4 h-4 text-primary" /> Exam Targets
+            <span className="text-xs font-normal text-muted-foreground">
+              · drafts only become indexable when you click Publish
+            </span>
+          </h2>
+          <div className="grid gap-3">
+            {examTargets.map((ex) => {
+              const isGen = genId === ex.id;
+              const canPublish = ex.status === "ready_for_review";
+              const isLive = ex.status === "published";
+              return (
+                <Card key={ex.id} className="glass">
+                  <CardContent className="pt-4 space-y-3">
+                    <div className="flex items-start justify-between flex-wrap gap-2">
+                      <div>
+                        <div className="font-semibold">{ex.name}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          Tier {ex.tier} · {ex.language.toUpperCase()} · {ex.region ?? "India"} · ~{(ex.annual_aspirants ?? 0).toLocaleString()} aspirants/year
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant={isLive ? "default" : canPublish ? "secondary" : "outline"}>
+                          {ex.status}
+                        </Badge>
+                        {ex.quality_score != null && ex.quality_score > 0 && (
+                          <Badge variant="outline">Q {ex.quality_score}/100</Badge>
+                        )}
+                      </div>
+                    </div>
+                    {(ex.word_count || ex.mcq_count) ? (
+                      <div className="text-xs text-muted-foreground">
+                        {ex.word_count ?? 0} words · {ex.mcq_count ?? 0} MCQs
+                        {ex.last_quality_check && ` · checked ${new Date(ex.last_quality_check).toLocaleDateString()}`}
+                      </div>
+                    ) : null}
+                    <div className="flex gap-2 flex-wrap">
+                      <Button size="sm" variant="outline" onClick={() => generateExam(ex.id)} disabled={isGen}>
+                        {isGen ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Sparkles className="w-3 h-3 mr-1" />}
+                        {ex.status === "draft" ? "Generate draft" : "Regenerate"}
+                      </Button>
+                      {(canPublish || isLive) && (
+                        <Button size="sm" variant="ghost" asChild>
+                          <Link to={`/exam/${ex.slug}`} target="_blank" rel="noopener">Preview</Link>
+                        </Button>
+                      )}
+                      {canPublish && (
+                        <Button size="sm" variant="neon" onClick={() => publishExam.mutate(ex)} disabled={publishExam.isPending}>
+                          <Check className="w-3 h-3 mr-1" /> Publish live
+                        </Button>
+                      )}
+                      {isLive && (
+                        <Button size="sm" variant="ghost" onClick={() => unpublishExam.mutate(ex)}>
+                          <Pause className="w-3 h-3 mr-1" /> Unpublish
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+            {examTargets.length === 0 && (
+              <Card className="glass"><CardContent className="py-6 text-center text-sm text-muted-foreground">
+                No exam targets seeded yet.
+              </CardContent></Card>
+            )}
+          </div>
+        </section>
+
+
         {/* History */}
         {decisions.length > 1 && (
           <section>
