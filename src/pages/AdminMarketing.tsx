@@ -35,6 +35,21 @@ type Content = {
   created_at: string;
 };
 
+type ExamTarget = {
+  id: string;
+  slug: string;
+  name: string;
+  language: string;
+  region: string | null;
+  tier: number;
+  annual_aspirants: number | null;
+  status: string;
+  quality_score: number | null;
+  word_count: number | null;
+  mcq_count: number | null;
+  last_quality_check: string | null;
+};
+
 export default function AdminMarketing() {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useAdminCheck();
@@ -169,6 +184,69 @@ export default function AdminMarketing() {
       setKrRunning(false);
     }
   };
+
+  const { data: examTargets = [] } = useQuery({
+    queryKey: ["exam-targets"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("exam_targets")
+        .select("*")
+        .order("tier", { ascending: true })
+        .order("annual_aspirants", { ascending: false });
+      if (error) throw error;
+      return data as ExamTarget[];
+    },
+    enabled: !!isAdmin,
+  });
+
+  const [genId, setGenId] = useState<string | null>(null);
+  const generateExam = async (examId: string) => {
+    setGenId(examId);
+    try {
+      const { data, error } = await supabase.functions.invoke("amm-generate-exam-page", { body: { exam_id: examId } });
+      if (error) throw error;
+      if (data?.gate_passed) {
+        toast({ title: "Draft generated — ready for review", description: `Score ${data.quality_score}/100 · ${data.word_count} words · ${data.mcq_count} MCQs` });
+      } else {
+        toast({
+          title: "Draft saved — quality gate NOT passed",
+          description: (data?.gate_reasons ?? []).join(" · ") || "Fix issues then regenerate",
+          variant: "destructive",
+        });
+      }
+      qc.invalidateQueries({ queryKey: ["exam-targets"] });
+    } catch (e: any) {
+      toast({ title: "Generation failed", description: e?.message ?? "Unknown error", variant: "destructive" });
+    } finally {
+      setGenId(null);
+    }
+  };
+
+  const publishExam = useMutation({
+    mutationFn: async (exam: ExamTarget) => {
+      if (exam.status !== "ready_for_review") throw new Error("Quality gate must pass first");
+      const { error: pErr } = await supabase.from("exam_pages").update({ published: true }).eq("slug", exam.slug);
+      if (pErr) throw pErr;
+      const { error: tErr } = await supabase.from("exam_targets").update({ status: "published" }).eq("id", exam.id);
+      if (tErr) throw tErr;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["exam-targets"] });
+      toast({ title: "Published live", description: "Page is now indexable. Sitemap updates on next deploy." });
+    },
+    onError: (e: any) => toast({ title: "Publish failed", description: e?.message, variant: "destructive" }),
+  });
+
+  const unpublishExam = useMutation({
+    mutationFn: async (exam: ExamTarget) => {
+      await supabase.from("exam_pages").update({ published: false }).eq("slug", exam.slug);
+      await supabase.from("exam_targets").update({ status: "ready_for_review" }).eq("id", exam.id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["exam-targets"] });
+      toast({ title: "Unpublished" });
+    },
+  });
 
   if (authLoading || adminLoading) {
     return (
